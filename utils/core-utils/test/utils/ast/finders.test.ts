@@ -201,7 +201,6 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     it('finds a globally imported contract', function () {
       const result = findImportedContractFullyQualifiedName(
         'ERC20',
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         sources['contracts/Token.sol'],
         astNodes
       );
@@ -212,7 +211,6 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     it('finds a aliased imported contract', function () {
       const result = findImportedContractFullyQualifiedName(
         'ERC721Base',
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         sources['contracts/Token.sol'],
         astNodes
       );
@@ -223,7 +221,6 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     it('returns undefined when not finding it', function () {
       const result = findImportedContractFullyQualifiedName(
         'UnexistantContract',
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         sources['contracts/Token.sol'],
         astNodes
       );

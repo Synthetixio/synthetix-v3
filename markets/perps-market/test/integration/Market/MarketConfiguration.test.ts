@@ -214,9 +214,11 @@ describe('MarketConfiguration', () => {
           ...fixture.settlementStrategy,
           settlementDelay: 0,
         };
-        await systems()
-          .PerpsMarket.connect(owner())
-          .addSettlementStrategy(marketId, settlementStrategy),
+
+        await assertEvent(
+          await systems()
+            .PerpsMarket.connect(owner())
+            .addSettlementStrategy(marketId, settlementStrategy),
           'SettlementStrategyAdded(' +
             marketId.toString() +
             ', [' +
@@ -234,7 +236,8 @@ describe('MarketConfiguration', () => {
             ', ' +
             settlementStrategy.disabled.toString() +
             '], 0)',
-          systems().PerpsMarket;
+          systems().PerpsMarket
+        );
       });
     });
   });

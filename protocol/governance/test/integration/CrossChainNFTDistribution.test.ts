@@ -29,7 +29,7 @@ describe('cross chain nft distribution', function () {
     for (const evt of rx.events!) {
       try {
         events.push(iface.parseLog(evt));
-      } catch (_) {
+      } catch {
         // If the event is not parsed is not the one we are looking for
       }
     }
