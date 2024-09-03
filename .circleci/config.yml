@@ -3,12 +3,24 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: "20.16.0"
+    default: "20.17.0"
 
 commands:
   yarn-install:
     steps:
-      - run: yarn install --immutable --immutable-cache
+      - run: date +"%Y-%m" > /tmp/month.txt && cat /tmp/month.txt
+      - restore_cache:
+          keys:
+            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
+      - run: sudo corepack enable
+      - run: corepack install
+      - run: yarn -v
+      - run: yarn install --immutable
+      - save_cache:
+          key: yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+          paths:
+            - "~/.yarn/berry"
 
   install-foundry:
     steps:
@@ -433,7 +445,11 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      - run: yarn install --immutable --immutable-cache --check-cache
+      - yarn-install
+
+      # Ignoring 1097346 for "ip" package that is not yet fixed but also not very dangerous
+      # https://github.com/indutny/node-ip/issues/136#issuecomment-1941462942
+      - run: yarn audit --ignore 1097346
 
   simulate-release:
     parameters:
