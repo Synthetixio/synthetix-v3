@@ -592,7 +592,7 @@ jobs:
           command: |
             export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
             export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
-            yarn subgraphgen
+            yarn subgraph:codegen
 
       - run: yarn workspace @synthetixio/core-subgraph test
       - run: yarn workspace @synthetixio/spot-market-subgraph test
