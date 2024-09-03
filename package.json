@@ -110,7 +110,7 @@
     "auxiliary/**"
   ],
   "engines": {
-    "node": "^18.16.0"
+    "node": "^20.17.0"
   },
   "packageManager": "yarn@4.4.1"
 }

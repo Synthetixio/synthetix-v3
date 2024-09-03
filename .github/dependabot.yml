@@ -26,9 +26,6 @@ updates:
           - "*sinon*"
           - "*nyc*"
           - "*jest*"
-      deps:
-        patterns:
-          - "*"
     reviewers:
       - "noisekit"
     ignore:
@@ -38,3 +35,4 @@ updates:
       - dependency-name: "chalk"
       - dependency-name: "node-fetch"
       - dependency-name: "forge-std"
+      - dependency-name: "solc"

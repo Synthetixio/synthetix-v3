@@ -2966,12 +2966,12 @@ __metadata:
     "@synthetixio/oracle-manager": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     "@types/lodash": "npm:^4.14.199"
-    "@types/mocha-each": "npm:2.0.1"
+    "@types/mocha-each": "npm:^2.0.1"
     "@usecannon/cli": "npm:2.16.6"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     lodash: "npm:^4.17.21"
-    mocha-each: "npm:2.0.1"
+    mocha-each: "npm:^2.0.1"
     solidity-docgen: "npm:^0.6.0-beta.36"
     typescript: "npm:^5.5.4"
   languageName: unknown
@@ -3010,7 +3010,7 @@ __metadata:
     hardhat-gas-reporter: "npm:^1.0.10"
     hardhat-ignore-warnings: "npm:^0.2.9"
     solidity-coverage: "npm:^0.8.7"
-    typechain: "npm:8.3.2"
+    typechain: "npm:^8.3.2"
   languageName: unknown
   linkType: soft
 
@@ -3081,7 +3081,7 @@ __metadata:
     solc: "npm:0.8.21"
     solidity-ast: "npm:^0.4.55"
     ts-node: "npm:^10.9.2"
-    typechain: "npm:8.3.2"
+    typechain: "npm:^8.3.2"
     typescript: "npm:^5.5.4"
     viem: "npm:^2.9.31"
   peerDependencies:
@@ -3155,7 +3155,7 @@ __metadata:
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
-    typechain: "npm:8.3.2"
+    typechain: "npm:^8.3.2"
   languageName: unknown
   linkType: soft
 
@@ -3764,12 +3764,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mocha-each@npm:2.0.1":
-  version: 2.0.1
-  resolution: "@types/mocha-each@npm:2.0.1"
+"@types/mocha-each@npm:^2.0.1":
+  version: 2.0.4
+  resolution: "@types/mocha-each@npm:2.0.4"
   dependencies:
     "@types/mocha": "npm:*"
-  checksum: 10/483dc267e03f165fccffab36ae7c7944484b816cf5d1381d134b7641f71bc21ea10284e35d5b38b933e8477b622f8a773e94427ea915e3e37dcedfc51030d8fd
+  checksum: 10/2588284db079e2d0a17735c8fb5c12cba9feabf2de55c9ab49e1f3b38cc522691d30ed3abb1bcb21c087b27f373e3f4123ef7bd8d9a4f95cef38f6c8045c71f3
   languageName: node
   linkType: hard
 
@@ -11981,7 +11981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mocha-each@npm:2.0.1":
+"mocha-each@npm:^2.0.1":
   version: 2.0.1
   resolution: "mocha-each@npm:2.0.1"
   dependencies:
@@ -16037,7 +16037,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typechain@npm:8.3.2":
+"typechain@npm:^8.3.2":
   version: 8.3.2
   resolution: "typechain@npm:8.3.2"
   dependencies:
