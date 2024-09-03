@@ -17,7 +17,7 @@ import handlePositionLiquidated from './handlePositionLiquidated';
 import handlePreviousOrderExpired from './handlePreviousOrderExpired';
 import handleReferrerShareUpdated from './handleReferrerShareUpdated';
 import handleSettlementStrategyAdded from './handleSettlementStrategyAdded';
-import handleSettlementStrategyEnabled from './handleSettlementStrategyEnabled';
+import handleSettlementStrategySet from './handleSettlementStrategySet';
 
 describe('PerpsMarketProxy', () => {
   beforeEach(() => {
@@ -45,5 +45,5 @@ describe('PerpsMarketProxy', () => {
   test('handlePreviousOrderExpired', handlePreviousOrderExpired);
   test('handleReferrerShareUpdated', handleReferrerShareUpdated);
   test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
-  test('handleSettlementStrategyEnabled', handleSettlementStrategyEnabled);
+  test('handleSettlementStrategySet', handleSettlementStrategySet);
 });

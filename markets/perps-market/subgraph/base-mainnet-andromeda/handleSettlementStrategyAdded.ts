@@ -3,7 +3,10 @@ import { SettlementStrategy } from './generated/schema';
 
 export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): void {
   const id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
-  const strategy = new SettlementStrategy(id);
+  const strategy = SettlementStrategy.load(id);
+  if (!strategy) {
+    return;
+  }
 
   strategy.strategyId = event.params.strategyId;
   strategy.marketId = event.params.marketId;

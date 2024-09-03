@@ -23,13 +23,15 @@ type Market @entity {
   owner: String
   initialMarginRatioD18: BigInt
   maintenanceMarginRatioD18: BigInt
-  liquidationRewardRatioD18: BigInt
-  maxSecondsInLiquidationWindow: BigInt
+  minimumInitialMarginRatioD18: BigInt
+  flagRewardRatioD18: BigInt
   minimumPositionMargin: BigInt
   maxLiquidationLimitAccumulationMultiplier: BigInt
+  maxSecondsInLiquidationWindow: BigInt
+  maxLiquidationPd: BigInt
+  endorsedLiquidator: String
   makerFee: BigInt
   takerFee: BigInt
-
   factoryInitialized: Boolean
 }
 
@@ -82,15 +84,6 @@ type ReferrerShare @entity {
 type GlobalConfiguration @entity {
   id: ID!
   feeCollector: String
-}
-
-# raw events
-type AccountLiquidated @entity {
-  id: ID!
-  timestamp: BigInt!
-  accountId: BigInt!
-  liquidationReward: BigInt!
-  fullyLiquidated: Boolean!
 }
 
 type PositionLiquidated @entity {
@@ -149,7 +142,7 @@ type PreviousOrderExpired @entity {
   accountId: BigInt!
   sizeDelta: BigInt!
   acceptablePrice: BigInt!
-  settlementTime: BigInt!
+  commitmentTime: BigInt!
   trackingCode: Bytes!
 }
 

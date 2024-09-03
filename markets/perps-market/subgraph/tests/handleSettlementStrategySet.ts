@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleSettlementStrategyAdded, handleSettlementStrategyEnabled } from '../optimism-goerli';
+import { handleSettlementStrategyAdded, handleSettlementStrategySet } from '../optimism-goerli';
 import { createSettlementStrategyAddedEvent } from './event-factories/createSettlementStrategyAddedEvent';
 import { createSettlementStrategyEnabledEvent } from './event-factories/createSettlementStrategyEnabledEvent';
 
@@ -48,11 +48,19 @@ export default function test(): void {
 
   log.info('Should disable the Settlement Strategy', []);
 
-  handleSettlementStrategyEnabled(
+  handleSettlementStrategySet(
     createSettlementStrategyEnabledEvent(
       marketId,
+      strategyType,
+      settlementDelay,
+      settlementWindowDuration,
+      priceWindowDuration,
+      priceVerificationContract,
+      feedId,
+      url,
+      settlementReward,
+      true,
       strategyId,
-      false,
       timestamp,
       blockNumber,
       logIndex
@@ -60,14 +68,27 @@ export default function test(): void {
   );
 
   assert.entityCount('SettlementStrategy', 1);
-  assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', 'false');
+  assert.fieldEquals('SettlementStrategy', '1-1', 'disabled', 'true');
 
   log.info(
     'Should skip even if Settlement Strategy does not exist and not add any more records',
     []
   );
-  handleSettlementStrategyEnabled(
-    createSettlementStrategyEnabledEvent(marketId, 123123, false, timestamp, blockNumber, logIndex)
+  handleSettlementStrategySet(
+    123123,
+    strategyType,
+    settlementDelay,
+    settlementWindowDuration,
+    priceWindowDuration,
+    priceVerificationContract,
+    feedId,
+    url,
+    settlementReward,
+    false,
+    strategyId,
+    timestamp,
+    blockNumber,
+    logIndex
   );
   assert.entityCount('SettlementStrategy', 1);
 }
