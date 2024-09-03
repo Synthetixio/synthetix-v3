@@ -47,7 +47,8 @@
     "docgen:contracts": "yarn clean && yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
     "subgraphgen": "yarn workspaces foreach --all --verbose run subgraphgen",
     "check-staged": "lint-staged",
-    "changed": "lerna changed --long"
+    "changed": "lerna changed --long",
+    "audit": "yarn npm audit --all --recursive --severity high"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
@@ -64,8 +65,8 @@
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
     "eslint-plugin-no-only-tests": "^3.1.0",
-    "lint-staged": "^15.2.2",
-    "mocha": "^10.3.0",
+    "lint-staged": "^15.2.10",
+    "mocha": "^10.7.3",
     "mocha-junit-reporter": "^2.2.1",
     "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
@@ -111,5 +112,5 @@
   "engines": {
     "node": "^18.16.0"
   },
-  "packageManager": "yarn@4.1.0"
+  "packageManager": "yarn@4.4.1"
 }
