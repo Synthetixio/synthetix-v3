@@ -8,7 +8,16 @@ parameters:
 commands:
   yarn-install:
     steps:
-      - run: yarn install --immutable --immutable-cache
+      - run: date +"%Y-%m" > /tmp/month.txt && cat /tmp/month.txt
+      - restore_cache:
+          keys:
+            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
+      - run: yarn install --immutable
+      - save_cache:
+          key: yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+          paths:
+            - "~/.yarn/berry"
 
   install-foundry:
     steps:
