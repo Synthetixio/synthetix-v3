@@ -224,9 +224,9 @@ describe('MarketConfiguration', () => {
             ', [' +
             settlementStrategy.strategyType.toString() +
             ', ' +
-            settlementStrategy.settlementDelay.toString() +
+            '1' + // settlement delay defaults to 1
             ', ' +
-            bn(1).toString() +
+            settlementStrategy.settlementWindowDuration.toString() +
             ', "' +
             settlementStrategy.priceVerificationContract.toString() +
             '", "' +
@@ -235,7 +235,9 @@ describe('MarketConfiguration', () => {
             settlementStrategy.settlementReward.toString() +
             ', ' +
             settlementStrategy.disabled.toString() +
-            '], 0)',
+            ', ' +
+            settlementStrategy.commitmentPriceDelay.toString() +
+            '], 3)',
           systems().PerpsMarket
         );
       });
