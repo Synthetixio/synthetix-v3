@@ -116,6 +116,13 @@ const config = {
         process.env.NETWORK_ENDPOINT ||
         `https://testnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 13001,
+    },
+    ['snaxchain']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://mainnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 2192,
     },
   },

@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import {IWormhole} from "@synthetixio/core-modules/contracts/interfaces/IWormhole.sol";
 import {IWormholeRelayer} from "@synthetixio/core-modules/contracts/interfaces/IWormholeRelayer.sol";
+import {ElectionSettings} from "../storage/ElectionSettings.sol";
+import {Epoch} from "../storage/Epoch.sol";
 
 /// @title Election module council with minimal logic to be deployed on Satellite chains
 interface IElectionModuleSatellite {
@@ -70,6 +72,28 @@ interface IElectionModuleSatellite {
 
     /// @notice Allows to withdraw a casted vote on the current network
     function withdrawVote() external payable;
+
+    // ---------------------------------------
+    // View functions
+    // ---------------------------------------
+
+    /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
+    function getCurrentPeriod() external view returns (uint256);
+
+    /// @notice Shows the current epoch schedule dates
+    function getEpochSchedule() external view returns (Epoch.Data memory epoch);
+
+    /// @notice Shows the settings for the current election
+    function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
+
+    /// @notice Shows the settings for the next election
+    function getNextElectionSettings()
+        external
+        view
+        returns (ElectionSettings.Data memory settings);
+
+    /// @notice Returns the index of the current epoch. The first epoch's index is 1
+    function getEpochIndex() external view returns (uint256);
 
     /// @dev Burn the council tokens from the given members; receiving end of members dismissal via Wormhole
     function _recvDismissMembers(address[] calldata membersToDismiss, uint256 epochIndex) external;
