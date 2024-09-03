@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'matchstick-as';
 
 import handleAccountCreated from './handleAccountCreated';
-import handleAccountLiquidated from './handleAccountLiquidated';
 import handleCollateralModified from './handleCollateralModified';
 import handleFundingParametersSet from './handleFundingParametersSet';
 import handleLiquidationParametersSet from './handleLiquidationParametersSet';
@@ -29,7 +28,6 @@ describe('PerpsMarketProxy', () => {
   });
 
   test('handleAccountCreated', handleAccountCreated);
-  test('handleAccountLiquidated', handleAccountLiquidated);
   test('handleCollateralModified', handleCollateralModified);
   test('handleFundingParametersSet', handleFundingParametersSet);
   test('handleLiquidationParametersSet', handleLiquidationParametersSet);

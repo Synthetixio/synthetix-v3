@@ -1,6 +1,6 @@
 import { BigInt, ethereum, Bytes } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { PreviousOrderExpired as PreviousOrderExpiredEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { PreviousOrderExpired as PreviousOrderExpiredEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createPreviousOrderExpiredEvent(
   marketId: i32,

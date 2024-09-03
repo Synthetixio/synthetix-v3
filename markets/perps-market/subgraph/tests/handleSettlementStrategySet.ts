@@ -1,7 +1,10 @@
 import { assert, log } from 'matchstick-as';
-import { handleSettlementStrategyAdded, handleSettlementStrategySet } from '../optimism-goerli';
+import {
+  handleSettlementStrategyAdded,
+  handleSettlementStrategySet,
+} from '../base-mainnet-andromeda';
 import { createSettlementStrategyAddedEvent } from './event-factories/createSettlementStrategyAddedEvent';
-import { createSettlementStrategyEnabledEvent } from './event-factories/createSettlementStrategyEnabledEvent';
+import { createSettlementStrategySetEvent } from './event-factories/createSettlementStrategySetEvent';
 
 export default function test(): void {
   assert.entityCount('SettlementStrategy', 0);
@@ -13,12 +16,11 @@ export default function test(): void {
   const strategyType = 1;
   const settlementDelay = 10_000;
   const settlementWindowDuration = 10_000;
-  const priceWindowDuration = 10_000;
   const priceVerificationContract = '0x4200000000000000000000000000000000000000';
   const feedId = '0x6900000000000000000000000000000000000000';
-  const url = 'https://example.com';
   const settlementReward = 10_000;
   const disabled = false;
+  const commitmentPriceDelay = 2;
   const strategyId = 1;
   const timestamp = 10_000;
   const blockNumber = 10;
@@ -30,12 +32,11 @@ export default function test(): void {
       strategyType,
       settlementDelay,
       settlementWindowDuration,
-      priceWindowDuration,
       priceVerificationContract,
       feedId,
-      url,
       settlementReward,
       disabled,
+      commitmentPriceDelay,
       strategyId,
       timestamp,
       blockNumber,
@@ -49,15 +50,14 @@ export default function test(): void {
   log.info('Should disable the Settlement Strategy', []);
 
   handleSettlementStrategySet(
-    createSettlementStrategyEnabledEvent(
+    createSettlementStrategySetEvent(
       marketId,
+      strategyId,
       strategyType,
       settlementDelay,
       settlementWindowDuration,
-      priceWindowDuration,
       priceVerificationContract,
       feedId,
-      url,
       settlementReward,
       true,
       strategyId,
@@ -75,20 +75,21 @@ export default function test(): void {
     []
   );
   handleSettlementStrategySet(
-    123123,
-    strategyType,
-    settlementDelay,
-    settlementWindowDuration,
-    priceWindowDuration,
-    priceVerificationContract,
-    feedId,
-    url,
-    settlementReward,
-    false,
-    strategyId,
-    timestamp,
-    blockNumber,
-    logIndex
+    createSettlementStrategySetEvent(
+      123123,
+      2,
+      strategyType,
+      settlementDelay,
+      settlementWindowDuration,
+      priceVerificationContract,
+      feedId,
+      settlementReward,
+      true,
+      strategyId,
+      timestamp,
+      blockNumber,
+      logIndex
+    )
   );
   assert.entityCount('SettlementStrategy', 1);
 }

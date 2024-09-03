@@ -1,6 +1,6 @@
 import { BigInt, ethereum, Address, Bytes } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { OrderCommitted as OrderCommittedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { OrderCommitted as OrderCommittedEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createOrderCommittedEvent(
   marketId: i32,

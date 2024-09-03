@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleSettlementStrategyAdded } from '../optimism-goerli';
+import { handleSettlementStrategyAdded } from '../base-mainnet-andromeda';
 import { createSettlementStrategyAddedEvent } from './event-factories/createSettlementStrategyAddedEvent';
 
 export default function test(): void {
@@ -11,12 +11,12 @@ export default function test(): void {
   const strategyType = 1;
   const settlementDelay = 10_000;
   const settlementWindowDuration = 10_000;
-  const priceWindowDuration = 10_000;
   const priceVerificationContract = '0x4200000000000000000000000000000000000000';
   const feedId = '0x6900000000000000000000000000000000000000';
-  const url = 'https://example.com';
   const settlementReward = 10_000;
   const disabled = false;
+  const commitmentPriceDelay = 2;
+
   const strategyId = 1;
   const timestamp = 10_000;
   const blockNumber = 10;
@@ -28,12 +28,11 @@ export default function test(): void {
       strategyType,
       settlementDelay,
       settlementWindowDuration,
-      priceWindowDuration,
       priceVerificationContract,
       feedId,
-      url,
       settlementReward,
       disabled,
+      commitmentPriceDelay,
       strategyId,
       timestamp,
       blockNumber,
@@ -60,7 +59,12 @@ export default function test(): void {
     priceVerificationContract.toString()
   );
   assert.fieldEquals('SettlementStrategy', '1-1', 'feedId', feedId.toString());
-  assert.fieldEquals('SettlementStrategy', '1-1', 'url', url);
   assert.fieldEquals('SettlementStrategy', '1-1', 'settlementReward', settlementReward.toString());
   assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', (!disabled).toString());
+  assert.fieldEquals(
+    'SettlementStrategy',
+    '1-1',
+    'commitmentPriceDelay',
+    commitmentPriceDelay.toString()
+  );
 }

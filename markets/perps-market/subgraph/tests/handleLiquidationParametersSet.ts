@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleMarketCreated, handleLiquidationParametersSet } from '../optimism-goerli';
+import { handleMarketCreated, handleLiquidationParametersSet } from '../base-mainnet-andromeda';
 import { createMarketCreatedEvent } from './event-factories/createMarketCreatedEvent';
 import { createLiquidationParametersSetEvent } from './event-factories/createLiquidationParametersSetEvent';
 

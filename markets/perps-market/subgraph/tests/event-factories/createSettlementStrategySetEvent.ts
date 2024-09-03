@@ -1,12 +1,13 @@
 import { BigInt, ethereum, Address, Bytes } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
 import {
-  SettlementStrategyAdded as SettlementStrategyAddedEvent,
-  SettlementStrategyAddedStrategyStruct,
-} from '../../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
+  SettlementStrategySet as SettlementStrategySetEvent,
+  SettlementStrategySetStrategyStruct,
+} from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
-export function createSettlementStrategyAddedEvent(
+export function createSettlementStrategySetEvent(
   marketId: i32,
+  strategyId: i32,
   // strategy struct
   strategyType: i32,
   settlementDelay: i64,
@@ -17,17 +18,16 @@ export function createSettlementStrategyAddedEvent(
   disabled: boolean,
   commitmentPriceDelay: i64,
   // end of strategy struct
-  strategyId: i32,
   timestamp: i64,
   blockNumber: i64,
   logIndex: i64
-): SettlementStrategyAddedEvent {
-  const event = newTypedMockEvent<SettlementStrategyAddedEvent>();
+): SettlementStrategySetEvent {
+  const event = newTypedMockEvent<SettlementStrategySetEvent>();
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));
 
-  const strategy = changetype<SettlementStrategyAddedStrategyStruct>([
+  const strategy = changetype<SettlementStrategySetStrategyStruct>([
     ethereum.Value.fromI32(strategyType),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementDelay)),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementWindowDuration)),
