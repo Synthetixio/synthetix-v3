@@ -446,7 +446,10 @@ jobs:
     steps:
       - checkout
       - yarn-install
-      - run: yarn npm audit --all --recursive --severity high
+
+      # Ignoring 1097346 for "ip" package that is not yet fixed but also not very dangerous
+      # https://github.com/indutny/node-ip/issues/136#issuecomment-1941462942
+      - run: yarn audit --ignore 1097346
 
   simulate-release:
     parameters:
