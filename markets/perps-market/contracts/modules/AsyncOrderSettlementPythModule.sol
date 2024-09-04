@@ -78,8 +78,6 @@ contract AsyncOrderSettlementPythModule is
         runtime.marketId = asyncOrder.request.marketId;
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
-        // ensure account has not been flagged for liquidation
-        /// @custom:question is this check necessary given validateRequest() calls isEligibleForLiquidation()?
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
 
         Position.Data storage oldPosition;
@@ -144,7 +142,7 @@ contract AsyncOrderSettlementPythModule is
         // trader can now commit a new order
         asyncOrder.reset();
 
-        /// @custom:question two events here seems bad. Can we not combine or find a better way?
+        /// @dev two events emitted to avoid stack limitations
         emit InterestCharged(runtime.accountId, runtime.chargedInterest);
 
         emit OrderSettled(
