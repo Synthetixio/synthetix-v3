@@ -51,6 +51,8 @@
     "audit": "yarn npm audit --all --recursive --severity high"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.9.1",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
     "@lerna-lite/changed": "^3.3.0",
@@ -61,10 +63,11 @@
     "@synthetixio/deps": "workspace:*",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.17",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@typescript-eslint/parser": "^7.0.1",
-    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "eslint": "^9.9.1",
     "eslint-plugin-no-only-tests": "^3.1.0",
+    "globals": "^15.9.0",
     "lint-staged": "^15.2.10",
     "mocha": "^10.7.3",
     "mocha-junit-reporter": "^2.2.1",
@@ -72,7 +75,7 @@
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
     "prettier-plugin-toml": "^2.0.1",
-    "solhint": "^4.1.1",
+    "solhint": "^5.0.3",
     "solhint-plugin-meta-transactions": "^0.1.0",
     "solhint-plugin-numcast": "^1.0.0",
     "ts-node": "^10.9.2",
@@ -86,22 +89,22 @@
   ],
   "lint-staged": {
     "*.js": [
-      "prettier --check",
-      "eslint --max-warnings=0"
+      "yarn prettier --check",
+      "yarn eslint --max-warnings=0"
     ],
     "*.ts": [
-      "prettier --check",
-      "eslint --max-warnings=0"
+      "yarn prettier --check",
+      "yarn eslint --max-warnings=0"
     ],
     "*.sol": [
-      "prettier --check",
-      "solhint"
+      "yarn prettier --check",
+      "yarn solhint"
     ],
-    "*.toml": "prettier --check",
-    "*.yml": "prettier --check",
-    "*.yaml": "prettier --check",
-    "*.json": "prettier --check",
-    "*.md": "prettier --check"
+    "*.toml": "yarn prettier --check",
+    "*.yml": "yarn prettier --check",
+    "*.yaml": "yarn prettier --check",
+    "*.json": "yarn prettier --check",
+    "*.md": "yarn prettier --check"
   },
   "workspaces": [
     "utils/**",

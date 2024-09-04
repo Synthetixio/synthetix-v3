@@ -65,7 +65,7 @@ describe('SynthetixElectionModule - Elections', () => {
     rx.events!.forEach((_event) => {
       try {
         events.push(iface.parseLog(_event));
-      } catch (error) {
+      } catch {
         // Handle the case where the event does not match the ABI
       }
     });

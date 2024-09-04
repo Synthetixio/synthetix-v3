@@ -360,7 +360,7 @@ export const findEventSafe = (receipt: ContractReceipt, eventName: string, contr
     .map((log) => {
       try {
         return contract.interface.parseLog(log);
-      } catch (err) {
+      } catch {
         return undefined;
       }
     })

@@ -14,7 +14,6 @@ export default class BalanceTree {
     );
   }
 
-  // eslint-disable-next-line max-params
   static verifyProof(
     account: Buffer | string,
     amount: ethers.BigNumberish,

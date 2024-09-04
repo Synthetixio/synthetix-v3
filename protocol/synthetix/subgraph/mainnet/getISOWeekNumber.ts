@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 // exported for test
 export function getISOWeekNumber(timestamp: i64): i64 {
   const date = new Date(timestamp);

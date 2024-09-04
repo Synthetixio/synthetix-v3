@@ -37,7 +37,7 @@ describe('cross chain election testing', function () {
     for (const evt of rx.events!) {
       try {
         event = iface.parseLog(evt);
-      } catch (_) {
+      } catch {
         // If the event is not parsed is not the one we are looking for
       }
     }
