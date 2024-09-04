@@ -852,7 +852,7 @@ workflows:
           #requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
-          cannonPreset: "main"
+          cannonPreset: "with-synthetix"
           hardhatNetwork: "optimistic-mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
@@ -862,7 +862,7 @@ workflows:
           #requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
-          cannonPreset: "main"
+          cannonPreset: "with-synthetix"
           hardhatNetwork: "mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
