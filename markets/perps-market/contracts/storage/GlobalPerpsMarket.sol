@@ -106,6 +106,11 @@ library GlobalPerpsMarket {
         delegatedCollateralValue = delegatedCollateralValueInt.toUint();
 
         rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
+
+        // Cap at 100% utilization
+        if (rate > DecimalMath.UNIT_UINT128) {
+            rate = DecimalMath.UNIT_UINT128;
+        }
     }
 
     function getDelegatedCollateralValue(Data storage self) internal view returns (int256) {
