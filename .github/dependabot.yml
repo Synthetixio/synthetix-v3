@@ -26,6 +26,32 @@ updates:
           - "*sinon*"
           - "*nyc*"
           - "*jest*"
+      other:
+        patterns:
+          - "*"
+
+        # excluding all patterns from other groups
+        exclude-patterns:
+          # cannon
+          - "@usecannon*"
+          - "*cannon*"
+
+          # lerna
+          - "*lerna*"
+
+          # subgraph
+          - "@graphprotocol*"
+          - "matchstick"
+
+          # tests
+          - "*prettier*"
+          - "*eslint*"
+          - "*solhint*"
+          - "*lint*"
+          - "*mocha*"
+          - "*sinon*"
+          - "*nyc*"
+          - "*jest*"
     reviewers:
       - "noisekit"
     ignore:
