@@ -14,10 +14,10 @@ build() {
   yarn prettier --write "subgraph.$namespace.yaml"
 }
 
-codegen base-sepolia-andromeda
-codegen base-mainnet-andromeda
-codegen mainnet
-codegen sepolia
-codegen optimism-mainnet
-codegen arbitrum-mainnet
-codegen arbitrum-sepolia
+build base-sepolia-andromeda
+build base-mainnet-andromeda
+build mainnet
+build sepolia
+build optimism-mainnet
+build arbitrum-mainnet
+build arbitrum-sepolia
