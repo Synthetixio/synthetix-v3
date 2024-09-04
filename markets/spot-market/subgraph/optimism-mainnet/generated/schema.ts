@@ -625,8 +625,8 @@ export class Order extends Entity {
     }
   }
 
-  get settlementTime(): BigInt | null {
-    let value = this.get('settlementTime');
+  get commitmentTime(): BigInt | null {
+    let value = this.get('commitmentTime');
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -634,11 +634,11 @@ export class Order extends Entity {
     }
   }
 
-  set settlementTime(value: BigInt | null) {
+  set commitmentTime(value: BigInt | null) {
     if (!value) {
-      this.unset('settlementTime');
+      this.unset('commitmentTime');
     } else {
-      this.set('settlementTime', Value.fromBigInt(<BigInt>value));
+      this.set('commitmentTime', Value.fromBigInt(<BigInt>value));
     }
   }
 
