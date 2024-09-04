@@ -26,7 +26,7 @@ export function createSettlementStrategySetEvent(
 
   event.parameters = [];
   event.parameters.push(new ethereum.EventParam('marketId', ethereum.Value.fromI32(marketId)));
-
+  event.parameters.push(new ethereum.EventParam('strategyId', ethereum.Value.fromI32(strategyId)));
   const strategy = changetype<SettlementStrategySetStrategyStruct>([
     ethereum.Value.fromI32(strategyType),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementDelay)),
@@ -38,8 +38,6 @@ export function createSettlementStrategySetEvent(
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(commitmentPriceDelay)),
   ]);
   event.parameters.push(new ethereum.EventParam('strategy', ethereum.Value.fromTuple(strategy)));
-
-  event.parameters.push(new ethereum.EventParam('strategyId', ethereum.Value.fromI32(strategyId)));
 
   event.block.timestamp = BigInt.fromI64(timestamp);
   event.block.number = BigInt.fromI64(blockNumber);

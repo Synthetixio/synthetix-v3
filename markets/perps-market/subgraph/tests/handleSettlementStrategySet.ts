@@ -45,7 +45,7 @@ export default function test(): void {
   );
 
   assert.entityCount('SettlementStrategy', 1);
-  assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', (!disabled).toString());
+  assert.fieldEquals('SettlementStrategy', '1-1', 'disabled', 'false');
 
   log.info('Should disable the Settlement Strategy', []);
 

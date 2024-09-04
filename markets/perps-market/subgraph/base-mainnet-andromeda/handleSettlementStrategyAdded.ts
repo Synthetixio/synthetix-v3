@@ -3,10 +3,7 @@ import { SettlementStrategy } from './generated/schema';
 
 export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): void {
   const id = event.params.strategyId.toString() + '-' + event.params.marketId.toString();
-  const strategy = SettlementStrategy.load(id);
-  if (!strategy) {
-    return;
-  }
+  const strategy = new SettlementStrategy(id);
 
   strategy.strategyId = event.params.strategyId;
   strategy.marketId = event.params.marketId;
@@ -18,7 +15,7 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
     event.params.strategy.priceVerificationContract.toHexString();
   strategy.feedId = event.params.strategy.feedId;
   strategy.settlementReward = event.params.strategy.settlementReward;
-  strategy.enabled = !event.params.strategy.disabled;
+  strategy.disabled = event.params.strategy.disabled;
   strategy.commitmentPriceDelay = event.params.strategy.commitmentPriceDelay;
 
   strategy.save();

@@ -705,6 +705,40 @@ export class Order extends Entity {
     }
   }
 
+  get commitmentTime(): BigInt | null {
+    let value = this.get('commitmentTime');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set commitmentTime(value: BigInt | null) {
+    if (!value) {
+      this.unset('commitmentTime');
+    } else {
+      this.set('commitmentTime', Value.fromBigInt(<BigInt>value));
+    }
+  }
+
+  get expectedPriceTime(): BigInt | null {
+    let value = this.get('expectedPriceTime');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set expectedPriceTime(value: BigInt | null) {
+    if (!value) {
+      this.unset('expectedPriceTime');
+    } else {
+      this.set('expectedPriceTime', Value.fromBigInt(<BigInt>value));
+    }
+  }
+
   get settlementTime(): BigInt | null {
     let value = this.get('settlementTime');
     if (!value || value.kind == ValueKind.NULL) {
@@ -967,8 +1001,8 @@ export class SettlementStrategy extends Entity {
     this.set('marketId', Value.fromBigInt(value));
   }
 
-  get enabled(): boolean {
-    let value = this.get('enabled');
+  get disabled(): boolean {
+    let value = this.get('disabled');
     if (!value || value.kind == ValueKind.NULL) {
       return false;
     } else {
@@ -976,8 +1010,8 @@ export class SettlementStrategy extends Entity {
     }
   }
 
-  set enabled(value: boolean) {
-    this.set('enabled', Value.fromBoolean(value));
+  set disabled(value: boolean) {
+    this.set('disabled', Value.fromBoolean(value));
   }
 
   get strategyType(): i32 {
@@ -1586,6 +1620,32 @@ export class OrderCommitted extends Entity {
 
   set acceptablePrice(value: BigInt) {
     this.set('acceptablePrice', Value.fromBigInt(value));
+  }
+
+  get commitmentTime(): BigInt {
+    let value = this.get('commitmentTime');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set commitmentTime(value: BigInt) {
+    this.set('commitmentTime', Value.fromBigInt(value));
+  }
+
+  get expectedPriceTime(): BigInt {
+    let value = this.get('expectedPriceTime');
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error('Cannot return null for a required field.');
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set expectedPriceTime(value: BigInt) {
+    this.set('expectedPriceTime', Value.fromBigInt(value));
   }
 
   get settlementTime(): BigInt {

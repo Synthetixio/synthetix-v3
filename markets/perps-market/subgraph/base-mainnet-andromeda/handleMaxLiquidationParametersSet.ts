@@ -10,7 +10,7 @@ export function handleMaxLiquidationParametersSet(event: MaxLiquidationParameter
       event.params.maxLiquidationLimitAccumulationMultiplier;
     market.maxSecondsInLiquidationWindow = event.params.maxSecondsInLiquidationWindow;
     market.maxLiquidationPd = event.params.maxLiquidationPd;
-    market.endorsedLiquidator = event.params.endorsedLiquidator;
+    market.endorsedLiquidator = event.params.endorsedLiquidator.toHexString();
 
     market.save();
   }

@@ -27,7 +27,7 @@ export default function test(): void {
   let accountId = 1;
   let sizeDelta = 300;
   let acceptablePrice = 400;
-  let settlementTime = 500;
+  let commitmentTime = 500;
   let trackingCode = '0xbebebe';
 
   handlePreviousOrderExpired(
@@ -36,7 +36,7 @@ export default function test(): void {
       accountId,
       sizeDelta,
       acceptablePrice,
-      settlementTime,
+      commitmentTime,
       trackingCode,
       timestamp,
       blockNumber,
@@ -60,8 +60,8 @@ export default function test(): void {
   assert.fieldEquals(
     'PreviousOrderExpired',
     orderExpiredId,
-    'settlementTime',
-    settlementTime.toString()
+    'commitmentTime',
+    commitmentTime.toString()
   );
   assert.fieldEquals('PreviousOrderExpired', orderExpiredId, 'trackingCode', trackingCode);
 }

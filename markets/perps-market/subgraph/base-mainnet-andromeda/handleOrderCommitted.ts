@@ -23,6 +23,8 @@ export function handleOrderCommitted(event: OrderCommittedEvent): void {
   order.accountId = event.params.accountId;
   order.orderType = event.params.orderType;
   order.acceptablePrice = event.params.acceptablePrice;
+  order.commitmentTime = event.params.commitmentTime;
+  order.expectedPriceTime = event.params.expectedPriceTime;
   order.settlementTime = event.params.settlementTime;
   order.expirationTime = event.params.expirationTime;
   order.trackingCode = event.params.trackingCode;
@@ -43,6 +45,8 @@ export function handleOrderCommitted(event: OrderCommittedEvent): void {
   orderCommitted.orderType = event.params.orderType;
   orderCommitted.sizeDelta = event.params.sizeDelta;
   orderCommitted.acceptablePrice = event.params.acceptablePrice;
+  orderCommitted.commitmentTime = event.params.commitmentTime;
+  orderCommitted.expectedPriceTime = event.params.expectedPriceTime;
   orderCommitted.settlementTime = event.params.settlementTime;
   orderCommitted.expirationTime = event.params.expirationTime;
   orderCommitted.trackingCode = event.params.trackingCode;

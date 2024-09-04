@@ -21,7 +21,6 @@ export default function test(): void {
   const timestamp = 10_000;
   const blockNumber = 10;
   const logIndex = 1;
-
   handleSettlementStrategyAdded(
     createSettlementStrategyAddedEvent(
       marketId,
@@ -60,7 +59,7 @@ export default function test(): void {
   );
   assert.fieldEquals('SettlementStrategy', '1-1', 'feedId', feedId.toString());
   assert.fieldEquals('SettlementStrategy', '1-1', 'settlementReward', settlementReward.toString());
-  assert.fieldEquals('SettlementStrategy', '1-1', 'enabled', (!disabled).toString());
+  assert.fieldEquals('SettlementStrategy', '1-1', 'disabled', disabled.toString());
   assert.fieldEquals(
     'SettlementStrategy',
     '1-1',

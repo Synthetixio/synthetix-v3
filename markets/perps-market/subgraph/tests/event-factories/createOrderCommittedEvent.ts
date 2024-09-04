@@ -8,6 +8,8 @@ export function createOrderCommittedEvent(
   orderType: i32,
   sizeDelta: i64,
   acceptablePrice: i64,
+  commitmentTime: i64,
+  expectedPriceTime: i64,
   settlementTime: i64,
   expirationTime: i64,
   trackingCode: string,
@@ -32,6 +34,18 @@ export function createOrderCommittedEvent(
     new ethereum.EventParam(
       'acceptablePrice',
       ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(acceptablePrice))
+    )
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      'commitmentTime',
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(commitmentTime))
+    )
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      'expectedPriceTime',
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(expectedPriceTime))
     )
   );
   event.parameters.push(

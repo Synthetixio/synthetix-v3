@@ -43,6 +43,8 @@ type Order @entity {
   orderType: Int
   size: BigInt
   acceptablePrice: BigInt
+  commitmentTime: BigInt
+  expectedPriceTime: BigInt
   settlementTime: BigInt
   expirationTime: BigInt
   trackingCode: Bytes
@@ -63,7 +65,7 @@ type SettlementStrategy @entity {
   id: ID!
   strategyId: BigInt!
   marketId: BigInt!
-  enabled: Boolean
+  disabled: Boolean
   strategyType: Int
   settlementDelay: BigInt
   settlementWindowDuration: BigInt
@@ -112,6 +114,8 @@ type OrderCommitted @entity {
   orderType: Int!
   sizeDelta: BigInt!
   acceptablePrice: BigInt!
+  commitmentTime: BigInt!
+  expectedPriceTime: BigInt!
   settlementTime: BigInt!
   expirationTime: BigInt!
   trackingCode: Bytes!
