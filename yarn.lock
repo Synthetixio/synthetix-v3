@@ -16393,8 +16393,8 @@ __metadata:
   linkType: hard
 
 "viem@npm:^2.16.5, viem@npm:^2.9.31":
-  version: 2.19.6
-  resolution: "viem@npm:2.19.6"
+  version: 2.21.1
+  resolution: "viem@npm:2.21.1"
   dependencies:
     "@adraffy/ens-normalize": "npm:1.10.0"
     "@noble/curves": "npm:1.4.0"
@@ -16410,7 +16410,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10/f943f4e3930d5b3028a28130ef8d792ad71268737e66d0d807171292f74901b272b4d41fe95addfcc4e28258ceb9e3b55721f2d0b703b4576669b0bce3f0b649
+  checksum: 10/7f9901b276abf199f3cdad3a11d013502ec0dea326844e96f8b0fe65eb90dc4d5c14ac038ceb24524f8c6cb6e464ed54809119916887b3948d3a4a28f793eee6
   languageName: node
   linkType: hard
 
