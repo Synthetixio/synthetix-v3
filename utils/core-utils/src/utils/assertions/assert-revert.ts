@@ -145,11 +145,11 @@ async function _getCustomErrorFromTransaction(transaction: Transaction, contract
         const values = contract.interface.decodeErrorResult(fragment, code);
 
         return `${fragment.name}(${_wrapInQuotes(values as unknown[])})`;
-      } catch (err) {
+      } catch {
         // Decoding failed, try another fragment.
       }
     }
-  } catch (err) {
+  } catch {
     return 'UNKNOWN_ERROR_FAILED_TO_DECODE';
   }
 }

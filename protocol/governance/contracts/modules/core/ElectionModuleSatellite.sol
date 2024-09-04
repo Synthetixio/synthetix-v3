@@ -15,6 +15,7 @@ import {ElectionCredentials} from "../../submodules/election/ElectionCredentials
 import {Ballot} from "../../storage/Ballot.sol";
 import {CouncilMembers} from "../../storage/CouncilMembers.sol";
 import {Council} from "../../storage/Council.sol";
+import {ElectionSettings} from "../../storage/ElectionSettings.sol";
 import {Epoch} from "../../storage/Epoch.sol";
 
 contract ElectionModuleSatellite is
@@ -151,6 +152,42 @@ contract ElectionModuleSatellite is
         );
 
         emit VoteWithdrawnSent(sender);
+    }
+
+    /// @inheritdoc	IElectionModuleSatellite
+    function getCurrentPeriod() external view override returns (uint256) {
+        // solhint-disable-next-line numcast/safe-cast
+        return uint256(Council.load().getCurrentEpoch().getCurrentPeriod());
+    }
+
+    /// @inheritdoc	IElectionModuleSatellite
+    function getEpochSchedule() external view override returns (Epoch.Data memory epoch) {
+        return Council.load().getCurrentEpoch();
+    }
+
+    /// @inheritdoc	IElectionModuleSatellite
+    function getElectionSettings()
+        external
+        view
+        override
+        returns (ElectionSettings.Data memory settings)
+    {
+        return Council.load().getCurrentElectionSettings();
+    }
+
+    /// @inheritdoc	IElectionModuleSatellite
+    function getNextElectionSettings()
+        external
+        view
+        override
+        returns (ElectionSettings.Data memory settings)
+    {
+        return Council.load().getNextElectionSettings();
+    }
+
+    /// @inheritdoc	IElectionModuleSatellite
+    function getEpochIndex() external view override returns (uint256) {
+        return Council.load().currentElectionId;
     }
 
     function _recvDismissMembers(

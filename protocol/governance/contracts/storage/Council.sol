@@ -10,7 +10,7 @@ library Council {
     using Epoch for Epoch.Data;
     using ElectionSettings for ElectionSettings.Data;
 
-    error NotCallableInCurrentPeriod();
+    error NotCallableInCurrentPeriod(Epoch.ElectionPeriod currentPeriod);
     error InvalidEpochConfiguration(uint256 code, uint64 v1, uint64 v2);
     error ChangesCurrentPeriod();
 
@@ -75,7 +75,7 @@ library Council {
     function onlyInPeriod(Epoch.ElectionPeriod period) internal view {
         Epoch.ElectionPeriod currentPeriod = getCurrentEpoch(load()).getCurrentPeriod();
         if (currentPeriod != period) {
-            revert NotCallableInCurrentPeriod();
+            revert NotCallableInCurrentPeriod(currentPeriod);
         }
     }
 
@@ -86,7 +86,7 @@ library Council {
     ) internal view {
         Epoch.ElectionPeriod currentPeriod = getCurrentEpoch(load()).getCurrentPeriod();
         if (currentPeriod != period1 && currentPeriod != period2) {
-            revert NotCallableInCurrentPeriod();
+            revert NotCallableInCurrentPeriod(currentPeriod);
         }
     }
 

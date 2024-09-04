@@ -12,14 +12,12 @@ interface Balance {
 
 export function parseBalanceMap(balances: Balance[] | { [addr: string]: BigNumberish }) {
   // if balances are in an old format, process them
-  /* eslint-disable indent */
   const balancesInNewFormat = Array.isArray(balances)
     ? balances
     : Object.keys(balances).map((account) => ({
         address: account,
         balance: `${balances[account].toString(16)}`,
       }));
-  /* eslint-enable indent */
 
   const dataByAddress = balancesInNewFormat.reduce(
     (memo, { address: account, balance }) => {

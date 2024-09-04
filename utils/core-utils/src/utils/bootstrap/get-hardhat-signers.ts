@@ -16,7 +16,6 @@ export async function getHardhatSigners(
       (account) => new Wallet(typeof account === 'string' ? account : account.privateKey)
     );
   } else if (accounts === 'remote') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     throw new Error('Cannot use remote accounts');
   } else {
     signers = Array(accounts.count)

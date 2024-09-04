@@ -1,7 +1,6 @@
 import { bufferToHex, keccak256 } from 'ethereumjs-util';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface BufferArray extends Array<Buffer> {}
+type BufferArray = Array<Buffer>;
 
 type BufferTree = Buffer | BufferArray;
 
