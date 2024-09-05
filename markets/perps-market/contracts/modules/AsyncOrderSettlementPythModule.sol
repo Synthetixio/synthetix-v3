@@ -71,7 +71,7 @@ contract AsyncOrderSettlementPythModule is
         AsyncOrder.Data storage asyncOrder,
         SettlementStrategy.Data storage settlementStrategy
     ) private {
-        /// @dev runtime stores order settlement data; prevents stack too deep error
+        /// @dev runtime stores order settlement data; circumvents stack limitations
         SettleOrderRuntime memory runtime;
 
         runtime.accountId = asyncOrder.request.accountId;
@@ -134,10 +134,12 @@ contract AsyncOrderSettlementPythModule is
             factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
-        // order fees are total fees minus settlement reward
-        uint orderFees = runtime.totalFees - runtime.settlementReward;
-        GlobalPerpsMarketConfiguration.Data s = GlobalPerpsMarketConfiguration.load();
-        s.collectFees(orderFees, asyncOrder.request.referrer, factory);
+        {
+            // order fees are total fees minus settlement reward
+            uint orderFees = runtime.totalFees - runtime.settlementReward;
+            GlobalPerpsMarketConfiguration.Data storage s = GlobalPerpsMarketConfiguration.load();
+            s.collectFees(orderFees, asyncOrder.request.referrer, factory);
+        }
 
         // trader can now commit a new order
         asyncOrder.reset();
