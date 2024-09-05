@@ -83,20 +83,22 @@ library GlobalPerpsMarket {
     /**
      * @notice assert the locked credit delta does not exceed market capacity
      * @dev reverts if applying the delta exceeds the market's credit capacity
-     * @dev 
+     * @param self reference to the global perps market data
+     * @param lockedCreditDelta the proposed change in credit to be validated
      */
     function validateMarketCapacity(Data storage self, int256 lockedCreditDelta) internal view {
-        /// @dev establish amount of collateral currently collateralizing outstanding perp markets
+        // establish amount of collateral currently collateralizing outstanding perp markets
         int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
 
-        /// @dev establish amount of credit needed to collateralize outstanding perp markets
+        // establish amount of credit needed to collateralize outstanding perp markets
         int256 credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
 
-        /// @dev calculate new accumulated credit following the addition of the new locked credit
+        // calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
 
-        if (delegatedCollateralValue < lockedCreditDelta) {
-            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, lockedCreditDelta);
+        // revert if accumulated credit value exceeds what is currently collateralizing the perp markets
+        if (delegatedCollateralValue < credit) {
+            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, credit);
         }
     }
 
