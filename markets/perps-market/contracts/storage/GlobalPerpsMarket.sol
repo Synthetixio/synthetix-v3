@@ -81,8 +81,9 @@ library GlobalPerpsMarket {
     }
 
     /**
-     * @notice Check whether, given the new locked credit delta, if the market is still solvent given its credit capacity from the core system.
-     * @dev reverts if current delegated collateral is insufficient to collateralize the specified locked credit
+     * @notice assert the locked credit delta does not exceed market capacity
+     * @dev reverts if applying the delta exceeds the market's credit capacity
+     * @dev 
      */
     function validateMarketCapacity(Data storage self, int256 lockedCreditDelta) internal view {
         /// @dev establish amount of collateral currently collateralizing outstanding perp markets
@@ -94,8 +95,8 @@ library GlobalPerpsMarket {
         /// @dev calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
 
-        if (delegatedCollateralValue < lockedCredit) {
-            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, lockedCredit);
+        if (delegatedCollateralValue < lockedCreditDelta) {
+            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, lockedCreditDelta);
         }
     }
 
@@ -115,6 +116,7 @@ library GlobalPerpsMarket {
     }
 
     /// @notice get the value of collateral that is currently delegated to the perps market
+    /// @dev value does not include trader provided collateral (i.e., margin)
     /// @dev value returned is denominated in USD
     /// @dev negative values indicate credit capacity exceeded, and lp's are at risk of liquidation
     /// @return value of delegated collateral; negative values indicate credit capacity exceeded
