@@ -492,7 +492,7 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketId
             );
-            maxNumberOfWindows = marketConfig.numberOfLiquidationWindows(
+            uint256 numberOfWindows = marketConfig.numberOfLiquidationWindows(
                 MathUtil.abs(position.size)
             );
 
@@ -501,6 +501,8 @@ library PerpsAccount {
             );
             uint256 flagReward = marketConfig.calculateFlagReward(notionalValue);
             totalFlagReward += flagReward;
+
+            maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }
         GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
             .load();
