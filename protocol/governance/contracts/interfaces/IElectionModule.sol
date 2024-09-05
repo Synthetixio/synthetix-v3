@@ -81,6 +81,11 @@ interface IElectionModule is IElectionModuleSatellite {
         uint64 newEpochEndDate
     ) external payable;
 
+    function setCurrentEpochSeatCountAndMinimumActiveMembers(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers
+    ) external;
+
     /// @notice Adjust settings that will be used on next epoch
     /// @dev can only be called during the Administration period
     /// @param epochSeatCount number of council seats to be elected in the next epoch
