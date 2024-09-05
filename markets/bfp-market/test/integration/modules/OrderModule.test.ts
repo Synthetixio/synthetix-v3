@@ -822,7 +822,7 @@ describe('OrderModule', () => {
         //
         // The idea of this very specific number is that it would pass the initial margin requirement but still be
         // liquidatable, the really bad skew/fill price.
-        desiredLeverage: 14.15,
+        desiredLeverage: 15.15,
         desiredSide: 1,
         desiredKeeperFeeBufferUsd: 0,
       });
