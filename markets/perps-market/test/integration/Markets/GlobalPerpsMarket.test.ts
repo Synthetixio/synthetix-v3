@@ -5,6 +5,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assert from 'assert';
 import { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { _SECONDS_IN_DAY } from '../helpers';
 
 describe('GlobalPerpsMarket', () => {
   const { systems, perpsMarkets, synthMarkets, signers, trader1, superMarketId, owner } =
@@ -49,7 +50,11 @@ describe('GlobalPerpsMarket', () => {
     await assertEvent(
       await systems()
         .PerpsMarket.connect(owner())
-        .initializeFactory(await trader1().getAddress(), await trader1().getAddress()),
+        .initializeFactory(
+          await trader1().getAddress(),
+          await trader1().getAddress(),
+          _SECONDS_IN_DAY
+        ),
       'FactoryInitialized(1)',
       systems().PerpsMarket
     );
