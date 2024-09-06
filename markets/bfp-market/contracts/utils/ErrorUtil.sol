@@ -107,6 +107,9 @@ library ErrorUtil {
     /// @notice Thrown when a specified hook is not whitelisted, or does not match spec, or otherwise.
     error InvalidHook(address hook);
 
+    /// @notice Thrown when a duplicate hook is specified.
+    error DuplicateHook(address hook);
+
     /// @notice Thrown when there are too many hooks specified.
     error MaxHooksExceeded();
 
