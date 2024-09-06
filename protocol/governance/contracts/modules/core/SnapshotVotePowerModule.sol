@@ -19,34 +19,26 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     event SnapshotContractSet(
         address indexed snapshotContract,
         bool indexed enabled,
-        SnapshotVotePower.WeightType weight
+        SnapshotVotePower.WeightType weight,
+        uint256 scale
     );
 
     ///@notice Sets a snapshot contract to be used for voting power calculations
     function setSnapshotContract(
         address snapshotContract,
         SnapshotVotePower.WeightType weight,
+        uint256 scale,
         bool enabled
     ) external override {
-        OwnableStorage.onlyOwner();
-        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
-
-        SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
-        snapshotVotePower.enabled = enabled;
-        snapshotVotePower.weight = weight;
-
-        emit SnapshotContractSet(snapshotContract, enabled, weight);
-    }
-
-    function setScale(address snapshotContract, uint256 scale) external {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
-        if (snapshotVotePower.weight != SnapshotVotePower.WeightType.Scaled)
-            revert SnapshotVotePower.InvalidWeightType();
+        snapshotVotePower.weight = weight;
         snapshotVotePower.scale = scale;
-        emit ScaleSet(snapshotContract, scale);
+        snapshotVotePower.enabled = enabled;
+
+        emit SnapshotContractSet(snapshotContract, enabled, weight, scale);
     }
 
     function takeVotePowerSnapshot(

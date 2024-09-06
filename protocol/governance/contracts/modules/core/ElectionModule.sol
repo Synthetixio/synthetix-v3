@@ -151,7 +151,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 newEpochEndDate
     ) external payable override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
         Council.Data storage council = Council.load();
 
         Epoch.Data storage currentEpoch = council.getCurrentEpoch();
@@ -187,23 +187,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         );
     }
 
-    //TODO: remove this function after the election
-    function setCurrentEpochSeatCountAndMinimumActiveMembers(
-        uint8 epochSeatCount,
-        uint8 minimumActiveMembers
-    ) external override {
-        OwnableStorage.onlyOwner();
-        Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
-
-        Council.Data storage council = Council.load();
-        ElectionSettings.Data storage currentSettings = council.getCurrentElectionSettings();
-        if (epochSeatCount == 0 || minimumActiveMembers == 0) {
-            revert ParameterError.InvalidParameter("epochSeatCount", "minimumActiveMembers");
-        }
-        currentSettings.epochSeatCount = epochSeatCount;
-        currentSettings.minimumActiveMembers = minimumActiveMembers;
-    }
-
     /// @inheritdoc	IElectionModule
     function setNextElectionSettings(
         uint8 epochSeatCount,
@@ -214,7 +197,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 maxDateAdjustmentTolerance
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
 
         Council.load().getNextElectionSettings().setElectionSettings(
             epochSeatCount,

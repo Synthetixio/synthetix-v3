@@ -107,16 +107,19 @@ describe('SynthetixElectionModule - Elections', () => {
     await mothership.GovernanceProxy.setSnapshotContract(
       mothership.SnapshotRecordMock.address,
       0,
+      1,
       true
     );
     await satellite1.GovernanceProxy.setSnapshotContract(
       satellite1.SnapshotRecordMock.address,
       0,
+      1,
       true
     );
     await satellite2.GovernanceProxy.setSnapshotContract(
       satellite2.SnapshotRecordMock.address,
       0,
+      1,
       true
     );
   });
@@ -237,35 +240,38 @@ describe('SynthetixElectionModule - Elections', () => {
           }
         });
 
-        // describe('when trying to set the snapshot contract', () => {
-        //   it('reverts', async () => {
-        //     const { mothership, satellite1, satellite2 } = chains;
-        //     await assertRevert(
-        //       mothership.GovernanceProxy.setSnapshotContract(
-        //         mothership.SnapshotRecordMock.address,
-        //         0,
-        //         true
-        //       ),
-        //       'NotCallableInCurrentPeriod'
-        //     );
-        //     await assertRevert(
-        //       satellite1.GovernanceProxy.setSnapshotContract(
-        //         satellite1.SnapshotRecordMock.address,
-        //         0,
-        //         true
-        //       ),
-        //       'NotCallableInCurrentPeriod'
-        //     );
-        //     await assertRevert(
-        //       satellite2.GovernanceProxy.setSnapshotContract(
-        //         satellite2.SnapshotRecordMock.address,
-        //         0,
-        //         true
-        //       ),
-        //       'NotCallableInCurrentPeriod'
-        //     );
-        //   });
-        // });
+        describe('when trying to set the snapshot contract', () => {
+          it('reverts', async () => {
+            const { mothership, satellite1, satellite2 } = chains;
+            await assertRevert(
+              mothership.GovernanceProxy.setSnapshotContract(
+                mothership.SnapshotRecordMock.address,
+                0,
+                1,
+                true
+              ),
+              'NotCallableInCurrentPeriod'
+            );
+            await assertRevert(
+              satellite1.GovernanceProxy.setSnapshotContract(
+                satellite1.SnapshotRecordMock.address,
+                0,
+                1,
+                true
+              ),
+              'NotCallableInCurrentPeriod'
+            );
+            await assertRevert(
+              satellite2.GovernanceProxy.setSnapshotContract(
+                satellite2.SnapshotRecordMock.address,
+                0,
+                1,
+                true
+              ),
+              'NotCallableInCurrentPeriod'
+            );
+          });
+        });
 
         it('simulate debt share data', async () => {
           const { mothership, satellite1, satellite2 } = chains;
