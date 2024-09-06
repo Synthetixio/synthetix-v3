@@ -164,6 +164,11 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
      * @inheritdoc ILiquidationModule
      */
     function canLiquidate(uint128 accountId) external view override returns (bool isEligible) {
+        // If an account is already flagged can be liquidated, no matter other conditions
+        if (GlobalPerpsMarket.load().liquidatableAccounts.contains(accountId)) {
+            return true;
+        }
+
         (isEligible, , , , ) = PerpsAccount.load(accountId).isEligibleForLiquidation(
             PerpsPrice.Tolerance.DEFAULT
         );
