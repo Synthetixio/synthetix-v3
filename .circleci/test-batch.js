@@ -20,7 +20,7 @@ function executeBatch(index, batch) {
       `node ${require.resolve('mocha/bin/mocha.js')}`,
       '--jobs 1',
       `--retries ${MOCHA_RETRIES}`,
-      `--timeout 20000`,
+      `--timeout 10000`,
       isHardhat ? `--require hardhat/register` : '--require ts-node/register',
       `--reporter mocha-junit-reporter`,
       `--reporter-options mochaFile=/tmp/junit/batch-${index}.xml,outputs=true,toConsole=true`,

@@ -263,6 +263,8 @@ library Position {
             addresses
         );
 
+        // Compute the net size difference as the fillPremium is only applied on the change in size and not total.
+        runtime.sizeDelta = newPosition.size - currentPosition.size;
         // Delta between oracle and fillPrice (pos.entryPrice) may be large if settled on a very skewed market (i.e
         // a high premium paid). This can lead to instant liquidation on the settle so we deduct that difference from
         // the margin before verifying the health factor to account for the premium.
@@ -280,7 +282,7 @@ library Position {
         //
         // NOTE: We create the new margin manually rather than using `marginValuesForLiqValidation.discountedMarginUsd`
         // as the pnl adjustment for that margin is based on the `oraclePrice` rather than the `fillPrice`. Also, when
-        // this order settles the pnl will be realised with the fill price. Finally, we also need to deduct fees for
+        // this order settles the pnl will be realized with the fill price. Finally, we also need to deduct fees for
         // settling this order.
         runtime.discountedNextMarginUsd = MathUtil
             .max(

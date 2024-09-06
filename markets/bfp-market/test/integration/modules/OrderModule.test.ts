@@ -776,7 +776,7 @@ describe('OrderModule', () => {
       await commitAndSettle(bs, marketId, otherTrader, otherTraderOrder);
 
       // index token price drops
-      const newMarketOraclePrice1 = wei(openOrder.oraclePrice).mul(0.75).toBN();
+      const newMarketOraclePrice1 = wei(openOrder.oraclePrice).mul(0.81).toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
 
       // MainTrader tries to commit an order closing 90% of their position.
@@ -822,7 +822,7 @@ describe('OrderModule', () => {
         //
         // The idea of this very specific number is that it would pass the initial margin requirement but still be
         // liquidatable, the really bad skew/fill price.
-        desiredLeverage: 15.15,
+        desiredLeverage: 14.15,
         desiredSide: 1,
         desiredKeeperFeeBufferUsd: 0,
       });
@@ -2238,7 +2238,7 @@ describe('OrderModule', () => {
       await commitAndSettle(bs, marketId, otherTrader, otherTraderOrder);
 
       // Price drops before MainTrader's order is settled
-      const newMarketOraclePrice1 = wei(openOrder.oraclePrice).mul(0.75).toBN();
+      const newMarketOraclePrice1 = wei(openOrder.oraclePrice).mul(0.81).toBN();
       await market.aggregator().mockSetCurrentPrice(newMarketOraclePrice1);
 
       const { settlementTime, publishTime } = await getFastForwardTimestamp(
