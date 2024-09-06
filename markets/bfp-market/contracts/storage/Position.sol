@@ -229,14 +229,17 @@ library Position {
             params.makerFee,
             params.takerFee
         );
+
         runtime.ethPrice = INodeModule(addresses.oracleManager)
             .process(PerpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
+
         runtime.keeperFee = Order.getSettlementKeeperFee(
             params.keeperFeeBufferUsd,
             runtime.ethPrice
         );
+
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
@@ -279,7 +282,7 @@ library Position {
         //
         // NOTE: We create the new margin manually rather than using `marginValuesForLiqValidation.discountedMarginUsd`
         // as the pnl adjustment for that margin is based on the `oraclePrice` rather than the `fillPrice`. Also, when
-        // this order settles the pnl will be realised with the fill price. Finally, we also need to deduct fees for
+        // this order settles the pnl will be realized with the fill price. Finally, we also need to deduct fees for
         // settling this order.
         runtime.discountedNextMarginUsd = MathUtil
             .max(
@@ -291,8 +294,9 @@ library Position {
                 0
             )
             .toUint();
+
         if (runtime.positionDecreasing) {
-            // Postion can be liquidatable due to fees, even if decreasing. This can't happen if closed completely.
+            // Position can be liquidatable due to fees, even if decreasing. This can't happen if closed completely.
             if (
                 newPosition.size != 0 &&
                 runtime.discountedNextMarginUsd.divDecimal(runtime.mm) <= DecimalMath.UNIT
