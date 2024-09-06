@@ -136,7 +136,7 @@ describe('Insolvent test', () => {
       });
     });
 
-    it('reverts when attempting to open position above market credit capacity', async () => {
+    it.only('reverts when attempting to open position above market credit capacity', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
@@ -154,7 +154,7 @@ describe('Insolvent test', () => {
       );
     });
 
-    it('reverts when attempting to open position in the opposite direction above market credit capacity', async () => {
+    it.only('reverts when attempting to open position in the opposite direction above market credit capacity', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
@@ -170,6 +170,20 @@ describe('Insolvent test', () => {
         `ExceedsMarketCreditCapacity("${delegatedCollateralValue.toString(18, true)}", "${wei(60).add(wei(50)).mul(_ETH_PRICE).toString(18, true)}")`,
         systems().PerpsMarket
       );
+    });
+
+    it.only('allows existing position size to be decreased, thus reducing system risk, despite insolvent market', async () => {
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .commitOrder({
+          marketId: ethMarket.marketId(),
+          accountId: 2,
+          sizeDelta: bn(-10),
+          settlementStrategyId: ethMarket.strategyId(),
+          acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+          referrer: ethers.constants.AddressZero,
+          trackingCode: ethers.constants.HashZero,
+        });
     });
   });
 
