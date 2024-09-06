@@ -154,7 +154,7 @@ describe('Insolvent test', () => {
       );
     });
 
-    it.only('reverts when attempting to open position in the opposite direction above market credit capacity', async () => {
+    it('reverts when attempting to open position in the opposite direction above market credit capacity', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
@@ -172,7 +172,8 @@ describe('Insolvent test', () => {
       );
     });
 
-    it.only('allows existing position size to be decreased, thus reducing system risk, despite insolvent market', async () => {
+    it('does not revert when reducing position size, even in an insolvent market', async () => {
+      // risk is decreased when position magnitude is reduced
       await systems()
         .PerpsMarket.connect(trader1())
         .commitOrder({
@@ -184,6 +185,27 @@ describe('Insolvent test', () => {
           referrer: ethers.constants.AddressZero,
           trackingCode: ethers.constants.HashZero,
         });
+    });
+
+    it('reverts when reducing position size, even in an insolvent market, if position direction changes', async () => {
+      // risk is decreased when position magnitude is reduced, however
+      // if the position direction changes, this is considered a new position and
+      // thus simply should not be allowed
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarket.marketId(),
+            accountId: 2,
+            sizeDelta: bn(-51), // resulting position size is 1 ETH Short (i.e., 50 + (-51) = -1)
+            settlementStrategyId: ethMarket.strategyId(),
+            acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `ExceedsMarketCreditCapacity("${delegatedCollateralValue.toString(18, true)}", "${wei(-51).add(wei(50)).mul(_ETH_PRICE).toString(18, true)}")`,
+        systems().PerpsMarket
+      );
     });
   });
 
