@@ -64,7 +64,7 @@ export const assertEvents = async (
     } else {
       const allEvents = parsedLogs.join(`\n${spaces}`);
 
-      typeof expectedAtIndex === 'string'
+      return typeof expectedAtIndex === 'string'
         ? assert.strictEqual(
             event,
             expectedAtIndex,

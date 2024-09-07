@@ -28,7 +28,7 @@ export function createError({
       if (!title) continue;
       stack.unshift(`    at ${title} (${absolutePath})`);
     }
-  } catch (err) {
+  } catch {
     console.warn('Could not render stack trace.');
   }
 
@@ -44,7 +44,6 @@ function _getErrorTitle(node: Node | YulNode) {
       return `${node.contractKind} ${node.name}`;
     case 'VariableDeclaration':
       return render(node);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     default:
       return (node as any).name as string;
   }

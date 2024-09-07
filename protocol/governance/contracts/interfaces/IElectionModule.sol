@@ -81,6 +81,11 @@ interface IElectionModule is IElectionModuleSatellite {
         uint64 newEpochEndDate
     ) external payable;
 
+    function setCurrentEpochSeatCountAndMinimumActiveMembers(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers
+    ) external;
+
     /// @notice Adjust settings that will be used on next epoch
     /// @dev can only be called during the Administration period
     /// @param epochSeatCount number of council seats to be elected in the next epoch
@@ -137,24 +142,6 @@ interface IElectionModule is IElectionModuleSatellite {
     // View functions
     // ---------------------------------------
 
-    /// @notice Shows the current epoch schedule dates
-    function getEpochSchedule() external view returns (Epoch.Data memory epoch);
-
-    /// @notice Shows the settings for the current election
-    function getElectionSettings() external view returns (ElectionSettings.Data memory settings);
-
-    /// @notice Shows the settings for the next election
-    function getNextElectionSettings()
-        external
-        view
-        returns (ElectionSettings.Data memory settings);
-
-    /// @notice Returns the index of the current epoch. The first epoch's index is 1
-    function getEpochIndex() external view returns (uint256);
-
-    /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
-    function getCurrentPeriod() external view returns (uint256);
-
     /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view returns (bool);
 
@@ -187,6 +174,9 @@ interface IElectionModule is IElectionModuleSatellite {
         uint256 chainId,
         uint256 electionId
     ) external pure returns (Ballot.Data memory);
+
+    /// @notice Returns the number of ballots in the current election
+    function getNumOfBallots() external view returns (uint256);
 
     /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
     function getCandidateVotes(address candidate) external view returns (uint256);

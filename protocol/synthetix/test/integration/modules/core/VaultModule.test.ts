@@ -113,7 +113,6 @@ describe('VaultModule', function () {
     return collateralBN.mul(decimalBN).div(debtBN);
   }
 
-  // eslint-disable-next-line max-params
   function verifyAccountState(
     accountId: number,
     poolId: number,

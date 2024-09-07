@@ -24,4 +24,10 @@ interface ISnapshotVotePowerModule {
     ) external returns (uint256 votingPower);
 
     function getPreparedBallot(address voter) external view returns (uint256 power);
+
+    function getVotingPowerForUser(
+        address snapshotContract,
+        address voter,
+        uint256 periodId
+    ) external view returns (uint256);
 }

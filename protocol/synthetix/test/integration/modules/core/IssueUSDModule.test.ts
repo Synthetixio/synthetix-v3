@@ -74,7 +74,6 @@ describe('IssueUSDModule', function () {
 
   const restore = snapshotCheckpoint(provider);
 
-  // eslint-disable-next-line max-params
   function verifyAccountState(
     accountId: number,
     poolId: number,
