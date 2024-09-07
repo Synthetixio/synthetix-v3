@@ -16,22 +16,36 @@ library PythNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         (address pythAddress, bytes32 priceFeedId, bool useEma) = abi.decode(
             parameters,
             (address, bytes32, bool)
         );
         IPyth pyth = IPyth(pythAddress);
-        PythStructs.Price memory pythData = useEma
-            ? pyth.getEmaPriceUnsafe(priceFeedId)
-            : pyth.getPriceUnsafe(priceFeedId);
+        PythStructs.Price memory pythData;
+
+        if (useEma) {
+            try pyth.getEmaPriceUnsafe(priceFeedId) returns (PythStructs.Price memory r) {
+                pythData = r;
+            } catch (bytes memory err) {
+                possibleError = err;
+                return (nodeOutput, possibleError);
+            }
+        } else {
+            try pyth.getPriceUnsafe(priceFeedId) returns (PythStructs.Price memory r) {
+                pythData = r;
+            } catch (bytes memory err) {
+                possibleError = err;
+                return (nodeOutput, possibleError);
+            }
+        }
 
         int256 factor = PRECISION + pythData.expo;
         int256 price = factor > 0
             ? pythData.price.upscale(factor.toUint())
             : pythData.price.downscale((-factor).toUint());
 
-        return NodeOutput.Data(price, pythData.publishTime, 0, 0);
+        nodeOutput = NodeOutput.Data(price, pythData.publishTime, 0, 0);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal view returns (bool valid) {

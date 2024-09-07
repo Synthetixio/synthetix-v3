@@ -30,38 +30,30 @@ library ReducerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (NodeOutput.Data memory nodeOutput) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.RECENT) {
-            return recent(parentNodeOutputs);
+            nodeOutput = recent(parentNodeOutputs);
+        } else if (operation == Operations.MIN) {
+            nodeOutput = min(parentNodeOutputs);
+        } else if (operation == Operations.MAX) {
+            nodeOutput = max(parentNodeOutputs);
+        } else if (operation == Operations.MEAN) {
+            nodeOutput = mean(parentNodeOutputs);
+        } else if (operation == Operations.MEDIAN) {
+            nodeOutput = median(parentNodeOutputs);
+        } else if (operation == Operations.MUL) {
+            nodeOutput = mul(parentNodeOutputs);
+        } else if (operation == Operations.DIV) {
+            nodeOutput = div(parentNodeOutputs);
+        } else if (operation == Operations.MULDECIMAL) {
+            nodeOutput = mulDecimal(parentNodeOutputs);
+        } else if (operation == Operations.DIVDECIMAL) {
+            nodeOutput = divDecimal(parentNodeOutputs);
+        } else {
+            possibleError = abi.encodeWithSelector(UnsupportedOperation.selector, operation);
         }
-        if (operation == Operations.MIN) {
-            return min(parentNodeOutputs);
-        }
-        if (operation == Operations.MAX) {
-            return max(parentNodeOutputs);
-        }
-        if (operation == Operations.MEAN) {
-            return mean(parentNodeOutputs);
-        }
-        if (operation == Operations.MEDIAN) {
-            return median(parentNodeOutputs);
-        }
-        if (operation == Operations.MUL) {
-            return mul(parentNodeOutputs);
-        }
-        if (operation == Operations.DIV) {
-            return div(parentNodeOutputs);
-        }
-        if (operation == Operations.MULDECIMAL) {
-            return mulDecimal(parentNodeOutputs);
-        }
-        if (operation == Operations.DIVDECIMAL) {
-            return divDecimal(parentNodeOutputs);
-        }
-
-        revert UnsupportedOperation(operation);
     }
 
     function median(

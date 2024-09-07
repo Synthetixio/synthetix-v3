@@ -17,6 +17,16 @@ interface INodeModule {
     error InvalidNodeDefinition(NodeDefinition.Data nodeType);
 
     /**
+     * @notice An array of revert reasons when an array of nodes is processed, but some of the nodes failed
+     */
+    error Errors(bytes[] revertReasons);
+
+    /**
+     * @notice ERC-7412 OracleDataRequired error definition. While not explicitly reverted by NodeModule, its a commonly encountered error that makes it useful to have it declared here
+     */
+    error OracleDataRequired(address oracleContract, bytes oracleQuery);
+
+    /**
      * @notice Emitted when `registerNode` is called.
      * @param nodeId The id of the registered node.
      * @param nodeType The nodeType assigned to this node.
@@ -82,4 +92,10 @@ interface INodeModule {
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
     ) external view returns (NodeOutput.Data memory node);
+
+    function processManyWithRuntime(
+        bytes32[] memory nodeIds,
+        bytes32[] memory runtimeKeys,
+        bytes32[] memory runtimeValues
+    ) external view returns (NodeOutput.Data[] memory nodes);
 }
