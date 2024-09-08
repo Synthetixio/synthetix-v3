@@ -42,6 +42,13 @@ interface ICollateralModule {
     );
 
     /**
+     * @notice Emitted when a lock is cleared from an account due to expiration
+     * @param tokenAmount The amount of collateral that was unlocked, demoninated in system units (1e18)
+     * @param expireTimestamp unix timestamp at which the unlock is due to expire
+     */
+    event CollateralLockExpired(uint256 tokenAmount, uint64 expireTimestamp);
+
+    /**
      * @notice Emitted when `tokenAmount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      * @param accountId The id of the account that withdrew collateral.
      * @param collateralType The address of the collateral that was withdrawn.
