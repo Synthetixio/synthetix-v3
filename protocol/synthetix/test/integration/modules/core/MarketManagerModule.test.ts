@@ -514,6 +514,101 @@ describe('MarketManagerModule', function () {
     });
   });
 
+  describe('outRange Pools Going In Range Scenario', () => {
+    before(restore);
+
+    it('outRange Pools Going In Range Give Debt To Delegator', async () => {
+      await systems()
+        .Core.connect(owner)
+        ['setMinLiquidityRatio(uint128,uint256)'](marketId(), ethers.utils.parseEther('1.5'));
+
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('100'),
+          },
+        ]);
+
+      await MockMarket().connect(owner).setReportedDebt(bn(500));
+
+      console.log('the pools', await systems().Core.callStatic.getMarketPools(marketId()));
+
+      await systems()
+        .Core.connect(owner)
+        .createPool(poolId + 1, await owner.getAddress());
+
+      await systems()
+        .Core.connect(owner)
+        .setPoolConfiguration(poolId + 1, [
+          {
+            marketId: marketId(),
+            weightD18: ethers.utils.parseEther('1'),
+            maxDebtShareValueD18: ethers.utils.parseEther('100'),
+          },
+        ]);
+
+      await systems()
+        .Core.connect(user1)
+        .delegateCollateral(
+          accountId,
+          poolId + 1,
+          collateralAddress(),
+          depositAmount,
+          ethers.utils.parseEther('1')
+        );
+
+      let result = await systems().Core.callStatic.getMarketPools(marketId());
+
+      assert.equal(result.inRangePoolIds.length, 2);
+      assert.equal(result.outRangePoolIds.length, 0);
+
+      // distribute debt to get the pool out of range
+      // ~666 * 3 creditCapacity is left, so set reportedDebt to a bit over at 680
+      console.log(await systems().Core.getWithdrawableMarketUsd(marketId()));
+      await MockMarket().connect(owner).setReportedDebt(bn(1000));
+
+      result = await systems().Core.callStatic.getMarketPools(marketId());
+
+      assert.equal(result.inRangePoolIds.length, 1);
+      assert.equal(result.outRangePoolIds.length, 1);
+
+      const user1DebtBefore = await systems().Core.callStatic.getPositionDebt(
+        accountId,
+        poolId,
+        collateralAddress()
+      );
+
+      // Deposit can bring the pool back in range
+      await systems()
+        .Core.connect(user1)
+        .delegateCollateral(
+          accountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.add(bn(500)),
+          ethers.utils.parseEther('1')
+        );
+
+      // Notice that the unveiled debt that was previously putting the pool out of range
+      // is now given to the user who delegated to put the pool back in range
+      const user1DebtAfter = await systems().Core.callStatic.getPositionDebt(
+        accountId,
+        poolId,
+        collateralAddress()
+      );
+
+      console.log('user debt', user1DebtBefore, user1DebtAfter);
+
+      result = await systems().Core.callStatic.getMarketPools(marketId());
+
+      assert.equal(result.inRangePoolIds.length, 2);
+      assert.equal(result.outRangePoolIds.length, 0);
+    });
+  });
+
   describe('getMarketPools()', () => {
     before(restore);
 
