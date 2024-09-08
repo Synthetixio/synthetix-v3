@@ -124,6 +124,10 @@ library Account {
 
         (, uint256 totalLocked) = self.collaterals[collateralType].cleanExpiredLocks(offset, count);
 
+        if (totalLocked == 0) {
+            return 0;
+        }
+
         uint256 totalDeposited = getAssignedCollateral(self, collateralType) +
             self.collaterals[collateralType].amountAvailableForDelegationD18;
 

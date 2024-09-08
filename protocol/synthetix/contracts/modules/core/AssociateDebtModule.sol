@@ -56,9 +56,6 @@ contract AssociateDebtModule is IAssociateDebtModule {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        // Refresh latest account debt (do this before hasMarket check to verify max debt per share)
-        poolData.updateAccountDebt(collateralType, accountId);
-
         // The market must appear in pool configuration of the specified position (and not be out of range)
         if (!poolData.hasMarket(marketId)) {
             revert NotFundedByPool(marketId, poolId);
@@ -70,6 +67,9 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // Remove the pro-rata debt we are about to assign from the market level (ensures it does not leak down to any other pools or vaults that may be connected)
         marketData.poolsDebtDistribution.distributeValue(-amount.toInt());
+
+        // Refresh latest account debt (do this before hasMarket check to verify max debt per share)
+        poolData.updateAccountDebt(collateralType, accountId);
 
         // We can now reassign this debt to the specified position
         epochData.assignDebtToAccount(accountId, amount.toInt());

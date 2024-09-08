@@ -309,6 +309,7 @@ contract VaultModule is IVaultModule {
         int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);
         if (
+            rawVaultDebt > 0 &&
             collateralValue.divDecimal(rawVaultDebt.toUint()) <
             CollateralConfiguration.load(collateralType).liquidationRatioD18
         ) {
