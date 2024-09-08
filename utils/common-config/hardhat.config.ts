@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
 import path from 'node:path';
 import dotenv from 'dotenv';
 
@@ -115,6 +113,13 @@ const config = {
       url:
         process.env.NETWORK_ENDPOINT ||
         `https://testnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 13001,
+    },
+    ['snaxchain']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://mainnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 2192,
     },

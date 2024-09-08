@@ -29,7 +29,7 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         bool enabled
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
 
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         snapshotVotePower.enabled = enabled;
@@ -80,6 +80,20 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
         uint128 electionId
     ) external view returns (uint128) {
         return SnapshotVotePower.load(snapshotContract).epochs[electionId].snapshotId;
+    }
+
+    /// @dev WARNING: this function is for the frontend to get the voting power of a voter, not for the contract to use
+    function getVotingPowerForUser(
+        address snapshotContract,
+        address voter,
+        uint256 periodId
+    ) external view override returns (uint256) {
+        uint256 snapshotAmount = ISnapshotRecord(snapshotContract).balanceOfOnPeriod(
+            voter,
+            periodId
+        );
+        SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
+        return SnapshotVotePower.calculateVotingPower(snapshotVotePower, snapshotAmount);
     }
 
     function prepareBallotWithSnapshot(

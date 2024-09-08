@@ -50,6 +50,7 @@ export async function spinChain<GovernanceProxy>({
     wipe: true,
     getArtifact: async (contractName: string) =>
       await hre.run('cannon:get-artifact', { name: contractName }),
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     pkgInfo: require(path.join(hre.config.paths.root, 'package.json')),
     projectDirectory: hre.config.paths.root,
   });

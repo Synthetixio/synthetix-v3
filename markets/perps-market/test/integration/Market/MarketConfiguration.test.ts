@@ -214,17 +214,19 @@ describe('MarketConfiguration', () => {
           ...fixture.settlementStrategy,
           settlementDelay: 0,
         };
-        await systems()
-          .PerpsMarket.connect(owner())
-          .addSettlementStrategy(marketId, settlementStrategy),
+
+        await assertEvent(
+          await systems()
+            .PerpsMarket.connect(owner())
+            .addSettlementStrategy(marketId, settlementStrategy),
           'SettlementStrategyAdded(' +
             marketId.toString() +
             ', [' +
             settlementStrategy.strategyType.toString() +
             ', ' +
-            settlementStrategy.settlementDelay.toString() +
+            '1' + // settlement delay defaults to 1
             ', ' +
-            bn(1).toString() +
+            settlementStrategy.settlementWindowDuration.toString() +
             ', "' +
             settlementStrategy.priceVerificationContract.toString() +
             '", "' +
@@ -233,8 +235,11 @@ describe('MarketConfiguration', () => {
             settlementStrategy.settlementReward.toString() +
             ', ' +
             settlementStrategy.disabled.toString() +
-            '], 0)',
-          systems().PerpsMarket;
+            ', ' +
+            settlementStrategy.commitmentPriceDelay.toString() +
+            '], 3)',
+          systems().PerpsMarket
+        );
       });
     });
   });

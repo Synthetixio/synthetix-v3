@@ -74,7 +74,6 @@ export async function cannonBuild(options: BuildOptions) {
 
   const packageRef = `${name}:${version}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ethersProvider = new ethers.providers.Web3Provider(
     provider
   ) as ethers.providers.Web3Provider;

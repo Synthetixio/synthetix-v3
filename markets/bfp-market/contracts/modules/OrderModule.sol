@@ -144,8 +144,18 @@ contract OrderModule is IOrderModule {
         }
 
         for (uint256 i = 0; i < length; ) {
-            if (!config.whitelisted[hooks[i]]) {
-                revert ErrorUtil.InvalidHook(hooks[i]);
+            address hook = hooks[i];
+            if (!config.whitelisted[hook]) {
+                revert ErrorUtil.InvalidHook(hook);
+            }
+            // Checks for any duplicate hooks
+            for (uint256 j = i + 1; j < length; ) {
+                if (hooks[i] == hooks[j]) {
+                    revert ErrorUtil.DuplicateHook(hook);
+                }
+                unchecked {
+                    ++j;
+                }
             }
             unchecked {
                 ++i;
