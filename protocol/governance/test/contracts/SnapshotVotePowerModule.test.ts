@@ -23,7 +23,12 @@ describe('SnapshotVotePowerModule', function () {
 
     it('should revert when not owner', async function () {
       await assertRevert(
-        c.GovernanceProxy.connect(user).setSnapshotContract(c.SnapshotRecordMock.address, 0, 1, true),
+        c.GovernanceProxy.connect(user).setSnapshotContract(
+          c.SnapshotRecordMock.address,
+          0,
+          1,
+          true
+        ),
         `Unauthorized("${await user.getAddress()}"`,
         c.GovernanceProxy
       );
