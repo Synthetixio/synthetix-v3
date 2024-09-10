@@ -14,15 +14,11 @@ task(
   TASK_STORAGE_VERIFY,
   'Using the two given storage dumps, verify that there are not invalid storage mutations'
 )
-  .addOptionalPositionalParam(
-    'previous',
-    'Older storage dump to compare to',
-    'storage.prev.dump.json'
-  )
+  .addOptionalPositionalParam('previous', 'Older storage dump to compare to', 'storage.dump.json')
   .addOptionalPositionalParam(
     'current',
     'More recent storage dump to compare to',
-    'storage.dump.json'
+    'storage.new.dump.json'
   )
   .addFlag('quiet', 'only emit errors to the console')
   .setAction(async ({ previous, current, quiet }: Required<Params>, hre) => {

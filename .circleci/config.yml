@@ -427,6 +427,8 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
+      # pull the storage dumps from main so that we can compare against them
+      - run: git checkout main -- $(find . -name 'storage.dump.json')
       - install-foundry
       - yarn-install
       - run: yarn build:ts

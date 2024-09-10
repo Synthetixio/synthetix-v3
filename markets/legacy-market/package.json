@@ -4,7 +4,7 @@
   "description": "Contract for migration from v2x to v3",
   "private": true,
   "scripts": {
-    "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:dump storage.new.dump.json && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build": "yarn build:contracts",
     "storage:verify": "hardhat compile --force && hardhat storage:verify",
     "test": "hardhat test",
