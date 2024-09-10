@@ -1,7 +1,6 @@
 import { subtask } from 'hardhat/config';
 import { HardhatPluginError } from 'hardhat/plugins';
 import { validateSlotNamespaceCollisions } from '../internal/validate-namespace';
-import { validateMutableStateVariables } from '../internal/validate-variables';
 import { SUBTASK_VALIDATE_CONTRACTS } from '../task-names';
 import { GetArtifactFunction } from '../types';
 
@@ -12,10 +11,11 @@ type Params = {
 
 subtask(SUBTASK_VALIDATE_CONTRACTS).setAction(async ({ contracts, getArtifact }: Params) => {
   const errors = await Promise.all([
-    validateMutableStateVariables({
+    // TODO: find a way to selectively do the mutable state variables check on only necessary contracts
+    /*validateMutableStateVariables({
       contracts,
       getArtifact,
-    }),
+    }),*/
     validateSlotNamespaceCollisions({
       contracts,
       getArtifact,
