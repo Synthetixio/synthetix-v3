@@ -9,7 +9,7 @@
     "storage:verify": " hardhat storage:verify",
     "SKIP.generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
-    "check:storage": "git diff --exit-code storage.dump.json",
+    "check:storage": "diff -u storage.dump.json storage.new.dump.json",
     "start": "yarn build && yarn cannon-build",
     "clean": "hardhat clean && rm -rf contracts/generated",
     "cannon-build": "hardhat cannon:build",

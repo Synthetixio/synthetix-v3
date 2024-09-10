@@ -425,14 +425,15 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      # pull the storage dumps from main so that we can compare against them
-      - run: for f in $(find . -name 'storage.dump.json'); do git checkout main -- $f || true; done
       - install-foundry
       - yarn-install
       - run: yarn build:ts
       - run: yarn storage:dump
-      - run: yarn storage:verify
       - run: yarn check:storage
+      # pull the storage dumps from main so that we can compare against them
+      - run: for f in $(find . -name 'storage.dump.json'); do git checkout main -- $f || true; done
+      # todo: next step may be removable/optimizable, but it only takes like 20 seconds
+      - run: yarn storage:verify
 
   lint:
     docker:

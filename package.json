@@ -24,7 +24,7 @@
     "storage:dump": "yarn workspaces foreach --all --verbose run storage:dump",
     "storage:verify": "yarn workspaces foreach --all --verbose run storage:verify",
     "build:contracts": "yarn workspaces foreach --all --topological-dev --verbose run build:contracts",
-    "check:storage": "yarn workspaces foreach --all --verbose run check:storage",
+    "check:storage": "yarn workspaces foreach --all --topological-dev --verbose run check:storage",
     "test": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --all --verbose run coverage",
     "lint:progress": "ESLINT_PROGRESS=true eslint --max-warnings=0 .",
