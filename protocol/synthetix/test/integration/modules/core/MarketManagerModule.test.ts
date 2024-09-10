@@ -335,23 +335,29 @@ describe('MarketManagerModule', function () {
       // delegate
       await systems()
         .Core.connect(user1)
-        .delegateCollateral(
+        .declareIntentToDelegateCollateral(
           accountId,
           poolId + 1,
           collateralAddress(),
           depositAmount,
           ethers.utils.parseEther('1')
         );
+      await systems()
+        .Core.connect(user1)
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 1, collateralAddress());
 
       await systems()
         .Core.connect(user1)
-        .delegateCollateral(
+        .declareIntentToDelegateCollateral(
           accountId,
           poolId + 2,
           collateralAddress(),
           depositAmount,
           ethers.utils.parseEther('1')
         );
+      await systems()
+        .Core.connect(user1)
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 2, collateralAddress());
     });
 
     before('accumulate debt', async () => {
@@ -394,21 +400,13 @@ describe('MarketManagerModule', function () {
     });
   });
 
-  describe('setMarketMinDelegateTime()', () => {
+  describe('setDelegationCollateralConfiguration()', () => {
     before(restore);
 
     it('only works for market', async () => {
       await assertRevert(
-        systems().Core.setMarketMinDelegateTime(marketId(), 86400),
+        systems().Core.setDelegationCollateralConfiguration(marketId(), 86400, 86400, 86400, 86400),
         'Unauthorized',
-        systems().Core
-      );
-    });
-
-    it('fails when min delegation time is unreasonably large', async () => {
-      await assertRevert(
-        MockMarket().setMinDelegationTime(100000000),
-        'InvalidParameter("minDelegateTime"',
         systems().Core
       );
     });
@@ -416,15 +414,23 @@ describe('MarketManagerModule', function () {
     describe('success', () => {
       let tx: ethers.providers.TransactionResponse;
       before('exec', async () => {
-        tx = await MockMarket().setMinDelegationTime(86400);
+        tx = await MockMarket().setDelegationCollateralConfiguration(60, 61, 62, 63);
       });
 
-      it('sets the value', async () => {
-        assertBn.equal(await systems().Core.getMarketMinDelegateTime(marketId()), 86400);
+      it('sets the values', async () => {
+        const config = await systems().Core.getDelegationCollateralConfiguration(marketId());
+        assertBn.equal(config.delegateCollateralDelay, 60);
+        assertBn.equal(config.delegateCollateralWindow, 61);
+        assertBn.equal(config.undelegateCollateralDelay, 62);
+        assertBn.equal(config.undelegateCollateralWindow, 63);
       });
 
       it('emits', async () => {
-        await assertEvent(tx, `SetMinDelegateTime(${marketId()}, 86400)`, systems().Core);
+        await assertEvent(
+          tx,
+          `SetDelegateCollateralConfiguration(${marketId()}, 60, 61, 62, 63)`,
+          systems().Core
+        );
       });
     });
   });
@@ -559,23 +565,29 @@ describe('MarketManagerModule', function () {
       // delegate
       await systems()
         .Core.connect(user1)
-        .delegateCollateral(
+        .declareIntentToDelegateCollateral(
           accountId,
           poolId + 1,
           collateralAddress(),
           depositAmount,
           ethers.utils.parseEther('1')
         );
+      await systems()
+        .Core.connect(user1)
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 1, collateralAddress());
 
       await systems()
         .Core.connect(user1)
-        .delegateCollateral(
+        .declareIntentToDelegateCollateral(
           accountId,
           poolId + 2,
           collateralAddress(),
           depositAmount,
           ethers.utils.parseEther('1')
         );
+      await systems()
+        .Core.connect(user1)
+        .processIntentToDelegateCollateralByPair(accountId, poolId + 2, collateralAddress());
     });
 
     it('inRangePools and outRangePools are returned correctly', async () => {

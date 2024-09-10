@@ -223,6 +223,21 @@ library CollateralConfiguration {
     }
 
     /**
+     * @dev Gets the effective issuance ratio taking capped to the minimum sent as parameter.
+     * @param self The CollateralConfiguration object whose collateral and settings are being queried.
+     * @param minIssuanceRatioD18 The minimum cap on issuanceRatio.
+     * @return issuanceRatioD18 The effective issuance ratio.
+     */
+    function getEffectiveIssuanceRatio(
+        Data storage self,
+        uint256 minIssuanceRatioD18
+    ) internal view returns (uint256 issuanceRatioD18) {
+        issuanceRatioD18 = self.issuanceRatioD18 > minIssuanceRatioD18
+            ? self.issuanceRatioD18
+            : minIssuanceRatioD18;
+    }
+
+    /**
      * @dev Reverts if the specified collateral and debt values produce a collateralization ratio which is below the amount required for new issuance of snxUSD.
      * @param self The CollateralConfiguration object whose collateral and settings are being queried.
      * @param debtD18 The debt component of the ratio.
@@ -234,9 +249,7 @@ library CollateralConfiguration {
         uint256 collateralValueD18,
         uint256 minIssuanceRatioD18
     ) internal view {
-        uint256 issuanceRatioD18 = self.issuanceRatioD18 > minIssuanceRatioD18
-            ? self.issuanceRatioD18
-            : minIssuanceRatioD18;
+        uint256 issuanceRatioD18 = getEffectiveIssuanceRatio(self, minIssuanceRatioD18);
 
         if (
             debtD18 != 0 &&

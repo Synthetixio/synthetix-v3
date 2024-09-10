@@ -138,11 +138,16 @@ library Market {
          * @dev The maximum amount of market provided collateral, per type, that this market can deposit.
          */
         mapping(address => uint256) maximumDepositableD18;
-        uint32 minDelegateTime;
-        uint32 __reservedForLater1;
-        uint64 __reservedForLater2;
-        uint64 __reservedForLater3;
-        uint64 __reservedForLater4;
+        /**
+         * @dev Delegation/Undelegation frontrunning protection.
+         */
+        uint32 minDelegateTime; // Accumulated Alignment 32
+        uint32 undelegateCollateralDelay; // Accumulated Alignment 64
+        uint32 undelegateCollateralWindow; // Accumulated Alignment 96
+        uint32 delegateCollateralDelay; // Accumulated Alignment 128
+        uint32 delegateCollateralWindow; // Accumulated Alignment 160
+        uint32 __reservedForLater1; // Accumulated Alignment 192
+        uint64 __reservedForLater2; // Accumulated Alignment 256
         /**
          * @dev Market-specific override of the minimum liquidity ratio
          */

@@ -137,7 +137,7 @@ export const bootstrap = (args: GeneratedBootstrap) => {
   const stakedCollateralAmount = wei(50_000_000).div(stakedCollateralPrice).toBN();
 
   // Create a pool which makes `args.markets.length` with all equal weighting.
-  const stakedPool = createStakedPool(core, stakedCollateralPrice, stakedCollateralAmount);
+  const stakedPool = createStakedPool(core, stakedCollateralPrice, stakedCollateralAmount, true);
 
   let ethOracleNodeId: string;
   let ethOracleAgg: AggregatorV3Mock;

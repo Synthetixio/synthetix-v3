@@ -23,6 +23,51 @@ interface IVaultModule {
     error InvalidCollateralAmount();
 
     /**
+     * @notice Thrown when the specified intent is not related to the account id.
+     */
+    error InvalidDelegationIntent();
+
+    /**
+     * @notice Thrown when the specified intent does not exist.
+     */
+    error DelegationIntentNotExists();
+
+    /**
+     * @notice Thrown when the specified intent is ready to be executed yet.
+     */
+    error DelegationIntentNotReady(uint32 declarationTime, uint32 processingStartTime);
+
+    /**
+     * @notice Thrown when the specified intent is already expired.
+     */
+    error DelegationIntentExpired(uint32 declarationTime, uint32 processingEndTime);
+
+    /**
+     * @notice Thrown when the specified intent is not expired yet.
+     */
+    error DelegationIntentNotExpired(uint256 intentId);
+
+    /**
+     * @notice Thrown when the specified intent is not in current epoch (it was nuked in a liquidation or administrative fix).
+     */
+    error DelegationIntentNotInCurrentEpoch(uint256 intentId);
+
+    /**
+     * @notice Thrown when the specified intent is not executable due to pending intents.
+     */
+    error ExceedingUndelegateAmount(
+        int256 deltaCollateralAmountD18,
+        int256 cachedDeltaCollateralAmountD18,
+        int256 totalDeltaCollateralAmountD18,
+        uint256 currentCollateralAmount
+    );
+
+    /**
+     * @notice Thrown when the both legacy and two steps delegation is enabled.
+     */
+    error LegacyAndTwoStepsDelegateCollateralEnabled();
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.
@@ -38,6 +83,74 @@ interface IVaultModule {
         uint256 amount,
         uint256 leverage,
         address indexed sender
+    );
+
+    /**
+     * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     * @param collateralDeltaAmount The new amount of the position, denominated with 18 decimals of precision.
+     * @param leverage The new leverage value of the position, denominated with 18 decimals of precision.
+     * @param intentId The id of the intent to update the position.
+     * @param declarationTime The time at which the intent was declared.
+     * @param processingStartTime The time at which the intent can be processed.
+     * @param processingEndTime The time at which the intent will no longer be able to be processed.
+     * @param sender The address that triggered the update of the position.
+     */
+    event DelegationIntentDeclared(
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType,
+        int256 collateralDeltaAmount,
+        uint256 leverage,
+        uint256 intentId,
+        uint32 declarationTime,
+        uint32 processingStartTime,
+        uint32 processingEndTime,
+        address indexed sender
+    );
+
+    /**
+     * @notice Emitted when an intent is removed (due to succesful execution or expiration).
+     * @param intentId The id of the intent to update the position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     */
+    event DelegationIntentRemoved(
+        uint256 intentId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType
+    );
+
+    /**
+     * @notice Emitted when an intent is skipped due to the intent not being executable at that time.
+     * @param intentId The id of the intent to update the position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     */
+    event DelegationIntentSkipped(
+        uint256 intentId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType
+    );
+
+    /**
+     * @notice Emitted when an intent is processed.
+     * @param intentId The id of the intent to update the position.
+     * @param accountId The id of the account whose position was updated.
+     * @param poolId The id of the pool in which the position was updated.
+     * @param collateralType The address of the collateral associated to the position.
+     */
+    event DelegationIntentProcessed(
+        uint256 intentId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
+        address collateralType
     );
 
     /**
@@ -63,6 +176,201 @@ interface IVaultModule {
         uint256 amount,
         uint256 leverage
     ) external;
+
+    /**
+     * @notice Declare an intent to update the delegated amount for the specified pool and collateral type pair.
+     * @param accountId The id of the account associated with the position that intends to update the collateral amount.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral used in the position.
+     * @param deltaAmountD18 The delta amount of collateral delegated in the position, denominated with 18 decimals of precision.
+     * @param leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
+     * @return intentId The id of the new intent to update the delegated amount.
+     * Requirements:
+     *
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+     * - If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+     * - If decreasing the amount delegated, the liquidity position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function declareIntentToDelegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaAmountD18,
+        uint256 leverage
+    ) external returns (uint256 intentId);
+
+    /**
+     * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by intent ids.
+     * @param accountId The id of the account associated with the position that intends to update the collateral amount.
+     * @param intentIds An array of intents to attempt to process.
+     * @dev The intents that are not executable at this time will be ignored and an event will be emitted to show that.
+     * Requirements:
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function processIntentToDelegateCollateralByIntents(
+        uint128 accountId,
+        uint256[] calldata intentIds
+    ) external;
+
+    /**
+     * @notice Attempt to process the outstanding intents to update the delegated amount of collateral by pool/collateral pair.
+     * @param accountId The id of the account associated with the position that intends to update the collateral amount.
+     * @param poolId The ID of the pool for which the intent of the account to delegate a new amount of collateral is being processed
+     * @param collateralType The address of the collateral used in the position.
+     * @dev The intents that are not executable at this time will be ignored and am event will be emitted to show that.
+     * Requirements:
+     *
+     * Emits a {DelegationUpdated} event.
+     */
+    function processIntentToDelegateCollateralByPair(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external;
+
+    /**
+     * @notice Attempt to delete delegation intents.
+     * @param accountId The id of the account owning the intents.
+     * @param intentIds Array of ids to attempt to delete.
+     * @dev It will only delete expired intents.
+     */
+    function deleteExpiredIntents(uint128 accountId, uint256[] calldata intentIds) external;
+
+    /**
+     * @notice Attempt to delete all expired delegation intents from an account.
+     * @param accountId The id of the account owning the intents.
+     * @dev It will only delete expired intents.
+     */
+    function deleteAllExpiredIntents(uint128 accountId) external;
+
+    /**
+     * @notice Attempt to delete delegation intents.
+     * @param accountId The id of the account owning the intents.
+     * @param intentIds Array of ids to attempt to delete.
+     * @dev It will delete any existent intent on the list (expired or not).
+     * @dev Only the vault owner can execute this call.
+     */
+    function forceDeleteIntents(uint128 accountId, uint256[] calldata intentIds) external;
+
+    /**
+     * @notice Attempt to delete delegation intents.
+     * @param accountId The id of the account owning the intents.
+     * @dev It will delete all the existent intents for the account (expired or not).
+     * @dev Only the vault owner can execute this call.
+     */
+    function forceDeleteAllAccountIntents(uint128 accountId) external;
+
+    /**
+     * @notice Returns details of the requested intent.
+     * @param accountId The id of the account owning the intent.
+     * @param intentId The id of the intents.
+     * @return poolId The id of the pool associated with the position.
+     * @return collateralType The address of the collateral used in the position.
+     * @return deltaCollateralAmountD18 The delta amount of collateral delegated in the position, denominated with 18 decimals of precision.
+     * @return leverage The new leverage amount used in the position, denominated with 18 decimals of precision.
+     * @return declarationTime The time at which the intent was declared.
+     * @return processingStartTime The time at which the intent execution window starts.
+     * @return processingEndTime The time at which the intent execution window ends.
+     */
+    function getAccountIntent(
+        uint128 accountId,
+        uint256 intentId
+    )
+        external
+        view
+        returns (
+            uint128 poolId,
+            address collateralType,
+            int256 deltaCollateralAmountD18,
+            uint256 leverage,
+            uint32 declarationTime,
+            uint32 processingStartTime,
+            uint32 processingEndTime
+        );
+
+    /**
+     * @notice Returns the total (positive and negative) amount of collateral intended to be delegated to the vault by the account.
+     * @param accountId The id of the account owning the intents.
+     * @param collateralType The address of the collateral.
+     * @return netDelegatedPerCollateral The total amount of collateral intended to be delegated to the vault by the account, denominated with 18 decimals of precision.
+     */
+    function getNetDelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view returns (int256 netDelegatedPerCollateral);
+
+    /**
+     * @notice Returns the total executable (not expired) amount of collateral intended to be delegated to the vault by the account.
+     * @param accountId The id of the account owning the intents.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral.
+     * @return accumulatedIntentDelta The total amount of collateral intended to be delegated that is not expired, denominated with 18 decimals of precision.
+     */
+    function getExecutableDelegationAccumulated(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view returns (int256 accumulatedIntentDelta);
+
+    /**
+     * @notice Returns the amount of debt that needs to be repaid, which allows execution of intents that aim at undelegating collalteral, ensuring complyiance with the issuance ratio requirements
+     * @param accountId The id of the account owning the position.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralType The address of the collateral.
+     * @param deltaCollateralAmountD18 The delta collateral to be delegated, denominated with 18 decimals of precision.
+     * @param collateralPrice Reference price of the collateral.
+     * @return howMuchToRepayD18 The debt to repay.
+     *
+     */
+    function requiredDebtRepaymentForUndelegation(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaCollateralAmountD18,
+        uint256 collateralPrice
+    ) external view returns (uint256 howMuchToRepayD18);
+
+    /**
+     * @notice Returns the list of executable (by timing) intents for the account.
+     * @param accountId The id of the account owning the intents.
+     * @param maxProcessableIntent The maximum number of intents to process.
+     * @return intentIds The list of intents.
+     * @return foundIntents The number of found intents.
+     *
+     * @dev The array of intent ids might have empty items at the end, use `foundIntents` to know the actual number
+     * of valid intents.
+     */
+    function getAccountExecutableIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view returns (uint256[] memory intentIds, uint256 foundIntents);
+
+    /**
+     * @notice Returns the list of expired (by timing) intents for the account.
+     * @param accountId The id of the account owning the intents.
+     * @param maxProcessableIntent The maximum number of intents to process.
+     * @return intentIds The list of intents.
+     * @return foundIntents The number of found intents.
+     *
+     * @dev The array of intent ids might have empty items at the end, use `foundIntents` to know the actual number
+     * of valid intents.
+     */
+    function getAccountExpiredIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view returns (uint256[] memory intentIds, uint256 foundIntents);
+
+    /**
+     * @notice Returns the list of intents for the account.
+     * @param accountId The id of the account owning the intents.
+     * @return intentIds The list of intents.
+     */
+    function getAccountIntentIds(
+        uint128 accountId
+    ) external view returns (uint256[] memory intentIds);
 
     /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.

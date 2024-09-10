@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import { delegateCollateral } from '@synthetixio/main/test/common';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 const _SECONDS_IN_YEAR = 31557600;
@@ -26,32 +27,41 @@ const interestRateParams = {
 const proportionalTime = (seconds: number) => wei(seconds).div(_SECONDS_IN_YEAR);
 
 describe('Position - interest rates', () => {
-  const { systems, perpsMarkets, superMarketId, provider, trader1, trader2, keeper, staker } =
-    bootstrapMarkets({
-      interestRateParams: {
-        lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
-        gradientBreakpoint: interestRateParams.gradientBreakpoint.toBN(),
-        highUtilGradient: interestRateParams.highUtilGradient.toBN(),
+  const {
+    systems,
+    perpsMarkets,
+    superMarketId,
+    provider,
+    owner,
+    trader1,
+    trader2,
+    keeper,
+    staker,
+  } = bootstrapMarkets({
+    interestRateParams: {
+      lowUtilGradient: interestRateParams.lowUtilGradient.toBN(),
+      gradientBreakpoint: interestRateParams.gradientBreakpoint.toBN(),
+      highUtilGradient: interestRateParams.highUtilGradient.toBN(),
+    },
+    synthMarkets: [],
+    perpsMarkets: [
+      {
+        lockedOiRatioD18: _ETH_LOCKED_OI_RATIO.toBN(),
+        requestedMarketId: 25,
+        name: 'Ether',
+        token: 'snxETH',
+        price: _ETH_PRICE.toBN(),
       },
-      synthMarkets: [],
-      perpsMarkets: [
-        {
-          lockedOiRatioD18: _ETH_LOCKED_OI_RATIO.toBN(),
-          requestedMarketId: 25,
-          name: 'Ether',
-          token: 'snxETH',
-          price: _ETH_PRICE.toBN(),
-        },
-        {
-          lockedOiRatioD18: _BTC_LOCKED_OI_RATIO.toBN(),
-          requestedMarketId: 50,
-          name: 'Bitcoin',
-          token: 'snxBTC',
-          price: _BTC_PRICE.toBN(),
-        },
-      ],
-      traderAccountIds: [2, 3],
-    });
+      {
+        lockedOiRatioD18: _BTC_LOCKED_OI_RATIO.toBN(),
+        requestedMarketId: 50,
+        name: 'Bitcoin',
+        token: 'snxBTC',
+        price: _BTC_PRICE.toBN(),
+      },
+    ],
+    traderAccountIds: [2, 3],
+  });
 
   let ethMarket: PerpsMarket, btcMarket: PerpsMarket;
 
@@ -254,15 +264,16 @@ describe('Position - interest rates', () => {
         systems().CollateralMock.address
       );
       // current assumption = 1000 collateral at $2000 price == $2M delegated collateral value
-      await systems()
-        .Core.connect(staker())
-        .delegateCollateral(
-          1,
-          1,
-          systems().CollateralMock.address,
-          wei(currentCollateralAmount).mul(wei(0.9)).toBN(),
-          ethers.utils.parseEther('1')
-        );
+      await delegateCollateral(
+        systems,
+        owner(),
+        staker(),
+        1,
+        1,
+        systems().CollateralMock.address,
+        wei(currentCollateralAmount).mul(wei(0.9)).toBN(),
+        ethers.utils.parseEther('1')
+      );
     });
 
     let updateTxn: ethers.providers.TransactionResponse;

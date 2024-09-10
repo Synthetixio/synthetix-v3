@@ -8,11 +8,19 @@ import { bootstrap } from '../integration/bootstrap';
 export const bn = (n: number) => wei(n).toBN();
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
+const LEGACY_DELEGATION_FEATURE_FLAG = ethers.utils.formatBytes32String('delegateCollateral');
+const DECLARE_DELEGATE_FEATURE_FLAG = ethers.utils.formatBytes32String(
+  'declareIntentToDelegateColl'
+);
+const PROCESS_DELEGATE_FEATURE_FLAG = ethers.utils.formatBytes32String(
+  'processIntentToDelegateColl'
+);
 
 export const createStakedPool = (
   r: ReturnType<typeof bootstrap>,
   stakedCollateralPrice: ethers.BigNumber = bn(1),
-  stakedAmount: ethers.BigNumber = bn(1000)
+  stakedAmount: ethers.BigNumber = bn(1000),
+  useLegacyDelegateCollateral: boolean = false
 ) => {
   let aggregator: ethers.Contract;
 
@@ -24,6 +32,19 @@ export const createStakedPool = (
     await r
       .systems()
       .Core.addToFeatureFlagAllowlist(POOL_FEATURE_FLAG, await r.owner().getAddress());
+  });
+
+  before('set permissions according to mode', async () => {
+    // set FF
+    await r
+      .systems()
+      .Core.setFeatureFlagAllowAll(LEGACY_DELEGATION_FEATURE_FLAG, useLegacyDelegateCollateral);
+    await r
+      .systems()
+      .Core.setFeatureFlagAllowAll(DECLARE_DELEGATE_FEATURE_FLAG, !useLegacyDelegateCollateral);
+    await r
+      .systems()
+      .Core.setFeatureFlagAllowAll(PROCESS_DELEGATE_FEATURE_FLAG, !useLegacyDelegateCollateral);
   });
 
   before('setup oracle manager node', async () => {
@@ -64,7 +85,8 @@ export const createStakedPool = (
       poolId,
       accountId,
       staker,
-      stakedAmount
+      stakedAmount,
+      useLegacyDelegateCollateral
     );
   });
 

@@ -1,12 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
+import "../../storage/AccountDelegationIntents.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -34,8 +36,13 @@ contract VaultModule is IVaultModule {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
+    using AccountDelegationIntents for AccountDelegationIntents.Data;
+    using DelegationIntent for DelegationIntent.Data;
+    using Account for Account.Data;
 
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
+    bytes32 private constant _DECLARE_DELEGATE_FEATURE_FLAG = "declareIntentToDelegateColl";
+    bytes32 private constant _PROCESS_DELEGATE_FEATURE_FLAG = "processIntentToDelegateColl";
 
     /**
      * @inheritdoc IVaultModule
@@ -49,14 +56,8 @@ contract VaultModule is IVaultModule {
     ) external override {
         FeatureFlag.ensureAccessToFeature(_DELEGATE_FEATURE_FLAG);
         Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
-
-        // Each collateral type may specify a minimum collateral amount that can be delegated.
-        // See CollateralConfiguration.minDelegationD18.
-        if (newCollateralAmountD18 > 0) {
-            CollateralConfiguration.requireSufficientDelegation(
-                collateralType,
-                newCollateralAmountD18
-            );
+        if (FeatureFlag.hasAccess(_DECLARE_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
+            revert LegacyAndTwoStepsDelegateCollateralEnabled();
         }
 
         // System only supports leverage of 1.0 for now.
@@ -67,13 +68,76 @@ contract VaultModule is IVaultModule {
 
         uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
-        // Conditions for collateral amount
+        int256 deltaCollateralAmountD18 = newCollateralAmountD18.toInt() -
+            currentCollateralAmount.toInt();
 
-        // Ensure current collateral amount differs from the new collateral amount.
         if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
+
+        _delegateCollateral(accountId, poolId, collateralType, deltaCollateralAmountD18, leverage);
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function declareIntentToDelegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaCollateralAmountD18,
+        uint256 leverage
+    ) external override returns (uint256 intentId) {
+        // Ensure the caller is authorized to represent the account.
+        FeatureFlag.ensureAccessToFeature(_DECLARE_DELEGATE_FEATURE_FLAG);
+        Account.Data storage account = Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._DELEGATE_PERMISSION
+        );
+        if (FeatureFlag.hasAccess(_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
+            revert LegacyAndTwoStepsDelegateCollateralEnabled();
+        }
+
+        // Input checks
+        // System only supports leverage of 1.0 for now.
+        if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
+        // Ensure current collateral amount differs from the new collateral amount.
+        if (deltaCollateralAmountD18 == 0) revert InvalidCollateralAmount();
+
+        // Verify the account holds enough collateral to execute the intent.
+        // Get previous intents cache
+        AccountDelegationIntents.Data storage accountIntents = account.delegationIntents[
+            account.currentDelegationIntentsEpoch
+        ];
+
+        // Identify the vault that corresponds to this collateral type and pool id.
+        Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
+
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+        int256 accumulatedDelta = deltaCollateralAmountD18 +
+            accountIntents.netDelegatedAmountPerCollateral[collateralType];
+        if (accumulatedDelta < 0 && currentCollateralAmount < (-1 * accumulatedDelta).toUint()) {
+            revert ExceedingUndelegateAmount(
+                deltaCollateralAmountD18,
+                accountIntents.netDelegatedAmountPerCollateral[collateralType],
+                accumulatedDelta,
+                currentCollateralAmount
+            );
+        }
+
+        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() + accumulatedDelta)
+            .toUint();
+
+        // Each collateral type may specify a minimum collateral amount that can be delegated.
+        // See CollateralConfiguration.minDelegationD18.
+        if (newCollateralAmountD18 > 0) {
+            CollateralConfiguration.requireSufficientDelegation(
+                collateralType,
+                newCollateralAmountD18
+            );
+        }
+        // Check the validity of the collateral amount to be delegated, respecting the caches that track outstanding intents to delegate or undelegate collateral.
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
-        else if (newCollateralAmountD18 > currentCollateralAmount) {
+        if (newCollateralAmountD18 > currentCollateralAmount) {
             // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
 
@@ -87,72 +151,174 @@ contract VaultModule is IVaultModule {
                 collateralType,
                 newCollateralAmountD18 - currentCollateralAmount
             );
-
-            // if decreasing delegation amount, ensure min time has elapsed
-        } else {
-            Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
-                vault.currentEpoch().lastDelegationTime[accountId]
-            );
         }
 
-        // distribute any outstanding rewards distributor value to vaults prior to updating positions
-        Pool.load(poolId).updateRewardsToVaults(
-            Vault.PositionSelector(accountId, poolId, collateralType)
-        );
+        // Create a new delegation intent.
+        intentId = DelegationIntent.nextId();
+        DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
+        intent.accountId = accountId;
+        intent.poolId = poolId;
+        intent.collateralType = collateralType;
+        intent.deltaCollateralAmountD18 = deltaCollateralAmountD18;
+        intent.leverage = leverage;
+        intent.declarationTime = block.timestamp.to32();
 
-        // Update the account's position for the given pool and collateral type,
-        // Note: This will trigger an update in the entire debt distribution chain.
-        uint256 collateralPrice = _updatePosition(
+        // Add intent to the account's delegation intents.
+        accountIntents.addIntent(intent, intentId);
+
+        // emit an event
+        emit DelegationIntentDeclared(
             accountId,
             poolId,
             collateralType,
-            newCollateralAmountD18,
-            currentCollateralAmount,
-            leverage
-        );
-
-        _updateAccountCollateralPools(
-            accountId,
-            poolId,
-            collateralType,
-            newCollateralAmountD18 > 0
-        );
-
-        // If decreasing the delegated collateral amount,
-        // check the account's collateralization ratio.
-        // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
-        if (newCollateralAmountD18 < currentCollateralAmount) {
-            int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
-
-            uint256 minIssuanceRatioD18 = Pool
-                .loadExisting(poolId)
-                .collateralConfigurations[collateralType]
-                .issuanceRatioD18;
-
-            // Minimum collateralization ratios are configured in the system per collateral type.abi
-            // Ensure that the account's updated position satisfies this requirement.
-            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
-                debt < 0 ? 0 : debt.toUint(),
-                newCollateralAmountD18.mulDecimal(collateralPrice),
-                minIssuanceRatioD18
-            );
-
-            // Accounts cannot reduce collateral if any of the pool's
-            // connected market has its capacity locked.
-            _verifyNotCapacityLocked(poolId);
-        }
-
-        // solhint-disable-next-line numcast/safe-cast
-        vault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
-
-        emit DelegationUpdated(
-            accountId,
-            poolId,
-            collateralType,
-            newCollateralAmountD18,
+            deltaCollateralAmountD18,
             leverage,
+            intentId,
+            intent.declarationTime,
+            intent.processingStartTime(),
+            intent.processingEndTime(),
             ERC2771Context._msgSender()
         );
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function processIntentToDelegateCollateralByIntents(
+        uint128 accountId,
+        uint256[] memory intentIds
+    ) public override {
+        FeatureFlag.ensureAccessToFeature(_PROCESS_DELEGATE_FEATURE_FLAG);
+        if (FeatureFlag.hasAccess(_DELEGATE_FEATURE_FLAG, ERC2771Context._msgSender())) {
+            revert LegacyAndTwoStepsDelegateCollateralEnabled();
+        }
+
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
+
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
+            if (!accountIntents.isInCurrentEpoch(intentId)) {
+                revert DelegationIntentNotInCurrentEpoch(intentId);
+            }
+
+            if (!intent.isExecutable()) {
+                // emit an Skipped event
+                emit DelegationIntentSkipped(
+                    intentId,
+                    accountId,
+                    intent.poolId,
+                    intent.collateralType
+                );
+
+                // If expired, remove the intent.
+                if (intent.intentExpired()) {
+                    accountIntents.removeIntent(intent, intentId);
+                    emit DelegationIntentRemoved(
+                        intentId,
+                        accountId,
+                        intent.poolId,
+                        intent.collateralType
+                    );
+                }
+
+                // skip to the next intent
+                continue;
+            }
+
+            // Ensure the intent is valid.
+            if (intent.accountId != accountId) revert InvalidDelegationIntent();
+
+            // Process the intent.
+            _delegateCollateral(
+                accountId,
+                intent.poolId,
+                intent.collateralType,
+                intent.deltaCollateralAmountD18,
+                intent.leverage
+            );
+
+            // Remove the intent.
+            accountIntents.removeIntent(intent, intentId);
+            emit DelegationIntentRemoved(intentId, accountId, intent.poolId, intent.collateralType);
+
+            // emit an event
+            emit DelegationIntentProcessed(
+                intentId,
+                accountId,
+                intent.poolId,
+                intent.collateralType
+            );
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function processIntentToDelegateCollateralByPair(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external override {
+        processIntentToDelegateCollateralByIntents(
+            accountId,
+            Account.load(accountId).getDelegationIntents().intentIdsByPair(poolId, collateralType)
+        );
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function forceDeleteAllAccountIntents(uint128 accountId) external override {
+        OwnableStorage.onlyOwner();
+        Account.load(accountId).cleanAllIntents();
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function forceDeleteIntents(uint128 accountId, uint256[] calldata intentIds) external override {
+        OwnableStorage.onlyOwner();
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
+            accountIntents.removeIntent(intent, intentId);
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function deleteAllExpiredIntents(uint128 accountId) external override {
+        Account.load(accountId).getDelegationIntents().cleanAllExpiredIntents();
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function deleteExpiredIntents(
+        uint128 accountId,
+        uint256[] calldata intentIds
+    ) external override {
+        AccountDelegationIntents.Data storage accountIntents = Account
+            .load(accountId)
+            .getDelegationIntents();
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            uint256 intentId = intentIds[i];
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentId);
+            if (intent.accountId != accountId) {
+                revert InvalidDelegationIntent();
+            }
+            if (!intent.intentExpired()) {
+                revert DelegationIntentNotExpired(intentId);
+            }
+            accountIntents.removeIntent(intent, intentId);
+        }
     }
 
     /**
@@ -243,6 +409,288 @@ contract VaultModule is IVaultModule {
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountIntent(
+        uint128 accountId,
+        uint256 intentId
+    ) external view override returns (uint128, address, int256, uint256, uint32, uint32, uint32) {
+        DelegationIntent.Data storage intent = Account
+            .load(accountId)
+            .getDelegationIntents()
+            .getIntent(intentId);
+        return (
+            intent.poolId,
+            intent.collateralType,
+            intent.deltaCollateralAmountD18,
+            intent.leverage,
+            intent.declarationTime,
+            intent.processingStartTime(),
+            intent.processingEndTime()
+        );
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountIntentIds(
+        uint128 accountId
+    ) external view override returns (uint256[] memory) {
+        return Account.load(accountId).getDelegationIntents().intentsId.values();
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountExpiredIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view override returns (uint256[] memory expiredIntents, uint256 foundItems) {
+        uint256[] memory allIntents = Account
+            .load(accountId)
+            .getDelegationIntents()
+            .intentsId
+            .values();
+        uint256 max = maxProcessableIntent > allIntents.length
+            ? allIntents.length
+            : maxProcessableIntent;
+        expiredIntents = new uint256[](max);
+        for (uint256 i = 0; i < max; i++) {
+            if (DelegationIntent.load(allIntents[i]).intentExpired()) {
+                expiredIntents[foundItems] = allIntents[i];
+                foundItems++;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getAccountExecutableIntentIds(
+        uint128 accountId,
+        uint256 maxProcessableIntent
+    ) external view override returns (uint256[] memory executableIntents, uint256 foundItems) {
+        uint256[] memory allIntents = Account
+            .load(accountId)
+            .getDelegationIntents()
+            .intentsId
+            .values();
+        uint256 max = maxProcessableIntent > allIntents.length
+            ? allIntents.length
+            : maxProcessableIntent;
+        executableIntents = new uint256[](max);
+        for (uint256 i = 0; i < max; i++) {
+            if (DelegationIntent.load(allIntents[i]).isExecutable()) {
+                executableIntents[foundItems] = allIntents[i];
+                foundItems++;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getNetDelegatedPerCollateral(
+        uint128 accountId,
+        address collateralType
+    ) external view override returns (int256) {
+        return
+            Account.load(accountId).getDelegationIntents().netDelegatedAmountPerCollateral[
+                collateralType
+            ];
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function getExecutableDelegationAccumulated(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view override returns (int256 accumulatedIntentDelta) {
+        uint256[] memory intentIds = Account.load(accountId).getDelegationIntents().intentIdsByPair(
+            poolId,
+            collateralType
+        );
+        accumulatedIntentDelta = 0;
+        for (uint256 i = 0; i < intentIds.length; i++) {
+            DelegationIntent.Data storage intent = DelegationIntent.load(intentIds[i]);
+            if (!intent.intentExpired()) {
+                accumulatedIntentDelta += intent.deltaCollateralAmountD18;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function requiredDebtRepaymentForUndelegation(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaCollateralAmountD18,
+        uint256 collateralPrice
+    ) external view override returns (uint256) {
+        // Identify the vault that corresponds to this collateral type and pool id.
+        if (deltaCollateralAmountD18 > 0) {
+            return 0;
+        }
+
+        Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
+
+        int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
+        uint256 effectiveDebt = debt < 0 ? 0 : debt.toUint();
+        if (effectiveDebt == 0) {
+            return 0;
+        }
+
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+
+        if (currentCollateralAmount < (-1 * deltaCollateralAmountD18).toUint()) {
+            revert ExceedingUndelegateAmount(
+                deltaCollateralAmountD18,
+                0,
+                deltaCollateralAmountD18,
+                currentCollateralAmount
+            );
+        }
+
+        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() +
+            deltaCollateralAmountD18).toUint();
+
+        uint256 minIssuanceRatioD18 = Pool
+            .loadExisting(poolId)
+            .collateralConfigurations[collateralType]
+            .issuanceRatioD18;
+
+        uint256 effectiveIssuanceRatioD18 = CollateralConfiguration
+            .load(collateralType)
+            .getEffectiveIssuanceRatio(minIssuanceRatioD18);
+
+        // edge case. Issuance set to max
+        if (effectiveIssuanceRatioD18 == type(uint256).max) {
+            return effectiveDebt;
+        }
+
+        uint256 collateralValue = newCollateralAmountD18.mulDecimal(collateralPrice);
+
+        uint256 maxDebt = effectiveIssuanceRatioD18.mulDecimal(collateralValue);
+        if (maxDebt >= effectiveDebt) {
+            return 0;
+        }
+        return maxDebt - effectiveDebt;
+    }
+
+    function _delegateCollateral(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        int256 deltaCollateralAmountD18,
+        uint256 leverage
+    ) internal {
+        // Identify the vault that corresponds to this collateral type and pool id.
+        Vault.Data storage vault = Pool.loadExisting(poolId).vaults[collateralType];
+
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
+
+        uint256 newCollateralAmountD18 = (currentCollateralAmount.toInt() +
+            deltaCollateralAmountD18).toUint();
+
+        // Each collateral type may specify a minimum collateral amount that can be delegated.
+        // See CollateralConfiguration.minDelegationD18.
+        if (newCollateralAmountD18 > 0) {
+            CollateralConfiguration.requireSufficientDelegation(
+                collateralType,
+                newCollateralAmountD18
+            );
+        }
+
+        // Conditions for collateral amount
+
+        // If increasing delegated collateral amount,
+        // Check that the account has sufficient collateral.
+        if (deltaCollateralAmountD18 > 0) {
+            // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
+            CollateralConfiguration.collateralEnabled(collateralType);
+
+            Account.requireSufficientCollateral(
+                accountId,
+                collateralType,
+                deltaCollateralAmountD18.toUint()
+            );
+
+            Pool.loadExisting(poolId).checkPoolCollateralLimit(
+                collateralType,
+                deltaCollateralAmountD18.toUint()
+            );
+            // if decreasing delegation amount, ensure min time has elapsed
+        } else {
+            Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
+                vault.currentEpoch().lastDelegationTime[accountId]
+            );
+        }
+
+        // distribute any outstanding rewards distributor value to vaults prior to updating positions
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
+        // Update the account's position for the given pool and collateral type,
+        // Note: This will trigger an update in the entire debt distribution chain.
+        uint256 collateralPrice = _updatePosition(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18,
+            currentCollateralAmount,
+            leverage
+        );
+
+        _updateAccountCollateralPools(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18 > 0
+        );
+
+        // If decreasing the delegated collateral amount,
+        // check the account's collateralization ratio.
+        // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
+        if (deltaCollateralAmountD18 < 0) {
+            int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
+
+            uint256 minIssuanceRatioD18 = Pool
+                .loadExisting(poolId)
+                .collateralConfigurations[collateralType]
+                .issuanceRatioD18;
+
+            // Minimum collateralization ratios are configured in the system per collateral type.abi
+            // Ensure that the account's updated position satisfies this requirement.
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
+                debt < 0 ? 0 : debt.toUint(),
+                newCollateralAmountD18.mulDecimal(collateralPrice),
+                minIssuanceRatioD18
+            );
+
+            // Accounts cannot reduce collateral if any of the pool's
+            // connected market has its capacity locked.
+            _verifyNotCapacityLocked(poolId);
+        }
+
+        // solhint-disable-next-line numcast/safe-cast
+        vault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
+
+        emit DelegationUpdated(
+            accountId,
+            poolId,
+            collateralType,
+            newCollateralAmountD18,
+            leverage,
+            ERC2771Context._msgSender() // this is the executor address, not the account owner or authorized (the one that posted the intent)
+        );
     }
 
     /**

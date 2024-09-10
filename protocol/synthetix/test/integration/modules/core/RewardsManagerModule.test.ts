@@ -17,7 +17,7 @@ import { verifyUsesFeatureFlag } from '../../verifications';
 describe('RewardsManagerModule', function () {
   this.timeout(120000);
   const { provider, signers, systems, poolId, collateralAddress, accountId } =
-    bootstrapWithStakedPool();
+    bootstrapWithStakedPool(true);
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 

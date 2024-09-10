@@ -21,6 +21,7 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/main": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",

@@ -3151,6 +3151,7 @@ __metadata:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/main": "workspace:*"
     "@synthetixio/wei": "npm:^2.74.4"
     ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"

@@ -33,6 +33,7 @@ contract LiquidationModule is ILiquidationModule {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
+    using Account for Account.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
@@ -113,6 +114,9 @@ contract LiquidationModule is ILiquidationModule {
         Account.load(liquidateAsAccountId).collaterals[collateralType].increaseAvailableCollateral(
             liquidationData.amountRewarded
         );
+
+        // Clean any outstanding intents to delegate collateral
+        Account.load(accountId).cleanAllIntents();
 
         emit Liquidation(
             accountId,
