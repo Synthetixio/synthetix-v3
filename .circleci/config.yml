@@ -429,7 +429,7 @@ jobs:
       - run: for f in $(find . -name 'storage.dump.json'); do git checkout main -- $f || true; done
       - install-foundry
       - yarn-install
-      - run: yarn build:ts
+      - run: yarn build
       - run: yarn storage:verify
       - run: yarn check:storage
 
