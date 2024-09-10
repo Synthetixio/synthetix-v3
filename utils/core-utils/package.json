@@ -57,8 +57,7 @@
     "solidity-ast": "^0.4.55",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
-    "typescript": "^5.5.4",
-    "viem": "^2.9.31"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@ethersproject/abi": "^5.7.0",

@@ -4,7 +4,12 @@ import { task } from 'hardhat/config';
 import { dumpStorage } from '../internal/dump';
 import { readJsonFileSafe, writeJsonFile } from '../internal/file-helpers';
 import { logInChunks } from '../internal/log-in-chunks';
-import { TASK_STORAGE_DUMP } from '../task-names';
+import {
+  TASK_STORAGE_DUMP,
+  SUBTASK_GET_ARTIFACTS,
+  SUBTASK_VALIDATE_CONTRACTS,
+  SUBTASK_VERIFY_CONTRACTS,
+} from '../task-names';
 import { StorageDump } from '../types';
 
 interface Params {
@@ -31,17 +36,17 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     const now = Date.now();
     const target = path.resolve(hre.config.paths.root, output);
 
-    const { contracts, getArtifact } = await hre.runGetArtifacts();
+    const { contracts, getArtifact } = await hre.run(SUBTASK_GET_ARTIFACTS);
 
     if (!noValidate) {
-      await hre.runValidateContracts({ contracts, getArtifact });
+      await hre.run(SUBTASK_VALIDATE_CONTRACTS, { contracts, getArtifact });
     }
 
     const dump = await dumpStorage({ contracts, getArtifact });
 
     if (!noVerify) {
       const prev = await readJsonFileSafe<StorageDump>(target);
-      await hre.runVerifyContracts({
+      await hre.run(SUBTASK_VERIFY_CONTRACTS, {
         curr: dump,
         prev,
         quiet: log || quiet,

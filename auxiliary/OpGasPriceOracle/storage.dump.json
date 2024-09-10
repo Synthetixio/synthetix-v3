@@ -48,16 +48,37 @@
         },
         {
           "type": "uint256",
-          "name": "numberOfUpdatedFeeds",
+          "name": "settleTxSize",
           "size": 32,
           "slot": "6",
           "offset": 0
         },
         {
           "type": "uint256",
-          "name": "executionKind",
+          "name": "flagTxSize",
           "size": 32,
           "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "liquidateTxSize",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "numberOfUpdatedFeeds",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "executionKind",
+          "size": 32,
+          "slot": "10",
           "offset": 0
         }
       ]

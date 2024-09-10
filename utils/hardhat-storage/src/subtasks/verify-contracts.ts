@@ -1,6 +1,5 @@
-import { extendEnvironment, subtask } from 'hardhat/config';
+import { subtask } from 'hardhat/config';
 import { HardhatPluginError } from 'hardhat/plugins';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { verifyMutations } from '../internal/verify-mutations';
 import { SUBTASK_VERIFY_CONTRACTS } from '../task-names';
 import { StorageDump, StorageMutation } from '../types';
@@ -10,18 +9,6 @@ type Params = {
   prev?: StorageDump;
   quiet?: boolean;
 };
-
-declare module 'hardhat/types/runtime' {
-  interface HardhatRuntimeEnvironment {
-    runVerifyContracts: (params: Params) => Promise<StorageMutation[]>;
-  }
-}
-
-extendEnvironment((hre: HardhatRuntimeEnvironment) => {
-  hre.runVerifyContracts = async (params: Params) => {
-    return hre.run(SUBTASK_VERIFY_CONTRACTS, params);
-  };
-});
 
 subtask(SUBTASK_VERIFY_CONTRACTS).setAction(async ({ curr, prev, quiet }: Params) => {
   const mutations = verifyMutations(curr, prev);

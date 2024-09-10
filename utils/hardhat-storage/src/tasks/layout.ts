@@ -1,4 +1,4 @@
-import { bold, dim, underline } from 'chalk';
+import chalk from 'chalk';
 import Table from 'cli-table3';
 import { task } from 'hardhat/config';
 import { dumpStorage } from '../internal/dump';
@@ -42,7 +42,7 @@ task(TASK_STORAGE_LAYOUT, 'Pretty print the storage layout of all the contracts'
       const storageDump = dump[fqName]!;
       const kind = storageDump!.kind;
 
-      console.log(`${bold(underline(`${kind} ${fqName}`))}`);
+      console.log(`${chalk.bold(chalk.underline(`${kind} ${fqName}`))}`);
 
       for (const structName of Object.keys(storageDump.structs)) {
         const slots = storageDump.structs[structName]!;
@@ -50,7 +50,7 @@ task(TASK_STORAGE_LAYOUT, 'Pretty print the storage layout of all the contracts'
 
         const table = new Table({
           ...defaultTable,
-          head: ['slot', 'offset', 'size', 'type', 'name'].map((t) => (t ? dim(t) : t)),
+          head: ['slot', 'offset', 'size', 'type', 'name'].map((t) => (t ? chalk.dim(t) : t)),
           colWidths: [null, null, null, null, null],
         });
 

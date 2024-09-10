@@ -3,7 +3,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ethers } from 'ethers';
-import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 import { ChainBuilderContext, ContractMap } from './cannon-types';
 import { getHardhatSigners } from './get-hardhat-signers';
@@ -21,6 +20,8 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
 
   before(async function prepareNode() {
     this.timeout(900000);
+
+    const hre = await import('hardhat');
 
     const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
     const typechainFolder = path.resolve(generatedPath, 'typechain');

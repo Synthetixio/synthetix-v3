@@ -8,8 +8,8 @@ import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
-import 'hardhat-ignore-warnings';
 import '@synthetixio/hardhat-storage';
+import 'hardhat-ignore-warnings';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
