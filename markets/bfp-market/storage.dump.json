@@ -418,6 +418,13 @@
           "size": 32,
           "slot": "9",
           "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "fromSize",
+          "size": 32,
+          "slot": "10",
+          "offset": 0
         }
       ]
     }
@@ -1417,6 +1424,20 @@
           "name": "ethPrice",
           "size": 32,
           "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "fillPremium",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "sizeDelta",
+          "size": 16,
+          "slot": "8",
           "offset": 0
         }
       ],

@@ -195,7 +195,7 @@ function _isBuiltInType(storageSlot: StorageSlotBase): storageSlot is StorageBui
   try {
     _getBuiltInValueType(storageSlot.type);
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 }

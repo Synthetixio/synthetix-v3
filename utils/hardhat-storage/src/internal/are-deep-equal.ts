@@ -4,7 +4,7 @@ export function areDeepEqual(a: unknown, b: unknown) {
   try {
     deepEqual(a, b);
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 }

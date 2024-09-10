@@ -90,7 +90,9 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
     );
 
     if (!childNode) {
-      throw new Error(`Could not find node with name "${nodePath}" from "${artifact.sourceName}"`);
+      throw new Error(
+        `Could not find node with name "${nodePath}" from "${parentArtifact.sourceName}"`
+      );
     }
 
     return [parentArtifact, childNode];
@@ -118,9 +120,14 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
     );
     if (foundNode) return [importedArtifact, foundNode];
   } else {
-    // if not, on all the imported files
+    // if not, recursively on all the imported files
     const importedSourceNames = findAll(artifact.ast, 'ImportDirective').map((node) => node.path);
-    for (const importSourceName of importedSourceNames) {
+
+    // loop protection: prevents infinite loop in case recursion of file imports causes that
+    const doneSourceNames = new Set(importedSourceNames);
+
+    let importSourceName;
+    while ((importSourceName = importedSourceNames.pop())) {
       const importedArtifact = await getArtifact(importSourceName);
       const foundNode = findOne(
         importedArtifact.ast,
@@ -128,6 +135,14 @@ export async function findNodeReferenceWithArtifact<T extends ASTNodeTypeString>
         (node) => (node as { name: string }).name === nodePath
       );
       if (foundNode) return [importedArtifact, foundNode];
+
+      // recursively add all import directives from this file
+      for (const d of findAll(importedArtifact.ast, 'ImportDirective').map((node) => node.path)) {
+        if (!doneSourceNames.has(d)) {
+          importedSourceNames.push(d);
+          doneSourceNames.add(d);
+        }
+      }
     }
   }
 

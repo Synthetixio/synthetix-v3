@@ -1211,6 +1211,18 @@
                     {
                       "type": "uint32",
                       "name": "lastUpdate"
+                    },
+                    {
+                      "type": "int128",
+                      "name": "nextScheduledValueD18"
+                    },
+                    {
+                      "type": "uint64",
+                      "name": "nextStart"
+                    },
+                    {
+                      "type": "uint32",
+                      "name": "nextDuration"
                     }
                   ]
                 }
@@ -1300,6 +1312,107 @@
           "name": "collateralDisabledByDefault",
           "size": 1,
           "slot": "11",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "rewardIds",
+          "members": [
+            {
+              "type": "array",
+              "name": "_values",
+              "value": {
+                "type": "bytes32"
+              }
+            },
+            {
+              "type": "mapping",
+              "name": "_positions",
+              "key": {
+                "type": "bytes32"
+              },
+              "value": {
+                "type": "uint256"
+              }
+            }
+          ],
+          "size": 64,
+          "slot": "12",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "rewardsToVaults",
+          "key": {
+            "type": "bytes32"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "address",
+                "name": "distributor"
+              },
+              {
+                "type": "uint128",
+                "name": "__slotAvailableForFutureUse"
+              },
+              {
+                "type": "uint128",
+                "name": "rewardPerShareD18"
+              },
+              {
+                "type": "mapping",
+                "name": "claimStatus",
+                "key": {
+                  "type": "uint256"
+                },
+                "value": {
+                  "type": "struct",
+                  "members": [
+                    {
+                      "type": "uint128",
+                      "name": "lastRewardPerShareD18"
+                    },
+                    {
+                      "type": "uint128",
+                      "name": "pendingSendD18"
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "int128",
+                "name": "scheduledValueD18"
+              },
+              {
+                "type": "uint64",
+                "name": "start"
+              },
+              {
+                "type": "uint32",
+                "name": "duration"
+              },
+              {
+                "type": "uint32",
+                "name": "lastUpdate"
+              },
+              {
+                "type": "int128",
+                "name": "nextScheduledValueD18"
+              },
+              {
+                "type": "uint64",
+                "name": "nextStart"
+              },
+              {
+                "type": "uint32",
+                "name": "nextDuration"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "14",
           "offset": 0
         }
       ]
@@ -1403,6 +1516,27 @@
           "size": 4,
           "slot": "3",
           "offset": 28
+        },
+        {
+          "type": "int128",
+          "name": "nextScheduledValueD18",
+          "size": 16,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "nextStart",
+          "size": 8,
+          "slot": "4",
+          "offset": 16
+        },
+        {
+          "type": "uint32",
+          "name": "nextDuration",
+          "size": 4,
+          "slot": "4",
+          "offset": 24
         }
       ]
     }
@@ -1723,6 +1857,18 @@
               {
                 "type": "uint32",
                 "name": "lastUpdate"
+              },
+              {
+                "type": "int128",
+                "name": "nextScheduledValueD18"
+              },
+              {
+                "type": "uint64",
+                "name": "nextStart"
+              },
+              {
+                "type": "uint32",
+                "name": "nextDuration"
               }
             ]
           },

@@ -480,6 +480,13 @@
           "size": 96,
           "slot": "7",
           "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "totalAccountsDebt",
+          "size": 32,
+          "slot": "10",
+          "offset": 0
         }
       ]
     }
@@ -511,7 +518,7 @@
         },
         {
           "type": "mapping",
-          "name": "maxCollateralAmounts",
+          "name": "__unused_1",
           "key": {
             "type": "uint128"
           },
@@ -524,7 +531,7 @@
         },
         {
           "type": "array",
-          "name": "synthDeductionPriority",
+          "name": "__unused_2",
           "value": {
             "type": "uint128"
           },
@@ -626,6 +633,20 @@
           "size": 16,
           "slot": "13",
           "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "collateralLiquidateRewardRatioD18",
+          "size": 16,
+          "slot": "13",
+          "offset": 16
+        },
+        {
+          "type": "address",
+          "name": "rewardDistributorImplementation",
+          "size": 20,
+          "slot": "14",
+          "offset": 0
         }
       ]
     }
@@ -691,6 +712,38 @@
           "name": "timestamp",
           "size": 32,
           "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/LiquidationAssetManager.sol:LiquidationAssetManager": {
+    "name": "LiquidationAssetManager",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint128",
+          "name": "id",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "distributor",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "poolDelegatedCollateralTypes",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "2",
           "offset": 0
         }
       ]
@@ -851,6 +904,80 @@
                   }
                 }
               ]
+            }
+          ],
+          "size": 96,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "debt",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/PerpsCollateralConfiguration.sol:PerpsCollateralConfiguration": {
+    "name": "PerpsCollateralConfiguration",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint128",
+          "name": "id",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxAmount",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "upperLimitDiscount",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "lowerLimitDiscount",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "discountScalar",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "lam",
+          "members": [
+            {
+              "type": "uint128",
+              "name": "id"
+            },
+            {
+              "type": "address",
+              "name": "distributor"
+            },
+            {
+              "type": "array",
+              "name": "poolDelegatedCollateralTypes",
+              "value": {
+                "type": "address"
+              }
             }
           ],
           "size": 96,
@@ -1298,6 +1425,13 @@
           "name": "name",
           "size": 32,
           "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "liquidationAssetManager",
+          "size": 20,
+          "slot": "6",
           "offset": 0
         }
       ]
