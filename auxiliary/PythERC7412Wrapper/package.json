@@ -8,7 +8,7 @@
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
-    "build:contracts": "hardhat compile --force && hardhat storage:dump storage.new.dump.json && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build:contracts": "hardhat compile --force && hardhat storage:dump --output storage.new.dump.json && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.json",
     "storage:verify": "hardhat compile --force && hardhat storage:verify",
