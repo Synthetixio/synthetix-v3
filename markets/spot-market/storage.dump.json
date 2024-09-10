@@ -116,7 +116,10 @@
               {
                 "type": "enum",
                 "name": "strategyType",
-                "members": ["ONCHAIN", "PYTH"]
+                "members": [
+                  "ONCHAIN",
+                  "PYTH"
+                ]
               },
               {
                 "type": "uint256",
@@ -330,7 +333,10 @@
         {
           "type": "enum",
           "name": "strategyType",
-          "members": ["ONCHAIN", "PYTH"],
+          "members": [
+            "ONCHAIN",
+            "PYTH"
+          ],
           "size": 1,
           "slot": "0",
           "offset": 0
