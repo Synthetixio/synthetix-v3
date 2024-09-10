@@ -16,6 +16,7 @@ module.exports = [
     ignores: [
       '!**/.*',
       '!.circleci/test-batch.js',
+      '.yarn',
       '**/coverage',
       '**/dist',
       'utils/*/utils',
