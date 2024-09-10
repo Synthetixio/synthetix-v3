@@ -3234,6 +3234,7 @@ __metadata:
     ts-node: "npm:^10.9.2"
     typechain: "npm:^8.3.2"
     typescript: "npm:^5.5.4"
+    viem: "npm:^2.16.5"
   peerDependencies:
     "@usecannon/builder": ^2.16.2
     "@usecannon/cli": ^2.16.2
