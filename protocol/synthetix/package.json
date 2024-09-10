@@ -13,7 +13,7 @@
     "storage:verify": " hardhat storage:verify",
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
-    "check:storage": "diff -u storage.dump.json storage.new.dump.json",
+    "check:storage": "diff -uw storage.dump.json storage.new.dump.json",
     "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
