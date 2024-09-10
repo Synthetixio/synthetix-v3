@@ -451,9 +451,19 @@ jobs:
       - checkout
       - yarn-install
 
-      # Ignoring 1097346 and 1099357 for "ip" package that is not yet fixed but also not very dangerous
-      # https://github.com/indutny/node-ip/issues/136#issuecomment-1941462942
-      - run: yarn audit --ignore 1097346 --ignore 1099357
+      - run:
+          name: "yarn audit"
+          # Ignoring 1099357 for "ip" package that is not yet fixed but also not very dangerous
+          # https://github.com/indutny/node-ip/issues/136#issuecomment-1941462942
+          # https://github.com/advisories/GHSA-2p57-rm9w-gvfp
+
+          # Ignoring 1099499 for "path-to-regexp" package that is not yet fixed
+          # It is also only used by sinon
+          # https://github.com/advisories/GHSA-9wv6-86v2-598j
+          command: |-
+            yarn audit \
+              --ignore 1099357 \
+              --ignore 1099499
 
   simulate-release:
     parameters:
