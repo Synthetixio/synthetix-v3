@@ -71,9 +71,7 @@ export async function dumpStorage({ getArtifact, contracts }: Params) {
     }
   }
 
-  if (Object.keys(results).length > 0) {
-    return results;
-  }
+  return results;
 }
 
 async function _astVariableToStorageSlot(

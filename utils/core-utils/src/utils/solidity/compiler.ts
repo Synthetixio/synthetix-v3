@@ -88,9 +88,9 @@ async function _getCompiler(version: string) {
 
   if (!isDownloaded) {
     await downloader.downloadCompiler(
-      version,
-      async () => {},
-      async () => {}
+      version
+      //async () => {},
+      //async () => {}
     );
   }
 
