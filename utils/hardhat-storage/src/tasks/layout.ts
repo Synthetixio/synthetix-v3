@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import Table from 'cli-table3';
 import { task } from 'hardhat/config';
 import { dumpStorage } from '../internal/dump';
-import { TASK_STORAGE_LAYOUT } from '../task-names';
+import { SUBTASK_GET_ARTIFACTS, TASK_STORAGE_LAYOUT } from '../task-names';
 
 const defaultTable = {
   chars: {
@@ -31,7 +31,7 @@ const defaultTable = {
 };
 task(TASK_STORAGE_LAYOUT, 'Pretty print the storage layout of all the contracts').setAction(
   async (_, hre) => {
-    const { contracts, getArtifact } = await hre.runGetArtifacts();
+    const { contracts, getArtifact } = await hre.run(SUBTASK_GET_ARTIFACTS);
     const dump = await dumpStorage({ contracts, getArtifact });
 
     if (!dump) return;
