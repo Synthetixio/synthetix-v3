@@ -36,6 +36,8 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
     const now = Date.now();
     const target = path.resolve(hre.config.paths.root, output);
 
+    await hre.run('compile');
+
     const { contracts, getArtifact } = await hre.run(SUBTASK_GET_ARTIFACTS);
 
     if (!noValidate) {
