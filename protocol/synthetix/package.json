@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.3.19",
+  "version": "3.6.0",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
@@ -9,6 +9,7 @@
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
     "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "storage:verify": "hardhat compile --force && hardhat storage:verify",
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.json",
@@ -34,7 +35,6 @@
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-ast": "^0.4.55",
-    "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.2"
+    "solidity-docgen": "^0.6.0-beta.36"
   }
 }

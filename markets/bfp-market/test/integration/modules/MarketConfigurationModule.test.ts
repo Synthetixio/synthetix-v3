@@ -3,12 +3,26 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assert from 'assert';
 import { bootstrap } from '../../bootstrap';
-import { bn, genBootstrap, genMarket, genOneOf } from '../../generators';
-import { withExplicitEvmMine } from '../../helpers';
+import {
+  bn,
+  genBootstrap,
+  genMarket,
+  genNumber,
+  genOneOf,
+  genOrder,
+  genTrader,
+} from '../../generators';
+import {
+  commitAndSettle,
+  depositMargin,
+  fastForwardBySec,
+  SECONDS_ONE_DAY,
+  withExplicitEvmMine,
+} from '../../helpers';
 
 describe('MarketConfigurationModule', async () => {
   const bs = bootstrap(genBootstrap());
-  const { markets, traders, owner, systems, restore, provider } = bs;
+  const { markets, collateralsWithoutSusd, traders, owner, systems, restore, provider } = bs;
 
   beforeEach(restore);
 
@@ -171,6 +185,81 @@ describe('MarketConfigurationModule', async () => {
         `MarketNotFound("${notFoundMarketId}")`,
         BfpMarketProxy
       );
+    });
+
+    it('should call recomputeFunding when setting market configuration', async () => {
+      const { BfpMarketProxy } = systems();
+      const from = owner();
+
+      // Randomly select a market currently available and new params for said market.
+      const market = genOneOf(markets());
+      const marketId = market.marketId();
+      const { specific } = genMarket();
+
+      const collateral = genOneOf(collateralsWithoutSusd());
+      const { trader, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs, {
+          desiredMarket: market,
+          desiredCollateral: collateral,
+          desiredMarginUsdDepositAmount: 10_000,
+        })
+      );
+
+      const openOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSide: 1,
+        desiredLeverage: 10,
+      });
+      await commitAndSettle(bs, marketId, trader, openOrder);
+
+      // Fast-forward time to accrue funding.
+      await fastForwardBySec(provider(), SECONDS_ONE_DAY);
+
+      const { receipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.connect(from).setMarketConfigurationById({ ...specific, marketId }),
+        provider()
+      );
+
+      await assertEvent(
+        receipt,
+        `MarketConfigured(${marketId}, "${await from.getAddress()}")`,
+        BfpMarketProxy
+      );
+
+      await assertEvent(receipt, `FundingRecomputed`, BfpMarketProxy);
+    });
+  });
+
+  describe('setMinDelegationTime', () => {
+    it('should revert when non-owner', async () => {
+      const { BfpMarketProxy } = systems();
+      const from = genOneOf(traders()).signer; // not owner.
+
+      // Randomly select a market currently available and new params for said market.
+      const marketId = genOneOf(markets()).marketId();
+      const minDelegationTime = BigInt(genNumber(1, 86400));
+
+      await assertRevert(
+        BfpMarketProxy.connect(from).setMinDelegationTime(marketId, minDelegationTime),
+        `Unauthorized("${await from.getAddress()}")`,
+        BfpMarketProxy
+      );
+    });
+
+    it('should set min delegation time', async () => {
+      const { BfpMarketProxy, Core } = systems();
+      const from = owner();
+
+      // Randomly select a market currently available and new params for said market.
+      const marketId = genOneOf(markets()).marketId();
+      const minDelegationTime = BigInt(genNumber(1, 86400));
+
+      const { receipt } = await withExplicitEvmMine(
+        () => BfpMarketProxy.connect(from).setMinDelegationTime(marketId, minDelegationTime),
+        provider()
+      );
+
+      await assertEvent(receipt, `SetMinDelegateTime(${marketId}, ${minDelegationTime})`, Core);
     });
   });
 });

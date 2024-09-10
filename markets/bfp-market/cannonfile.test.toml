@@ -24,7 +24,7 @@ preset = "<%= settings.synthetixPreset %>"
 
 [import.pyth]
 source = "pyth"
-args = [120, 1] # 120s, 1wei
+# args = [120, 1] # 120s, 1wei
 
 # --- Module Contracts --- #
 
@@ -42,7 +42,7 @@ args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.MarketConfigurationModule]
 artifact = "MarketConfigurationModule"
-args = []
+args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 [contract.PerpAccountModule]
 artifact = "PerpAccountModule"

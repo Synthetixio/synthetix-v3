@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import {Price} from "@synthetixio/spot-market/contracts/storage/Price.sol";
+import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256, SafeCastU256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
@@ -13,11 +13,11 @@ import {PerpsPrice} from "./PerpsPrice.sol";
 import {MarketUpdate} from "./MarketUpdate.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 import {GlobalPerpsMarket} from "./GlobalPerpsMarket.sol";
-import {InterestRate} from "./InterestRate.sol";
 import {GlobalPerpsMarketConfiguration} from "./GlobalPerpsMarketConfiguration.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
+import {PerpsCollateralConfiguration} from "./PerpsCollateralConfiguration.sol";
 
 uint128 constant SNX_USD_MARKET_ID = 0;
 
@@ -36,6 +36,7 @@ library PerpsAccount {
     using PerpsMarketFactory for PerpsMarketFactory.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
     using DecimalMath for int256;
     using DecimalMath for uint256;
     using KeeperCosts for KeeperCosts.Data;
@@ -50,15 +51,18 @@ library PerpsAccount {
         SetUtil.UintSet activeCollateralTypes;
         // @dev set of open position market ids
         SetUtil.UintSet openPositionMarketIds;
+        // @dev account's debt accrued from previous positions
+        // @dev please use updateAccountDebt() to update this value which will update global debt also
+        uint256 debt;
     }
 
     error InsufficientCollateralAvailableForWithdraw(
-        uint256 availableUsdDenominated,
-        uint256 requiredUsdDenominated
+        int256 withdrawableMarginUsd,
+        uint256 requestedMarginUsd
     );
 
     error InsufficientSynthCollateral(
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 collateralAmount,
         uint256 withdrawAmount
     );
@@ -67,9 +71,13 @@ library PerpsAccount {
 
     error AccountLiquidatable(uint128 accountId);
 
+    error AccountMarginLiquidatable(uint128 accountId);
+
     error MaxPositionsPerAccountReached(uint128 maxPositionsPerAccount);
 
     error MaxCollateralsPerAccountReached(uint128 maxCollateralsPerAccount);
+
+    error NonexistentDebt(uint128 accountId);
 
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
@@ -100,10 +108,10 @@ library PerpsAccount {
         }
     }
 
-    function validateMaxCollaterals(uint128 accountId, uint128 synthMarketId) internal view {
+    function validateMaxCollaterals(uint128 accountId, uint128 collateralId) internal view {
         Data storage account = load(accountId);
 
-        if (account.collateralAmounts[synthMarketId] == 0) {
+        if (account.collateralAmounts[collateralId] == 0) {
             uint128 maxCollateralsPerAccount = GlobalPerpsMarketConfiguration
                 .load()
                 .maxCollateralsPerAccount;
@@ -111,6 +119,71 @@ library PerpsAccount {
                 revert MaxCollateralsPerAccountReached(maxCollateralsPerAccount);
             }
         }
+    }
+
+    /**
+     * @notice This function charges the account the specified amount
+     * @dev This is the only function that changes account debt.
+     * @dev Excess credit is added to account's snxUSD amount.
+     * @dev if the amount is positive, it is credit, if negative, it is debt.
+     */
+    function charge(Data storage self, int256 amount) internal returns (uint256 debt) {
+        uint256 newDebt;
+        if (amount > 0) {
+            // Adding credit
+            int256 leftoverDebt = self.debt.toInt() - amount;
+            if (leftoverDebt > 0) {
+                newDebt = leftoverDebt.toUint();
+            } else {
+                newDebt = 0;
+                updateCollateralAmount(self, SNX_USD_MARKET_ID, -leftoverDebt);
+            }
+        } else {
+            // Adding debt
+            int256 creditAvailable = self.collateralAmounts[SNX_USD_MARKET_ID].toInt();
+            int256 leftoverCredit = creditAvailable + amount;
+
+            if (leftoverCredit > 0) {
+                updateCollateralAmount(self, SNX_USD_MARKET_ID, amount);
+                newDebt = self.debt;
+            } else {
+                updateCollateralAmount(self, SNX_USD_MARKET_ID, -creditAvailable);
+                newDebt = (self.debt.toInt() - leftoverCredit).toUint();
+            }
+        }
+
+        return updateAccountDebt(self, newDebt.toInt() - self.debt.toInt());
+    }
+
+    function updateAccountDebt(Data storage self, int256 amount) internal returns (uint256 debt) {
+        self.debt = (self.debt.toInt() + amount).toUint();
+        GlobalPerpsMarket.load().updateDebt(amount);
+
+        return self.debt;
+    }
+
+    function isEligibleForMarginLiquidation(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal view returns (bool isEligible, int256 availableMargin) {
+        // calculate keeper costs
+        KeeperCosts.Data storage keeperCosts = KeeperCosts.load();
+        uint256 totalLiquidationCost = keeperCosts.getFlagKeeperCosts(self.id) +
+            keeperCosts.getLiquidateKeeperCosts();
+        uint256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance, false);
+
+        GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
+            .load();
+        uint256 liquidationRewardForKeeper = globalConfig.calculateCollateralLiquidateReward(
+            totalCollateralValue
+        );
+
+        int256 totalLiquidationReward = globalConfig
+            .keeperReward(liquidationRewardForKeeper, totalLiquidationCost, totalCollateralValue)
+            .toInt();
+
+        availableMargin = getAvailableMargin(self, stalenessTolerance) - totalLiquidationReward;
+        isEligible = availableMargin < 0 && self.debt > 0;
     }
 
     function isEligibleForLiquidation(
@@ -139,7 +212,7 @@ library PerpsAccount {
 
     function flagForLiquidation(
         Data storage self
-    ) internal returns (uint256 flagKeeperCost, uint256 marginCollected) {
+    ) internal returns (uint256 flagKeeperCost, uint256 seizedMarginValue) {
         SetUtil.UintSet storage liquidatableAccounts = GlobalPerpsMarket
             .load()
             .liquidatableAccounts;
@@ -147,8 +220,10 @@ library PerpsAccount {
         if (!liquidatableAccounts.contains(self.id)) {
             flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
-            marginCollected = convertAllCollateralToUsd(self);
+            seizedMarginValue = seizeCollateral(self);
             AsyncOrder.load(self.id).reset();
+
+            updateAccountDebt(self, -self.debt.toInt());
         }
     }
 
@@ -166,21 +241,44 @@ library PerpsAccount {
 
     function updateCollateralAmount(
         Data storage self,
-        uint128 synthMarketId,
+        uint128 collateralId,
         int256 amountDelta
     ) internal returns (uint256 collateralAmount) {
-        collateralAmount = (self.collateralAmounts[synthMarketId].toInt() + amountDelta).toUint();
-        self.collateralAmounts[synthMarketId] = collateralAmount;
+        collateralAmount = (self.collateralAmounts[collateralId].toInt() + amountDelta).toUint();
+        self.collateralAmounts[collateralId] = collateralAmount;
 
-        bool isActiveCollateral = self.activeCollateralTypes.contains(synthMarketId);
+        bool isActiveCollateral = self.activeCollateralTypes.contains(collateralId);
         if (collateralAmount > 0 && !isActiveCollateral) {
-            self.activeCollateralTypes.add(synthMarketId);
+            self.activeCollateralTypes.add(collateralId);
         } else if (collateralAmount == 0 && isActiveCollateral) {
-            self.activeCollateralTypes.remove(synthMarketId);
+            self.activeCollateralTypes.remove(collateralId);
         }
 
         // always update global values when account collateral is changed
-        GlobalPerpsMarket.load().updateCollateralAmount(synthMarketId, amountDelta);
+        GlobalPerpsMarket.load().updateCollateralAmount(collateralId, amountDelta);
+    }
+
+    function payDebt(Data storage self, uint256 amount) internal returns (uint256 debtPaid) {
+        if (self.debt == 0) {
+            revert NonexistentDebt(self.id);
+        }
+
+        /*
+            1. if the debt is less than the amount, set debt to 0 and only deposit debt amount
+            2. if the debt is more than the amount, subtract the amount from the debt
+            3. excess amount is ignored
+        */
+
+        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
+
+        debtPaid = MathUtil.min(self.debt, amount);
+        updateAccountDebt(self, -debtPaid.toInt());
+
+        perpsMarketFactory.synthetix.depositMarketUsd(
+            perpsMarketFactory.perpsMarketId,
+            ERC2771Context._msgSender(),
+            debtPaid
+        );
     }
 
     /**
@@ -191,68 +289,91 @@ library PerpsAccount {
      */
     function validateWithdrawableAmount(
         Data storage self,
-        uint128 synthMarketId,
+        uint128 collateralId,
         uint256 amountToWithdraw,
         ISpotMarketSystem spotMarket
-    ) internal view returns (uint256 availableWithdrawableCollateralUsd) {
-        uint256 collateralAmount = self.collateralAmounts[synthMarketId];
+    ) internal view {
+        uint256 collateralAmount = self.collateralAmounts[collateralId];
         if (collateralAmount < amountToWithdraw) {
-            revert InsufficientSynthCollateral(synthMarketId, collateralAmount, amountToWithdraw);
+            revert InsufficientSynthCollateral(collateralId, collateralAmount, amountToWithdraw);
         }
 
-        (
-            bool isEligible,
-            int256 availableMargin,
-            uint256 initialRequiredMargin,
-            ,
-            uint256 liquidationReward
-        ) = isEligibleForLiquidation(self, PerpsPrice.Tolerance.STRICT);
-
-        if (isEligible) {
+        int256 withdrawableMarginUsd = getWithdrawableMargin(self, PerpsPrice.Tolerance.STRICT);
+        // Note: this can only happen if account is liquidatable
+        if (withdrawableMarginUsd < 0) {
             revert AccountLiquidatable(self.id);
         }
 
-        uint256 requiredMargin = initialRequiredMargin + liquidationReward;
-        // availableMargin can be assumed to be positive since we check for isEligible for liquidation prior
-        availableWithdrawableCollateralUsd = availableMargin.toUint() - requiredMargin;
-
         uint256 amountToWithdrawUsd;
-        if (synthMarketId == SNX_USD_MARKET_ID) {
+        if (collateralId == SNX_USD_MARKET_ID) {
             amountToWithdrawUsd = amountToWithdraw;
         } else {
-            (amountToWithdrawUsd, ) = spotMarket.quoteSellExactIn(
-                synthMarketId,
+            (amountToWithdrawUsd, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
                 amountToWithdraw,
-                Price.Tolerance.DEFAULT
+                spotMarket,
+                PerpsPrice.Tolerance.STRICT,
+                false
             );
         }
 
-        if (amountToWithdrawUsd > availableWithdrawableCollateralUsd) {
+        if (amountToWithdrawUsd.toInt() > withdrawableMarginUsd) {
             revert InsufficientCollateralAvailableForWithdraw(
-                availableWithdrawableCollateralUsd,
+                withdrawableMarginUsd,
                 amountToWithdrawUsd
             );
         }
     }
 
-    function getTotalCollateralValue(
+    /**
+     * @notice Withdrawable amount depends on if the account has active positions or not
+     * @dev    If the account has no active positions and no debt, the withdrawable margin is the total collateral value
+     * @dev    If the account has no active positions but has debt, the withdrawable margin is the available margin (which is debt reduced)
+     * @dev    If the account has active positions, the withdrawable margin is the available margin - required margin - potential liquidation reward
+     */
+    function getWithdrawableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
+    ) internal view returns (int256 withdrawableMargin) {
+        bool hasActivePositions = hasOpenPositions(self);
+
+        // not allowed to withdraw until debt is paid off fully.
+        if (self.debt > 0) return 0;
+
+        if (hasActivePositions) {
+            (
+                uint256 requiredInitialMargin,
+                ,
+                uint256 liquidationReward
+            ) = getAccountRequiredMargins(self, stalenessTolerance);
+            uint256 requiredMargin = requiredInitialMargin + liquidationReward;
+            withdrawableMargin =
+                getAvailableMargin(self, stalenessTolerance) -
+                requiredMargin.toInt();
+        } else {
+            withdrawableMargin = getTotalCollateralValue(self, stalenessTolerance, false).toInt();
+        }
+    }
+
+    function getTotalCollateralValue(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance,
+        bool useDiscountedValue
     ) internal view returns (uint256) {
         uint256 totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint256 i = 1; i <= self.activeCollateralTypes.length(); i++) {
-            uint128 synthMarketId = self.activeCollateralTypes.valueAt(i).to128();
-            uint256 amount = self.collateralAmounts[synthMarketId];
+            uint128 collateralId = self.activeCollateralTypes.valueAt(i).to128();
+            uint256 amount = self.collateralAmounts[collateralId];
 
             uint256 amountToAdd;
-            if (synthMarketId == SNX_USD_MARKET_ID) {
+            if (collateralId == SNX_USD_MARKET_ID) {
                 amountToAdd = amount;
             } else {
-                (amountToAdd, ) = spotMarket.quoteSellExactIn(
-                    synthMarketId,
+                (amountToAdd, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
                     amount,
-                    Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
+                    spotMarket,
+                    stalenessTolerance,
+                    useDiscountedValue
                 );
             }
             totalCollateralValue += amountToAdd;
@@ -274,14 +395,20 @@ library PerpsAccount {
         }
     }
 
+    /**
+     * @notice This function returns the available margin for an account (this is not withdrawable margin which takes into account, margin requirements for open positions)
+     * @dev    The available margin is the total collateral value + account pnl - account debt
+     * @dev    The total collateral value is always based on the discounted value of the collateral
+     */
     function getAvailableMargin(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256) {
-        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance).toInt();
+        int256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance, true)
+            .toInt();
         int256 accountPnl = getAccountPnl(self, stalenessTolerance);
 
-        return totalCollateralValue + accountPnl;
+        return totalCollateralValue + accountPnl - self.debt.toInt();
     }
 
     function getTotalNotionalOpenInterest(
@@ -391,7 +518,7 @@ library PerpsAccount {
         uint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
             costOfFlagging,
-            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT)
+            getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false)
         );
         uint256 liquidateWindowsCosts = numOfWindows == 0
             ? 0
@@ -400,124 +527,26 @@ library PerpsAccount {
         possibleLiquidationReward = liquidateAndFlagCost + liquidateWindowsCosts;
     }
 
-    function convertAllCollateralToUsd(
-        Data storage self
-    ) internal returns (uint256 totalConvertedCollateral) {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+    function seizeCollateral(Data storage self) internal returns (uint256 seizedCollateralValue) {
         uint256[] memory activeCollateralTypes = self.activeCollateralTypes.values();
 
-        // 1. withdraw all collateral from synthetix
-        // 2. sell all collateral for snxUSD
-        // 3. deposit snxUSD into synthetix
         for (uint256 i = 0; i < activeCollateralTypes.length; i++) {
-            uint128 synthMarketId = activeCollateralTypes[i].to128();
-            if (synthMarketId == SNX_USD_MARKET_ID) {
-                totalConvertedCollateral += self.collateralAmounts[synthMarketId];
-                updateCollateralAmount(
-                    self,
-                    synthMarketId,
-                    -(self.collateralAmounts[synthMarketId].toInt())
-                );
+            uint128 collateralId = activeCollateralTypes[i].to128();
+            if (collateralId == SNX_USD_MARKET_ID) {
+                seizedCollateralValue += self.collateralAmounts[collateralId];
             } else {
-                totalConvertedCollateral += _deductAllSynth(self, factory, synthMarketId);
-            }
-        }
-    }
-
-    /**
-     * @notice  This function deducts snxUSD from an account
-     * @dev It uses the synth deduction priority to determine which synth to deduct from first
-     * @dev if the synth is not snxUSD it will sell the synth for snxUSD
-     * @dev Returns two arrays with the synth ids and amounts deducted
-     */
-    function deductFromAccount(
-        Data storage self,
-        uint256 amount // snxUSD
-    ) internal returns (uint128[] memory deductedSynthIds, uint256[] memory deductedAmount) {
-        uint256 leftoverAmount = amount;
-        uint128[] storage synthDeductionPriority = GlobalPerpsMarketConfiguration
-            .load()
-            .synthDeductionPriority;
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        ISpotMarketSystem spotMarket = factory.spotMarket;
-
-        deductedSynthIds = new uint128[](synthDeductionPriority.length);
-        deductedAmount = new uint256[](synthDeductionPriority.length);
-
-        for (uint256 i = 0; i < synthDeductionPriority.length; i++) {
-            uint128 synthMarketId = synthDeductionPriority[i];
-            uint256 availableAmount = self.collateralAmounts[synthMarketId];
-            if (availableAmount == 0) {
-                continue;
-            }
-            deductedSynthIds[i] = synthMarketId;
-
-            if (synthMarketId == SNX_USD_MARKET_ID) {
-                // snxUSD
-                if (availableAmount >= leftoverAmount) {
-                    deductedAmount[i] = leftoverAmount;
-                    updateCollateralAmount(self, synthMarketId, -(leftoverAmount.toInt()));
-                    leftoverAmount = 0;
-                    break;
-                } else {
-                    deductedAmount[i] = availableAmount;
-                    updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
-                    leftoverAmount -= availableAmount;
-                }
-            } else {
-                (uint256 synthAmountRequired, ) = spotMarket.quoteSellExactOut(
-                    synthMarketId,
-                    leftoverAmount,
-                    Price.Tolerance.STRICT
+                // transfer to liquidation asset manager
+                seizedCollateralValue += PerpsMarketFactory.load().transferLiquidatedSynth(
+                    collateralId,
+                    self.collateralAmounts[collateralId]
                 );
-
-                address synthToken = factory.spotMarket.getSynth(synthMarketId);
-
-                if (availableAmount >= synthAmountRequired) {
-                    factory.synthetix.withdrawMarketCollateral(
-                        factory.perpsMarketId,
-                        synthToken,
-                        synthAmountRequired
-                    );
-
-                    (uint256 amountToDeduct, ) = spotMarket.sellExactOut(
-                        synthMarketId,
-                        leftoverAmount,
-                        type(uint256).max,
-                        address(0)
-                    );
-
-                    factory.depositMarketUsd(leftoverAmount);
-
-                    deductedAmount[i] = amountToDeduct;
-                    updateCollateralAmount(self, synthMarketId, -(amountToDeduct.toInt()));
-                    leftoverAmount = 0;
-                    break;
-                } else {
-                    factory.synthetix.withdrawMarketCollateral(
-                        factory.perpsMarketId,
-                        synthToken,
-                        availableAmount
-                    );
-
-                    (uint256 amountToDeductUsd, ) = spotMarket.sellExactIn(
-                        synthMarketId,
-                        availableAmount,
-                        0,
-                        address(0)
-                    );
-
-                    factory.depositMarketUsd(amountToDeductUsd);
-
-                    deductedAmount[i] = availableAmount;
-                    updateCollateralAmount(self, synthMarketId, -(availableAmount.toInt()));
-                    leftoverAmount -= amountToDeductUsd;
-                }
             }
-        }
 
-        if (leftoverAmount > 0) {
-            revert InsufficientAccountMargin(leftoverAmount);
+            updateCollateralAmount(
+                self,
+                collateralId,
+                -(self.collateralAmounts[collateralId].toInt())
+            );
         }
     }
 
@@ -582,29 +611,7 @@ library PerpsAccount {
         );
     }
 
-    function _deductAllSynth(
-        Data storage self,
-        PerpsMarketFactory.Data storage factory,
-        uint128 synthMarketId
-    ) private returns (uint256 amountUsd) {
-        uint256 amount = self.collateralAmounts[synthMarketId];
-        address synth = factory.spotMarket.getSynth(synthMarketId);
-
-        // 1. withdraw collateral from market manager
-        factory.synthetix.withdrawMarketCollateral(factory.perpsMarketId, synth, amount);
-
-        // 2. sell collateral for snxUSD
-        (amountUsd, ) = PerpsMarketFactory.load().spotMarket.sellExactIn(
-            synthMarketId,
-            amount,
-            0,
-            address(0)
-        );
-
-        // 3. deposit snxUSD into market manager
-        factory.depositMarketUsd(amountUsd);
-
-        // 4. update account collateral amount
-        updateCollateralAmount(self, synthMarketId, -(amount.toInt()));
+    function hasOpenPositions(Data storage self) internal view returns (bool) {
+        return self.openPositionMarketIds.length() > 0;
     }
 }

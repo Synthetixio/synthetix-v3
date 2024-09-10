@@ -1,0 +1,79 @@
+name = "synthetix-governance-satellite"
+description = "On-chain voting for synthetix councils - Logic for satellite chains"
+version = "<%= package.version %>"
+include = ["./tomls/proxy-base.toml", "./tomls/council-token.toml"]
+
+# Deployment Owner, defaults to first hardhat account
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.salt]
+defaultValue = "governance"
+
+[setting.wormhole_core]
+defaultValue = "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.wormhole_relayer]
+defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
+
+[setting.initial_council_member]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.initial_epoch_index]
+defaultValue = "0"
+
+[setting.initial_epoch_start_date]
+defaultValue = "0"
+
+[setting.initial_nomination_period_start_date]
+defaultValue = "0"
+
+[setting.initial_voting_period_start_date]
+defaultValue = "0"
+
+[setting.initial_epoch_end_date]
+defaultValue = "0"
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.ElectionModuleSatellite]
+artifact = "contracts/modules/core/ElectionModuleSatellite.sol:ElectionModuleSatellite"
+
+[contract.SnapshotVotePowerModule]
+artifact = "contracts/modules/core/SnapshotVotePowerModule.sol:SnapshotVotePowerModule"
+
+[router.CoreRouter]
+contracts = [
+    "AssociatedSystemsModule",
+    "ElectionModuleSatellite",
+    "SnapshotVotePowerModule",
+    "InitialModuleBundle",
+]
+
+[invoke.upgrade_core_proxy]
+target = ["InitialProxy"]
+fromCall.func = "owner"
+func = "upgradeTo"
+args = ["<%= contracts.CoreRouter.address %>"]
+factory.GovernanceProxy.abiOf = ["CoreRouter"]
+factory.GovernanceProxy.event = "Upgraded"
+factory.GovernanceProxy.arg = 0
+factory.GovernanceProxy.highlight = true
+
+[invoke.init_election_module]
+target = ["GovernanceProxy"]
+fromCall.func = "owner"
+func = "initElectionModuleSatellite(uint256,uint64,uint64,uint64,uint64,address,address,address[])"
+args = [
+    "<%= settings.initial_epoch_index %>",
+    "<%= settings.initial_epoch_start_date %>",
+    "<%= settings.initial_nomination_period_start_date %>",
+    "<%= settings.initial_voting_period_start_date %>",
+    "<%= settings.initial_epoch_end_date %>",
+    "<%= settings.wormhole_core %>",
+    "<%= settings.wormhole_relayer %>",
+    [
+        "<%= settings.initial_council_member %>",
+    ],
+]

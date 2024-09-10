@@ -123,7 +123,8 @@ library PerpMarket {
     function updateDebtCorrection(
         PerpMarket.Data storage self,
         Position.Data storage oldPosition,
-        Position.Data memory newPosition
+        Position.Data memory newPosition,
+        uint256 oraclePrice
     ) internal {
         // This is needed to perform a fast constant time op for overall market debt.
         //
@@ -133,7 +134,7 @@ library PerpMarket {
         int256 fundingDelta = newPosition.entryFundingAccrued.mulDecimal(sizeDelta);
         int256 notionalDelta = newPosition.entryPrice.toInt().mulDecimal(sizeDelta);
         int256 totalPositionPnl = oldPosition.getPricePnl(newPosition.entryPrice) +
-            oldPosition.getAccruedFunding(self, newPosition.entryPrice);
+            oldPosition.getAccruedFunding(self, oraclePrice);
         self.debtCorrection += (fundingDelta + notionalDelta + totalPositionPnl).to128();
     }
 
@@ -182,6 +183,21 @@ library PerpMarket {
     ) internal view returns (uint256) {
         return
             self.size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
+            self.depositedCollateral[addresses.sUsd];
+    }
+
+    /// @dev Returns the market's required minimum backing credit in USD.
+    function getMinimumCreditWithPositionSize(
+        PerpMarket.Data storage self,
+        PerpMarketConfiguration.Data storage marketConfig,
+        uint256 price,
+        int128 positionSize,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (uint256) {
+        uint128 size = self.size + MathUtil.abs(positionSize).to128();
+
+        return
+            size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +
             self.depositedCollateral[addresses.sUsd];
     }
 
@@ -288,8 +304,11 @@ library PerpMarket {
     function recomputeFunding(
         PerpMarket.Data storage self,
         uint256 price
-    ) internal returns (int128 fundingRate, int128 unrecordingFunding) {
-        (fundingRate, unrecordingFunding) = getUnrecordedFundingWithRate(self, price);
+    ) internal returns (int128 fundingRate, int128 unrecordingFunding, int128 fundingVelocity) {
+        (fundingRate, unrecordingFunding, fundingVelocity) = getUnrecordedFundingWithRate(
+            self,
+            price
+        );
 
         self.currentFundingRateComputed = fundingRate;
         self.currentFundingAccruedComputed += unrecordingFunding;
@@ -345,7 +364,9 @@ library PerpMarket {
     }
 
     /// @dev Returns the current funding rate given current market conditions.
-    function getCurrentFundingRate(PerpMarket.Data storage self) internal view returns (int128) {
+    function getCurrentFundingRate(
+        PerpMarket.Data storage self
+    ) internal view returns (int128 fundingRate, int128 fundingVelocity) {
         // calculations:
         //  - proportionalSkew = skew / skewScale
         //  - velocity         = proportionalSkew * maxFundingVelocity
@@ -362,17 +383,17 @@ library PerpMarket {
         // currentFundingRate = 0 + 0.0025 * (29,000 / 86,400)
         //                    = 0 + 0.0025 * 0.33564815
         //                    = 0.00083912
-        int128 velocity = getCurrentFundingVelocity(self);
+        fundingVelocity = getCurrentFundingVelocity(self);
         int128 elapsed = getProportionalFundingElapsed(self);
-        return self.currentFundingRateComputed + velocity.mulDecimal(elapsed).to128();
+        fundingRate = self.currentFundingRateComputed + fundingVelocity.mulDecimal(elapsed).to128();
     }
 
     /// @dev Returns the next market funding accrued value.
     function getUnrecordedFundingWithRate(
         PerpMarket.Data storage self,
         uint256 price
-    ) internal view returns (int128 fundingRate, int128 unrecordedFunding) {
-        fundingRate = getCurrentFundingRate(self);
+    ) internal view returns (int128 fundingRate, int128 unrecordedFunding, int128 fundingVelocity) {
+        (fundingRate, fundingVelocity) = getCurrentFundingRate(self);
 
         // The minus sign is needed as funding flows in the opposite direction to skew.
         int256 avgFundingRate = -(self.currentFundingRateComputed + fundingRate).divDecimal(
@@ -389,7 +410,7 @@ library PerpMarket {
     function getMaxLiquidatableCapacity(
         PerpMarketConfiguration.Data storage marketConfig
     ) internal view returns (uint128) {
-        // How do we calculcate `maxLiquidatableCapacity`?
+        // How do we calculate `maxLiquidatableCapacity`?
         //
         // As an example, assume the following example parameters for a ETH/USD market.
         //
@@ -429,12 +450,12 @@ library PerpMarket {
         //
         // [(timestamp, size), (timestamp, size), ... (timestamp, size)]
         //
-        // Where timestamp is the `block.timestamp` at which a liqudation (partial or full) had occurred and
+        // Where timestamp is the `block.timestamp` at which a liquidation (partial or full) had occurred and
         // `size` is the amount of native units that was liquidated at that time. Many liquidations can
         // occur in a single block, so `size` is also the accumulation tokens liquidated by timestamp.
         //
         // Additionally, we also have the following information (1) current block.timestamp, (2) necessary details
-        // to calculcate `maxLiquidatableCapacity` (maximum size that can be liquidated within a single window), and
+        // to calculate `maxLiquidatableCapacity` (maximum size that can be liquidated within a single window), and
         // (3) seconds per window.
         //
         // To calculate how much size has already been liquidated in the current window, sum over all `size` where

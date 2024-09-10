@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/op-gas-price-oracle",
-  "version": "3.3.19",
+  "version": "3.6.0",
   "description": "Optimism Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"
@@ -11,6 +11,7 @@
     "clean": "hardhat clean",
     "build": "yarn build:contracts",
     "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "storage:verify": "hardhat compile --force && hardhat storage:verify",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.json",
     "compile-contracts": "hardhat compile",
@@ -29,7 +30,6 @@
     "@synthetixio/docgen": "workspace:*",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4"
   }
 }

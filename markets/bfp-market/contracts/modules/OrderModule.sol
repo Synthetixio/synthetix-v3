@@ -144,8 +144,18 @@ contract OrderModule is IOrderModule {
         }
 
         for (uint256 i = 0; i < length; ) {
-            if (!config.whitelisted[hooks[i]]) {
-                revert ErrorUtil.InvalidHook(hooks[i]);
+            address hook = hooks[i];
+            if (!config.whitelisted[hook]) {
+                revert ErrorUtil.InvalidHook(hook);
+            }
+            // Checks for any duplicate hooks
+            for (uint256 j = i + 1; j < length; ) {
+                if (hooks[i] == hooks[j]) {
+                    revert ErrorUtil.DuplicateHook(hook);
+                }
+                unchecked {
+                    ++j;
+                }
             }
             unchecked {
                 ++i;
@@ -199,13 +209,8 @@ contract OrderModule is IOrderModule {
 
     /// @dev Generic helper for funding recomputation during order management.
     function recomputeFunding(PerpMarket.Data storage market, uint256 price) private {
-        (int128 fundingRate, ) = market.recomputeFunding(price);
-        emit FundingRecomputed(
-            market.id,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(price);
+        emit FundingRecomputed(market.id, market.skew, fundingRate, fundingVelocity);
     }
 
     // --- Mutations --- //
@@ -363,7 +368,7 @@ contract OrderModule is IOrderModule {
         // 2. The new utilization rate is calculated using the new market size, so we need to update the size before we recompute utilization
         recomputeUtilization(market, runtime.tradeParams.oraclePrice);
 
-        market.updateDebtCorrection(position, trade.newPosition);
+        market.updateDebtCorrection(position, trade.newPosition, runtime.tradeParams.oraclePrice);
 
         // Account debt and market total trader debt must be updated with fees incurred to settle.
         Margin.Data storage accountMargin = Margin.load(accountId, marketId);

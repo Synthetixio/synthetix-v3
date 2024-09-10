@@ -6,7 +6,7 @@ import {
   openPosition,
   requiredMargins,
   getRequiredLiquidationRewardMargin,
-  expectedStartingPnl,
+  expectedFillPricePnl,
 } from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
@@ -126,7 +126,7 @@ describe('Orders - capped margin validation', () => {
       );
 
       const availableMargin = wei(100).add(
-        expectedStartingPnl(ETH_MARKET_PRICE, fillPrice, wei(3))
+        expectedFillPricePnl(ETH_MARKET_PRICE, fillPrice, wei(3))
       );
 
       await assertRevert(
@@ -231,7 +231,7 @@ describe('Orders - capped margin validation', () => {
 
       const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
       const availableMargin = wei(currentAvailableMargin).add(
-        expectedStartingPnl(BTC_MARKET_PRICE, fillPrice, wei(5))
+        expectedFillPricePnl(BTC_MARKET_PRICE, fillPrice, wei(5))
       );
 
       await assertRevert(
@@ -333,7 +333,7 @@ describe('Orders - capped margin validation', () => {
 
       const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
       const availableMargin = wei(currentAvailableMargin).add(
-        expectedStartingPnl(BTC_MARKET_PRICE, fillPrice, wei(10))
+        expectedFillPricePnl(BTC_MARKET_PRICE, fillPrice, wei(5))
       );
 
       await assertRevert(

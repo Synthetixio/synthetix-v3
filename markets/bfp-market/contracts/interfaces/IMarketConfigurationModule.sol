@@ -5,8 +5,9 @@ import {IMarket} from "@synthetixio/main/contracts/interfaces/external/IMarket.s
 import {IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
+import {IBasePerpMarket} from "./IBasePerpMarket.sol";
 
-interface IMarketConfigurationModule {
+interface IMarketConfigurationModule is IBasePerpMarket {
     // --- Structs --- //
 
     /// @notice See PerpMarketConfiguration.GlobalData for more details.
@@ -80,6 +81,11 @@ interface IMarketConfigurationModule {
     function setMarketConfigurationById(
         IMarketConfigurationModule.ConfigureByMarketParameters memory data
     ) external;
+
+    /// @notice Updates the minimum delegation time for a market.
+    /// @param marketId Market to update
+    /// @param minDelegationTime Minimum delegation time in seconds
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external;
 
     // --- Views --- //
 

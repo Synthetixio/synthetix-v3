@@ -31,6 +31,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
+    uint32 constant DEFAULT_MIN_DELEGATE_TIME = 24 hours; // 86400 seconds
+
     constructor(address _synthetix) {
         SYNTHETIX_CORE = _synthetix;
         ISynthetixSystem core = ISynthetixSystem(_synthetix);
@@ -71,7 +73,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         OwnableStorage.onlyOwner();
 
         uint128 id = ISynthetixSystem(SYNTHETIX_CORE).registerMarket(address(this));
-
+        if (data.minDelegateTime > 0) {
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(id, data.minDelegateTime);
+        } else {
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(
+                id,
+                DEFAULT_MIN_DELEGATE_TIME
+            );
+        }
         PerpMarket.create(id, data.name);
         PerpMarket.load().activeMarketIds.push(id);
         emit MarketCreated(id, data.name);
@@ -97,7 +106,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     /// @inheritdoc IPerpMarketFactoryModule
     function recomputeFunding(uint128 marketId) external {
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        (int128 fundingRate, ) = market.recomputeFunding(
+        (int128 fundingRate, , int128 fundingVelocity) = market.recomputeFunding(
             market.getOraclePrice(
                 AddressRegistry.Data({
                     synthetix: ISynthetixSystem(SYNTHETIX_CORE),
@@ -106,12 +115,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 })
             )
         );
-        emit FundingRecomputed(
-            marketId,
-            market.skew,
-            fundingRate,
-            market.getCurrentFundingVelocity()
-        );
+        emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
     }
 
     /// @inheritdoc IMarket
@@ -140,7 +144,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         }
 
         uint256 oraclePrice = market.getOraclePrice(addresses);
-        (, int128 unrecordedFunding) = market.getUnrecordedFundingWithRate(oraclePrice);
+        (, int128 unrecordedFunding, ) = market.getUnrecordedFundingWithRate(oraclePrice);
         int128 nextFundingAccrued = market.currentFundingAccruedComputed + unrecordedFunding;
         int256 priceWithFunding = oraclePrice.toInt() + nextFundingAccrued;
 
@@ -241,6 +245,7 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             oracleManager: ORACLE_MANAGER
         });
 
+        (int128 fundingRate, int128 fundingVelocity) = market.getCurrentFundingRate();
         return
             IPerpMarketFactoryModule.MarketDigest(
                 depositedCollaterals,
@@ -248,8 +253,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
                 market.skew,
                 market.size,
                 market.getOraclePrice(addresses),
-                market.getCurrentFundingVelocity(),
-                market.getCurrentFundingRate(),
+                fundingVelocity,
+                fundingRate,
                 market.currentUtilizationRateComputed,
                 remainingCapacity,
                 lastLiquidationTime,

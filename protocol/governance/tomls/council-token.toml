@@ -1,0 +1,29 @@
+[setting.council_token_name]
+defaultValue = "Synthetix Governance Module"
+
+[setting.council_token_symbol]
+defaultValue = "SNXGOV"
+
+[setting.council_token_uri]
+defaultValue = "https://synthetix.io"
+
+[contract.CouncilTokenModule]
+artifact = "contracts/modules/council-nft/CouncilTokenModule.sol:CouncilTokenModule"
+
+[router.CouncilTokenRouter]
+contracts = ["CouncilTokenModule", "InitialModuleBundle"]
+
+[invoke.init_council_token]
+target = ["GovernanceProxy"]
+fromCall.func = "owner"
+func = "initOrUpgradeNft"
+args = [
+    "<%= formatBytes32String('councilToken') %>",
+    "<%= settings.council_token_name %>",
+    "<%= settings.council_token_symbol %>",
+    "<%= settings.council_token_uri %>",
+    "<%= contracts.CouncilTokenRouter.address %>",
+]
+factory.CouncilToken.abiOf = ["CouncilTokenRouter"]
+factory.CouncilToken.event = "AssociatedSystemSet"
+factory.CouncilToken.arg = 2

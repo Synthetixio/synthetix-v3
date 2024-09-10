@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/common-config",
-  "version": "3.3.19",
+  "version": "3.4.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,12 +17,12 @@
     "@typechain/hardhat": "^9.1.0",
     "dotenv": "^16.4.3",
     "hardhat": "^2.19.5",
-    "hardhat-cannon": "2.15.2",
+    "hardhat-cannon": "2.17.0",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-gas-reporter": "^1.0.10",
     "hardhat-ignore-warnings": "^0.2.9",
     "solidity-coverage": "^0.8.7",
-    "typechain": "8.3.2"
+    "typechain": "^8.3.2"
   },
   "depcheck": {
     "ignoreMatches": [

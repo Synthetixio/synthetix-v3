@@ -18,7 +18,7 @@ describe('USDTokenModule', function () {
     stakerAddress = await staker().getAddress();
   });
 
-  before('get some snxUSD', async () => {
+  before('get some sUSD', async () => {
     await systems()
       .Core.connect(staker())
       .mintUsd(accountId, poolId, collateralAddress(), oneHundredUSD);
@@ -37,7 +37,7 @@ describe('USDTokenModule', function () {
 
   it('applied the USD parameters', async () => {
     assert.equal(await systems().USD.name(), 'Synthetic USD Token v3');
-    assert.equal(await systems().USD.symbol(), 'snxUSD');
+    assert.equal(await systems().USD.symbol(), 'sUSD');
     assert.equal(await systems().USD.decimals(), 18);
   });
 
@@ -67,11 +67,11 @@ describe('USDTokenModule', function () {
         usdBalanceBefore = await systems().USD.connect(staker()).balanceOf(stakerAddress);
       });
 
-      before('burn 50 snxUSD', async () => {
+      before('burn 50 sUSD', async () => {
         await systems().USD.connect(staker())['burn(uint256)'](fiftyUSD);
       });
 
-      it('properly reflects the amount of snxUSD burned from the caller', async () => {
+      it('properly reflects the amount of sUSD burned from the caller', async () => {
         const usdBalanceAfter = await systems().USD.connect(staker()).balanceOf(stakerAddress);
         assertBn.equal(usdBalanceAfter, usdBalanceBefore.sub(fiftyUSD));
       });

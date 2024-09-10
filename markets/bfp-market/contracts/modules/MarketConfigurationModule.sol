@@ -7,8 +7,29 @@ import {IMarketConfigurationModule} from "../interfaces/IMarketConfigurationModu
 import {PerpMarket} from "../storage/PerpMarket.sol";
 import {PerpMarketConfiguration} from "../storage/PerpMarketConfiguration.sol";
 import {ErrorUtil} from "../utils/ErrorUtil.sol";
+import {AddressRegistry} from "../storage/AddressRegistry.sol";
+import {ISynthetixSystem} from "../external/ISynthetixSystem.sol";
 
 contract MarketConfigurationModule is IMarketConfigurationModule {
+    // --- Immutables --- //
+
+    address immutable SYNTHETIX_CORE;
+    address immutable SYNTHETIX_SUSD;
+    address immutable ORACLE_MANAGER;
+
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+        ISynthetixSystem core = ISynthetixSystem(_synthetix);
+        SYNTHETIX_SUSD = address(core.getUsdToken());
+        ORACLE_MANAGER = address(core.getOracleManager());
+
+        if (
+            _synthetix == address(0) || ORACLE_MANAGER == address(0) || SYNTHETIX_SUSD == address(0)
+        ) {
+            revert ErrorUtil.InvalidCoreAddress(_synthetix);
+        }
+    }
+
     /// @inheritdoc IMarketConfigurationModule
     function setMarketConfiguration(
         IMarketConfigurationModule.GlobalMarketConfigureParameters memory data
@@ -49,7 +70,21 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         uint128 marketId = data.marketId;
 
         // Only allow an existing per market to be configurable. Ensure it's first created then configure.
-        PerpMarket.exists(marketId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
+        if (market.skew != 0) {
+            AddressRegistry.Data memory addresses = AddressRegistry.Data({
+                synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+                sUsd: SYNTHETIX_SUSD,
+                oracleManager: ORACLE_MANAGER
+            });
+
+            uint256 oraclePrice = PerpMarket.getOraclePrice(market, addresses);
+            (int128 fundingRate, , int128 fundingVelocity) = PerpMarket.recomputeFunding(
+                market,
+                oraclePrice
+            );
+            emit FundingRecomputed(marketId, market.skew, fundingRate, fundingVelocity);
+        }
 
         PerpMarketConfiguration.Data storage config = PerpMarketConfiguration.load(marketId);
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
@@ -85,6 +120,12 @@ contract MarketConfigurationModule is IMarketConfigurationModule {
         config.liquidationMaxPd = data.liquidationMaxPd;
 
         emit MarketConfigured(marketId, ERC2771Context._msgSender());
+    }
+
+    /// @inheritdoc IMarketConfigurationModule
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external {
+        OwnableStorage.onlyOwner();
+        ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(marketId, minDelegationTime);
     }
 
     // --- Views --- //

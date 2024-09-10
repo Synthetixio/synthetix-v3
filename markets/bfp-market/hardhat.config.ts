@@ -8,14 +8,13 @@ const config = {
   allowUnlimitedContractSize: true,
   docgen: {
     exclude: [
-      './interfaces/external',
-      './modules',
-      './mixins',
+      './external',
+      './generated',
       './mocks',
-      './utils',
+      './modules',
       './storage',
+      './utils',
       './Proxy.sol',
-      './Router.sol',
     ],
     templates,
   },

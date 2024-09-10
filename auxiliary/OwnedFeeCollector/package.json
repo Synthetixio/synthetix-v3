@@ -1,0 +1,36 @@
+{
+  "name": "@synthetixio/owned-fee-collector",
+  "version": "3.6.0",
+  "description": "Colelcts fees on behalf of an owner",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
+    "clean": "hardhat clean",
+    "build": "yarn build:contracts",
+    "build:contracts": "hardhat compile --force && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "publish-contracts": "cannon publish owned-fee-collector:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
+    "docgen": "hardhat docgen"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/wei": "^2.74.4",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.19.5",
+    "solidity-docgen": "^0.6.0-beta.36",
+    "typescript": "^5.5.4"
+  }
+}

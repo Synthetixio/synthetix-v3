@@ -13,6 +13,8 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
     struct CreatePerpMarketParameters {
         /// Name of the market to be created e.g, ETHPERP
         bytes32 name;
+        /// Minimum LP delegation time in seconds e.g. 86400
+        uint32 minDelegateTime;
     }
 
     struct DepositedCollateral {
@@ -52,7 +54,7 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
         uint128 utilizationRate;
         /// Amount of size remaining last recorded in current window.
         uint128 remainingLiquidatableSizeCapacity;
-        /// block.timestamp of when the last liqudation had occurred.
+        /// block.timestamp of when the last liquidation had occurred.
         uint128 lastLiquidationTime;
         /// All traders unsettled debt in USD.
         uint128 totalTraderDebtUsd;
@@ -92,9 +94,9 @@ interface IPerpMarketFactoryModule is IMarket, IBasePerpMarket {
 
     // --- Views --- //
 
-    /**
-     * @notice Returns a digest of an existing market given the `marketId`.
-     */
+    /// @notice Returns a digest of an existing market given the `marketId`.
+    /// @param marketId Market to query against
+    /// @return getMarketDigest Market digest struct
     function getMarketDigest(
         uint128 marketId
     ) external view returns (IPerpMarketFactoryModule.MarketDigest memory);

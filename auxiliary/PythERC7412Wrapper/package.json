@@ -1,18 +1,20 @@
 {
   "name": "@synthetixio/pyth-erc7412-wrapper",
-  "version": "3.3.19",
+  "version": "3.6.0",
   "description": "Benchmark prices oracle",
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
-    "coverage": "hardhat coverage --network hardhat",
-    "clean": "hardhat clean",
+    "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
     "build:contracts": "hardhat compile --force && hardhat storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "git diff --exit-code storage.dump.json",
+    "storage:verify": "hardhat compile --force && hardhat storage:verify",
+    "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "publish-contracts": "cannon publish pyth-erc7412-wrapper:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
@@ -29,7 +31,6 @@
     "@synthetixio/docgen": "workspace:*",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4"
   }
 }

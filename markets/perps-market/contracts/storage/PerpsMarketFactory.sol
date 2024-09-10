@@ -7,8 +7,9 @@ import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 import {ISpotMarketSystem} from "../interfaces/external/ISpotMarketSystem.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
-import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import {NodeDefinition} from "@synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol";
+import {PerpsPrice} from "../storage/PerpsPrice.sol";
+import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
+import {LiquidationAssetManager} from "../storage/LiquidationAssetManager.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {SetUtil} from "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
@@ -21,6 +22,8 @@ library PerpsMarketFactory {
     using SetUtil for SetUtil.UintSet;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarket for PerpsMarket.Data;
+    using LiquidationAssetManager for LiquidationAssetManager.Data;
+    using PerpsCollateralConfiguration for PerpsCollateralConfiguration.Data;
 
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
@@ -41,6 +44,10 @@ library PerpsMarketFactory {
         ISpotMarketSystem spotMarket;
         uint128 perpsMarketId;
         string name;
+        /**
+         * @dev all liquidated account's assets are sent to this address
+         */
+        address liquidationAssetManager;
     }
 
     function onlyIfInitialized(Data storage self) internal view {
@@ -100,5 +107,23 @@ library PerpsMarketFactory {
 
     function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {
         self.synthetix.withdrawMarketUsd(self.perpsMarketId, to, amount);
+    }
+
+    function transferLiquidatedSynth(
+        Data storage self,
+        uint128 collateralId,
+        uint256 amount
+    ) internal returns (uint256 synthValue) {
+        address synth = self.spotMarket.getSynth(collateralId);
+        self.synthetix.withdrawMarketCollateral(self.perpsMarketId, synth, amount);
+
+        (synthValue, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
+            amount,
+            self.spotMarket,
+            PerpsPrice.Tolerance.DEFAULT,
+            false
+        );
+
+        PerpsCollateralConfiguration.loadValidLam(collateralId).distributeCollateral(synth, amount);
     }
 }

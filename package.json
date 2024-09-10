@@ -15,11 +15,15 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "clean": "yarn workspaces foreach --all --parallel --verbose run clean",
-    "generate-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run generate-testable",
+    "generate-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --verbose run generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build-testable",
     "compile-contracts": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run compile-contracts",
     "build:ts": "yarn workspaces foreach --all --topological-dev --verbose run build:ts",
     "build": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --topological-dev --verbose run build",
+    "size-contracts": "yarn workspaces foreach --all --verbose run size-contracts",
+    "storage:verify": "yarn workspaces foreach --all --verbose run storage:verify",
+    "build:contracts": "yarn workspaces foreach --all --topological-dev --verbose run build:contracts",
+    "check:storage": "yarn workspaces foreach --all --verbose run check:storage",
     "test": "CANNON_REGISTRY_PRIORITY=local yarn workspaces foreach --all --parallel --verbose run test",
     "coverage": "yarn workspaces foreach --all --verbose run coverage",
     "lint:progress": "ESLINT_PROGRESS=true eslint --max-warnings=0 .",
@@ -40,13 +44,15 @@
     "publish:dev": "lerna publish --canary --dist-tag dev --preid dev.$(git rev-parse --short HEAD)",
     "publish-contracts": "yarn workspaces foreach --all --verbose run publish-contracts",
     "prepublishOnly": "node ./prepublishOnly.js",
-    "docgen:contracts": "yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
-    "docgen:abis": "yarn workspace @synthetixio/docgen run docgen:abis",
+    "docgen:contracts": "yarn clean && yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
     "subgraphgen": "yarn workspaces foreach --all --verbose run subgraphgen",
     "check-staged": "lint-staged",
-    "changed": "lerna changed --long"
+    "changed": "lerna changed --long",
+    "audit": "yarn npm audit --all --recursive --severity high"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.9.1",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
     "@lerna-lite/changed": "^3.3.0",
@@ -57,21 +63,23 @@
     "@synthetixio/deps": "workspace:*",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.17",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@typescript-eslint/parser": "^7.0.1",
-    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "eslint": "^9.9.1",
     "eslint-plugin-no-only-tests": "^3.1.0",
-    "lint-staged": "^15.2.2",
-    "mocha": "^10.3.0",
+    "globals": "^15.9.0",
+    "lint-staged": "^15.2.10",
+    "mocha": "^10.7.3",
     "mocha-junit-reporter": "^2.2.1",
     "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
     "prettier-plugin-toml": "^2.0.1",
-    "solhint": "^4.1.1",
+    "solhint": "^5.0.3",
     "solhint-plugin-meta-transactions": "^0.1.0",
     "solhint-plugin-numcast": "^1.0.0",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   },
   "resolutions": {
     "hardhat-gas-reporter/eth-gas-reporter": "git://github.com/dbeal-eth/eth-gas-reporter.git#fix-catch-errors"
@@ -81,22 +89,22 @@
   ],
   "lint-staged": {
     "*.js": [
-      "prettier --check",
-      "eslint --max-warnings=0"
+      "yarn prettier --check",
+      "yarn eslint --max-warnings=0"
     ],
     "*.ts": [
-      "prettier --check",
-      "eslint --max-warnings=0"
+      "yarn prettier --check",
+      "yarn eslint --max-warnings=0"
     ],
     "*.sol": [
-      "prettier --check",
-      "solhint"
+      "yarn prettier --check",
+      "yarn solhint"
     ],
-    "*.toml": "prettier --check",
-    "*.yml": "prettier --check",
-    "*.yaml": "prettier --check",
-    "*.json": "prettier --check",
-    "*.md": "prettier --check"
+    "*.toml": "yarn prettier --check",
+    "*.yml": "yarn prettier --check",
+    "*.yaml": "yarn prettier --check",
+    "*.json": "yarn prettier --check",
+    "*.md": "yarn prettier --check"
   },
   "workspaces": [
     "utils/**",
@@ -105,7 +113,7 @@
     "auxiliary/**"
   ],
   "engines": {
-    "node": "^18.16.0"
+    "node": "^20.17.0"
   },
-  "packageManager": "yarn@4.1.0"
+  "packageManager": "yarn@4.4.1"
 }
