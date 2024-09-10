@@ -364,7 +364,11 @@
         {
           "type": "enum",
           "name": "weight",
-          "members": ["Sqrt", "Linear", "Scaled"],
+          "members": [
+            "Sqrt",
+            "Linear",
+            "Scaled"
+          ],
           "size": 1,
           "slot": "0",
           "offset": 1
