@@ -48,7 +48,7 @@
     "docgen:contracts": "yarn clean && yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
     "subgraphgen": "yarn workspaces foreach --all --verbose run subgraphgen",
     "check-staged": "lint-staged",
-    "copy-storage": "bash -c 'for f in $(find . -name 'storage.new.dump.json'); do cp $f $(dirname $f)/storage.dump.json; done'",
+    "copy-storage": "bash -c 'for f in $(find . -name 'storage.new.dump.json'); do cp $f $(dirname $f)/storage.dump.json; git add $(dirname $f)/storage.dump.json; done'",
     "changed": "lerna changed --long",
     "audit": "yarn npm audit --all --recursive --severity high"
   },
