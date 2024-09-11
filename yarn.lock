@@ -1758,6 +1758,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/hashes@npm:~1.5.0":
+  version: 1.5.0
+  resolution: "@noble/hashes@npm:1.5.0"
+  checksum: 10/da7fc7af52af7afcf59810a7eea6155075464ff462ffda2572dc6d57d53e2669b1ea2ec774e814f6273f1697e567f28d36823776c9bf7068cba2a2855140f26e
+  languageName: node
+  linkType: hard
+
 "@noble/secp256k1@npm:1.7.1, @noble/secp256k1@npm:~1.7.0":
   version: 1.7.1
   resolution: "@noble/secp256k1@npm:1.7.1"
@@ -2631,6 +2638,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/base@npm:~1.1.8":
+  version: 1.1.8
+  resolution: "@scure/base@npm:1.1.8"
+  checksum: 10/5b764c0e98610bc4993479965db718457d91b68d3c6f1339e3cc74e53fc6b0ae0428d1d64d29a0de0cee9d966034674d4464fdbd2d1dbef27013927b2fe05c45
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:1.1.5":
   version: 1.1.5
   resolution: "@scure/bip32@npm:1.1.5"
@@ -2663,13 +2677,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/bip39@npm:1.3.0":
-  version: 1.3.0
-  resolution: "@scure/bip39@npm:1.3.0"
+"@scure/bip39@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@scure/bip39@npm:1.4.0"
   dependencies:
-    "@noble/hashes": "npm:~1.4.0"
-    "@scure/base": "npm:~1.1.6"
-  checksum: 10/7d71fd58153de22fe8cd65b525f6958a80487bc9d0fbc32c71c328aeafe41fa259f989d2f1e0fa4fdfeaf83b8fcf9310d52ed9862987e46c2f2bfb9dd8cf9fc1
+    "@noble/hashes": "npm:~1.5.0"
+    "@scure/base": "npm:~1.1.8"
+  checksum: 10/f86e0e79768c95bc684ed6de92892b1a6f228db0f8fab836f091c0ec0f6d1e291b8c4391cfbeaa9ea83f41045613535b1940cd10e7d780a5b73db163b1e7f151
   languageName: node
   linkType: hard
 
@@ -14045,9 +14059,9 @@ __metadata:
   linkType: hard
 
 "solidity-ast@npm:^0.4.38, solidity-ast@npm:^0.4.55":
-  version: 0.4.58
-  resolution: "solidity-ast@npm:0.4.58"
-  checksum: 10/f483278c428747a8b8da14d3428d9d158746236cd814b1f0bc7c669aece0ba092de3b6f11dbc56d9e6178fa940726ed30176232e3fe9b7317a071eb0133a28a9
+  version: 0.4.59
+  resolution: "solidity-ast@npm:0.4.59"
+  checksum: 10/95172fcc3b4ea183c328c36b72b1b861c2e1a2c0f8334f5375f05c1f7a11e13b10f126818dd1a65bb672b4bca87278faaa2bae5c25d2433e162bc86a47d43daa
   languageName: node
   linkType: hard
 
@@ -15276,22 +15290,22 @@ __metadata:
   linkType: hard
 
 "typescript@npm:^5.5.4":
-  version: 5.5.4
-  resolution: "typescript@npm:5.5.4"
+  version: 5.6.2
+  resolution: "typescript@npm:5.6.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/1689ccafef894825481fc3d856b4834ba3cc185a9c2878f3c76a9a1ef81af04194849840f3c69e7961e2312771471bb3b460ca92561e1d87599b26c37d0ffb6f
+  checksum: 10/f95365d4898f357823e93d334ecda9fcade54f009b397c7d05b7621cd9e865981033cf89ccde0f3e3a7b73b1fdbae18e92bc77db237b43e912f053fef0f9a53b
   languageName: node
   linkType: hard
 
 "typescript@patch:typescript@npm%3A^5.5.4#optional!builtin<compat/typescript>":
-  version: 5.5.4
-  resolution: "typescript@patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"
+  version: 5.6.2
+  resolution: "typescript@patch:typescript@npm%3A5.6.2#optional!builtin<compat/typescript>::version=5.6.2&hash=8c6c40"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/746fdd0865c5ce4f15e494c57ede03a9e12ede59cfdb40da3a281807853fe63b00ef1c912d7222143499aa82f18b8b472baa1830df8804746d09b55f6cf5b1cc
+  checksum: 10/8bfc7ca0d9feca4c3fcbd6c70741abfcd714197d6448e68225ae71e462447d904d3bfba49759a8fbe4956d87f054e2d346833c8349c222daa594a2626d4e1be8
   languageName: node
   linkType: hard
 
@@ -15585,14 +15599,14 @@ __metadata:
   linkType: hard
 
 "viem@npm:^2.16.5, viem@npm:^2.9.31":
-  version: 2.21.1
-  resolution: "viem@npm:2.21.1"
+  version: 2.21.4
+  resolution: "viem@npm:2.21.4"
   dependencies:
     "@adraffy/ens-normalize": "npm:1.10.0"
     "@noble/curves": "npm:1.4.0"
     "@noble/hashes": "npm:1.4.0"
     "@scure/bip32": "npm:1.4.0"
-    "@scure/bip39": "npm:1.3.0"
+    "@scure/bip39": "npm:1.4.0"
     abitype: "npm:1.0.5"
     isows: "npm:1.0.4"
     webauthn-p256: "npm:0.0.5"
@@ -15602,7 +15616,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10/7f9901b276abf199f3cdad3a11d013502ec0dea326844e96f8b0fe65eb90dc4d5c14ac038ceb24524f8c6cb6e464ed54809119916887b3948d3a4a28f793eee6
+  checksum: 10/9e589af23127ac40c7510402d5f3fc433dd039552748715c6abf65ef1290fb0c0c44c9a66fe56a942801eaabdda57793de3a84ff046acecc7ef5d5c137ccb50f
   languageName: node
   linkType: hard
 
