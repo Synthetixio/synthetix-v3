@@ -3,9 +3,12 @@ version = "<%= package.version %>"
 description = "Colelcts fees on behalf of an owner"
 
 [setting.owner]
+defaultValue = "0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8"
+
+[setting.fee_share_recipient]
 defaultValue = "0x0000000000000000000000000000000000000000"
 
-[setting.owner_fee_share]
+[setting.fee_share]
 defaultValue = "500000000000000000"
 
 [setting.fee_token]
@@ -15,7 +18,8 @@ defaultValue = "0x0000000000000000000000000000000000000000"
 artifact = "contracts/OwnedFeeCollector.sol:OwnedFeeCollector"
 args = [
     "<%= settings.owner %>",
-    "<%= settings.owner_fee_share %>",
+    "<%= settings.fee_share_recipient %>",
+    "<%= settings.fee_share %>",
     "<%= settings.fee_token %>",
 ]
 create2 = true
