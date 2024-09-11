@@ -431,7 +431,7 @@ jobs:
       - run: yarn storage:dump
       - run: yarn check:storage
       # pull the storage dumps from main so that we can compare against them
-      - run: for f in $(find . -name 'storage.dump.json'); do git checkout main -- $f || true; done
+      - run: for f in $(find . -name 'storage.dump.json'); do git checkout $(git merge-base HEAD FETCH_HEAD) -- $f || true; done
       # todo: next step may be removable/optimizable, but it only takes like 20 seconds
       - run: yarn storage:verify
 
