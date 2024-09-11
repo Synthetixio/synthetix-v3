@@ -1,0 +1,54 @@
+{
+  "contracts/storage/GlobalStorage.sol:GlobalStorage": {
+    "name": "GlobalStorage",
+    "kind": "contract",
+    "structs": {
+      "GlobalStore": [
+        {
+          "type": "uint256",
+          "name": "value",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "someValue",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/InitializableStorage.sol:InitializableStorage": {
+    "name": "InitializableStorage",
+    "kind": "contract",
+    "structs": {
+      "InitializableStore": [
+        {
+          "type": "bool",
+          "name": "initialized",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SettingsStorage.sol:SettingsStorage": {
+    "name": "SettingsStorage",
+    "kind": "contract",
+    "structs": {
+      "SettingsStore": [
+        {
+          "type": "uint256",
+          "name": "aSettingValue",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}
