@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 
@@ -121,7 +122,9 @@ describe('Insolvent test', () => {
     );
   });
 
-  describe('open position', () => {
+  describe.only('open position', () => {
+    const restore = snapshotCheckpoint(provider);
+
     before(async () => {
       await openPosition({
         systems,
@@ -173,7 +176,8 @@ describe('Insolvent test', () => {
     });
 
     it('does not revert when reducing position size, even in an insolvent market', async () => {
-      // risk is decreased when position magnitude is reduced
+      // risk is decreased when position magnitude is reduced;
+      // thus attempt to do so should not revert
       await systems()
         .PerpsMarket.connect(trader1())
         .commitOrder({
@@ -185,7 +189,12 @@ describe('Insolvent test', () => {
           referrer: ethers.constants.AddressZero,
           trackingCode: ethers.constants.HashZero,
         });
+
     });
+
+    // restore state for next test; 
+    // i.e., no pending order should exist
+    after(restore);
 
     it('reverts when reducing position size, even in an insolvent market, if position direction changes', async () => {
       // risk is decreased when position magnitude is reduced, however
