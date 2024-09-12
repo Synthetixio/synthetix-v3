@@ -14,11 +14,19 @@ import { findAll as _findAll } from 'solidity-ast/utils';
  * Get all the contract definitions on the given node
  */
 export function findAll<T extends NodeType | YulNodeType>(
-  astNode: Node | YulNode,
+  astNode: Node | YulNode | (Node | YulNode)[],
   nodeType: T | T[],
   filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
 ) {
   const result: (NodeTypeMap & YulNodeTypeMap)[T][] = [];
+
+  if (Array.isArray(astNode)) {
+    for (const node of astNode) {
+      result.push(...findAll(node, nodeType, filterFn));
+    }
+
+    return result;
+  }
 
   for (const node of _findAll(nodeType, astNode)) {
     if (filterFn(node)) result.push(node);
@@ -28,26 +36,51 @@ export function findAll<T extends NodeType | YulNodeType>(
 }
 
 export function findOne<T extends NodeType | YulNodeType>(
-  astNode: Node | YulNode,
+  astNode: Node | YulNode | (Node | YulNode)[],
   nodeType: T | T[],
   filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
 ) {
-  for (const node of _findAll(nodeType, astNode)) {
-    if (filterFn(node)) return node;
+  if (Array.isArray(astNode)) {
+    for (const node of astNode) {
+      const result = findOne(node, nodeType, filterFn) as (NodeTypeMap & YulNodeTypeMap)[T];
+      if (result) return result;
+    }
+  } else {
+    for (const node of _findAll(nodeType, astNode)) {
+      if (filterFn(node)) return node;
+    }
   }
+}
+
+export function findOneById<T extends NodeType | YulNodeType>(
+  astNode: Node | YulNode | (Node | YulNode)[],
+  nodeType: T | T[],
+  nodeId: number,
+  filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
+) {
+  const result = findOne(
+    astNode,
+    nodeType,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (node) => typeof (node as any).id === 'number' && (node as any).id === nodeId && filterFn(node)
+  );
+
+  if (!result) throw new Error(`Could not find node with id "${nodeId}"`);
+
+  return result;
 }
 
 // Helper function to find nodes as direct children in a SourceUnit,
 // Using this function you can avoid having to loop the whole tree when you know
 // where are you looking for stuff
-export function findChildren<T extends SourceUnit['nodes'][number]['nodeType']>(
+export function findChildren<T extends NodeType | YulNodeType>(
   sourceUnit: SourceUnit,
   nodeType: T,
   filterFn: (node: SourceUnit['nodes'][number]) => boolean = () => true
 ) {
   return sourceUnit.nodes.filter(
     (node) => node.nodeType === nodeType && filterFn(node)
-  ) as NodeTypeMap[T][];
+  ) as (NodeTypeMap & YulNodeTypeMap)[T][];
 }
 
 /**
@@ -204,6 +237,25 @@ export function findContractNode(contractFullyQualifiedName: string, astNodes: S
   );
 
   return contractNode;
+}
+
+/**
+ * Find a contracts node on the ASTs trees, and returns both
+ */
+export function findContractNodeWithAst(
+  contractFullyQualifiedName: string,
+  astNodes: SourceUnit[]
+): [SourceUnit, ContractDefinition] {
+  const { contractNode, sourceUnitNode } = _findContractSourceByFullyQualifiedName(
+    contractFullyQualifiedName,
+    astNodes
+  );
+
+  if (!contractNode) {
+    throw new Error(`Could not find contract node for "${contractFullyQualifiedName}"`);
+  }
+
+  return [sourceUnitNode, contractNode];
 }
 
 /**

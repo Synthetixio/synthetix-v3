@@ -3,18 +3,28 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: "20.16.0"
+    default: "20.17.0"
 
 commands:
   yarn-install:
     steps:
-      - run: yarn install --immutable --immutable-cache
+      - run: date +"%Y-%m" > /tmp/month.txt && cat /tmp/month.txt
+      - restore_cache:
+          keys:
+            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
+      - run: yarn -v
+      - run: yarn install --immutable
+      - save_cache:
+          key: yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+          paths:
+            - "~/.yarn/berry"
 
   install-foundry:
     steps:
       - restore_cache:
           keys:
-            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}-{{ .Environment.FOUNDRY_COMMIT }}
+            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
 
       - run:
           name: "Add .foundry/bin to PATH"
@@ -28,8 +38,18 @@ commands:
             if command -v forge; then
               forge --version
             else
-              echo "Forge needs to be compiled"
+              echo "Forge needs to be installed"
+
+              curl -L https://foundry.paradigm.xyz | bash
+              cd .foundry/bin
+              ./foundryup
+              forge --version
             fi
+
+      - save_cache:
+          key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
+          paths:
+            - "~/.foundry/bin"
 
   compile-foundry:
     steps:
@@ -158,20 +178,16 @@ commands:
 
   save-cannon-cache:
     steps:
-      # To avoid infinite cannon cache growth clean the cache once a week
-      - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
       - save_cache:
-          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}-{{ .Environment.CIRCLE_SHA1 }}
+          key: cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "~/.local/share/cannon"
 
   restore-cannon-cache:
     steps:
-      - run: date +"%Y-%U" > /tmp/week.txt && cat /tmp/week.txt
       - restore_cache:
           keys:
-            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}-{{ .Environment.CIRCLE_SHA1 }}
-            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ checksum "/tmp/week.txt" }}-
+            - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ .Environment.CIRCLE_SHA1 }}
 
 jobs:
   compile-foundry:
@@ -218,7 +234,11 @@ jobs:
       - save_cache:
           key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
           paths:
+            - "auxiliary/PythERC7412Wrapper/contracts/generated"
+            - "protocol/governance/contracts/generated"
+            - "protocol/oracle-manager/contracts/generated"
             - "protocol/synthetix/contracts/generated"
+            - "utils/core-modules/contracts/generated"
             # Add more folders here if we generate more
 
       - restore-cannon-cache
@@ -254,6 +274,7 @@ jobs:
 
             - "auxiliary/ArbitrumGasPriceOracle/artifacts"
             - "auxiliary/BuybackSnx/artifacts"
+            - "auxiliary/OwnedFeeCollector/artifacts"
             - "auxiliary/ERC4626ToAssetsRatioOracle/artifacts"
             - "auxiliary/OpGasPriceOracle/artifacts"
             - "auxiliary/PythERC7412Wrapper/artifacts"
@@ -263,6 +284,7 @@ jobs:
 
             - "auxiliary/ArbitrumGasPriceOracle/cache"
             - "auxiliary/BuybackSnx/cache"
+            - "auxiliary/OwnedFeeCollector/cache"
             - "auxiliary/ERC4626ToAssetsRatioOracle/cache"
             - "auxiliary/OpGasPriceOracle/cache"
             - "auxiliary/PythERC7412Wrapper/cache"
@@ -272,6 +294,7 @@ jobs:
 
             - "auxiliary/ArbitrumGasPriceOracle/typechain-types"
             - "auxiliary/BuybackSnx/typechain-types"
+            - "auxiliary/OwnedFeeCollector/typechain-types"
             - "auxiliary/ERC4626ToAssetsRatioOracle/typechain-types"
             - "auxiliary/OpGasPriceOracle/typechain-types"
             - "auxiliary/PythERC7412Wrapper/typechain-types"
@@ -323,9 +346,9 @@ jobs:
             # if there are no tests, terminate execution after this step
             if [ -s "/tmp/tests.txt" ]; then
               echo cat "/tmp/tests.txt"
-              cat "/tmp/tests.txt" 
+              cat "/tmp/tests.txt"
             else
-              echo "SKIP: No tests found" 
+              echo "SKIP: No tests found"
               circleci-agent step halt
             fi
 
@@ -405,8 +428,12 @@ jobs:
       - install-foundry
       - yarn-install
       - run: yarn build:ts
-      - run: yarn storage:verify
+      - run: yarn storage:dump
       - run: yarn check:storage
+      # pull the storage dumps from main so that we can compare against them
+      - run: for f in $(find . -name 'storage.dump.json'); do git checkout $(git merge-base HEAD FETCH_HEAD) -- $f || true; done
+      # todo: next step may be removable/optimizable, but it only takes like 20 seconds
+      - run: yarn storage:verify
 
   lint:
     docker:
@@ -420,13 +447,8 @@ jobs:
       - run: yarn deps:mismatched
       - run: yarn deps:circular
       - run: yarn lint
-
-  check-packages:
-    docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
-    steps:
-      - checkout
-      - run: yarn install --immutable --immutable-cache --check-cache
+      # Do not fail the build
+      - run: yarn audit || true
 
   simulate-release:
     parameters:
@@ -673,15 +695,16 @@ workflows:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
-      - compile-foundry
+      #      - compile-foundry
       - lint
       - size-contracts
-      - verify-storage:
-          requires: [compile-foundry]
-      - check-packages
+      - verify-storage
+      #      - verify-storage
+      #          #requires: [compile-foundry]
 
-      - build-testable:
-          requires: [compile-foundry]
+      - build-testable
+      #      - build-testable:
+      #          #requires: [compile-foundry]
 
       - test-contracts:
           name: "test-main"
@@ -720,7 +743,7 @@ workflows:
 
       - test-contracts:
           name: "test-core-modules"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           dir: "./utils/core-modules"
           parallelism: 1
           batch-size: 5
@@ -734,14 +757,14 @@ workflows:
 
       - test-contracts:
           name: "test-core-utils"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           dir: "./utils/core-utils"
           parallelism: 2
           batch-size: 5
 
       - test-forge:
           name: "test-rewards-distributor"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/rewards-distributor"
 
       - test-subgraph:
@@ -758,7 +781,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--base-mainnet-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "andromeda"
@@ -768,7 +791,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--base-sepolia-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "andromeda"
@@ -778,7 +801,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--optimism-mainnet"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "main"
@@ -788,7 +811,7 @@ workflows:
 
       - simulate-release:
           name: "synthetix--mainnet"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/main"
           cannonPackage: "synthetix:latest"
           cannonPreset: "main"
@@ -798,7 +821,7 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--base-mainnet-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -808,7 +831,7 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--base-sepolia-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -818,27 +841,27 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--optimism-mainnet"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
-          cannonPreset: "main"
+          cannonPreset: "with-synthetix"
           hardhatNetwork: "optimistic-mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
       - simulate-release:
           name: "oracle-manager--mainnet"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
-          cannonPreset: "main"
+          cannonPreset: "with-synthetix"
           hardhatNetwork: "mainnet"
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
       - simulate-release:
           name: "spot-market--base-mainnet-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "andromeda"
@@ -848,7 +871,7 @@ workflows:
 
       - simulate-release:
           name: "spot-market--base-sepolia-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "andromeda"
@@ -858,7 +881,7 @@ workflows:
 
       - simulate-release:
           name: "spot-market--optimism-mainnet"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "main"
@@ -868,7 +891,7 @@ workflows:
 
       - simulate-release:
           name: "perps-market--base-mainnet-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/perps-market"
           cannonPackage: "synthetix-perps-market:latest"
           cannonPreset: "andromeda"
@@ -878,7 +901,7 @@ workflows:
 
       - simulate-release:
           name: "perps-market--base-sepolia-andromeda"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           workspace: "@synthetixio/perps-market"
           cannonPackage: "synthetix-perps-market:latest"
           cannonPreset: "andromeda"
@@ -889,7 +912,7 @@ workflows:
       # TODO: Uncomment when deployed
       #- simulate-release:
       #    name: "perps-market--optimism-mainnet"
-      #    requires: [compile-foundry]
+      #    #requires: [compile-foundry]
       #    workspace: "@synthetixio/perps-market"
       #    cannonPackage: "synthetix-perps-market:latest"
       #    cannonPreset: "main"
@@ -913,15 +936,15 @@ workflows:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
-      - compile-foundry:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+      #      - compile-foundry:
+      #          filters:
+      #            tags:
+      #              only: /^v.*/
+      #            branches:
+      #              ignore: /.*/
       - docgen-contracts:
           name: "docgen-contracts"
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           filters:
             tags:
               only: /^v.*/
@@ -933,14 +956,14 @@ workflows:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
-      - compile-foundry:
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              only: /docgen-contracts/
+      #      - compile-foundry:
+      #          filters:
+      #            tags:
+      #              ignore: /.*/
+      #            branches:
+      #              only: /docgen-contracts/
       - docgen-contracts:
-          requires: [compile-foundry]
+          #requires: [compile-foundry]
           filters:
             tags:
               ignore: /.*/

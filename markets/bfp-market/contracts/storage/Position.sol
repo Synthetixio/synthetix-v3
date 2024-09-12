@@ -139,12 +139,12 @@ library Position {
         uint256 oraclePrice,
         PerpMarketConfiguration.Data storage marketConfig,
         AddressRegistry.Data memory addresses,
-        int128 sizeDelta
+        int128 positionSize
     ) internal view {
-        uint256 minimumCredit = market.getMinimumCreditWithTradeSize(
+        uint256 minimumCredit = market.getMinimumCreditWithPositionSize(
             marketConfig,
             oraclePrice,
-            sizeDelta,
+            positionSize,
             addresses
         );
 
@@ -229,14 +229,17 @@ library Position {
             params.makerFee,
             params.takerFee
         );
+
         runtime.ethPrice = INodeModule(addresses.oracleManager)
             .process(PerpMarketConfiguration.load().ethOracleNodeId)
             .price
             .toUint();
+
         runtime.keeperFee = Order.getSettlementKeeperFee(
             params.keeperFeeBufferUsd,
             runtime.ethPrice
         );
+
         Position.Data memory newPosition = Position.Data(
             currentPosition.size + params.sizeDelta,
             market.currentFundingAccruedComputed,
@@ -277,9 +280,10 @@ library Position {
 
         // We need discounted margin collateral as we're verifying for liquidation here.
         //
-        // NOTE:  We create the new margin manually rather than using marginValuesForLiqValidation.discountedMarginUsd as the pnl adjustment for that margin is based on the oracle price rather than the fillPrice.
-        // And when this order settles the pnl will be realised with the fill price.
-        // We also  need to deduct the fees for setteling this order.
+        // NOTE: We create the new margin manually rather than using `marginValuesForLiqValidation.discountedMarginUsd`
+        // as the pnl adjustment for that margin is based on the `oraclePrice` rather than the `fillPrice`. Also, when
+        // this order settles the pnl will be realized with the fill price. Finally, we also need to deduct fees for
+        // settling this order.
         runtime.discountedNextMarginUsd = MathUtil
             .max(
                 getNextMarginUsd(
@@ -290,10 +294,11 @@ library Position {
                 0
             )
             .toUint();
+
         if (runtime.positionDecreasing) {
-            // In some cases a postion can be liquidatable due to fees, even if position is decreasing. This cant happen if the user closes the position completly.
+            // Position can be liquidatable due to fees, even if decreasing. This can't happen if closed completely.
             if (
-                newPosition.size > 0 &&
+                newPosition.size != 0 &&
                 runtime.discountedNextMarginUsd.divDecimal(runtime.mm) <= DecimalMath.UNIT
             ) {
                 revert ErrorUtil.CanLiquidatePosition();
@@ -305,7 +310,7 @@ library Position {
                 params.oraclePrice,
                 marketConfig,
                 addresses,
-                params.sizeDelta
+                newPosition.size
             );
 
             // Check new position margin validations.

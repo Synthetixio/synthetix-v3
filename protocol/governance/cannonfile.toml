@@ -11,10 +11,10 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "governance"
 
 [setting.wormhole_core]
-defaultValue = "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0xc1BA3CC4bFE724A08FbbFbF64F8db196738665f4" # snaxchain https://explorer.snaxchain.io/address/0xc1BA3CC4bFE724A08FbbFbF64F8db196738665f4
 
 [setting.wormhole_relayer]
-defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # mainnet ethereum https://docs.wormhole.com/wormhole/reference/constants
+defaultValue = "0x27428DD2d3DD32A4D7f7C497eAaa23130d894911" # snaxchain https://explorer.snaxchain.io/address/0x27428DD2d3DD32A4D7f7C497eAaa23130d894911
 
 [setting.initial_council_member]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
@@ -57,7 +57,7 @@ contracts = [
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
-from = "<%= settings.owner %>"
+fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 factory.GovernanceProxy.abiOf = ["CoreRouter"]
@@ -68,6 +68,7 @@ factory.GovernanceProxy.highlight = true
 [invoke.init_election_module]
 target = ["GovernanceProxy"]
 func = "initOrUpdateElectionSettings(address[],address,address,uint8,uint64,uint64,uint64,uint64)"
+fromCall.func = "owner"
 args = [
     [
         "<%= settings.initial_council_member %>",
@@ -80,4 +81,3 @@ args = [
     "<%= settings.nomination_period_duration %>",
     "<%= settings.voting_period_duration %>",
 ]
-from = "<%= settings.owner %>"

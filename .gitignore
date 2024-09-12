@@ -18,12 +18,13 @@ typechain-types
 lerna-debug.log
 docs/
 junit
+storage.new.dump.json
 
 # Yarn v3
+.pnp.*
 .yarn/*
-!.yarn/cache
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/sdks
-.yarn/versions
+!.yarn/versions

@@ -6,9 +6,10 @@
   "scripts": {
     "clean": "hardhat clean",
     "build": "yarn build:contracts",
-    "storage:verify": "hardhat compile --force && hardhat storage:verify",
-    "build:contracts": "hardhat compile --force && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
-    "check:storage": "git diff --exit-code storage.dump.sol",
+    "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "storage:dump": "hardhat storage:dump --output storage.new.dump.json",
+    "check:storage": "diff -uw storage.dump.json storage.new.dump.json",
+    "storage:verify": " hardhat storage:verify",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat"
   },
@@ -20,7 +21,7 @@
     "@synthetixio/hardhat-storage": "workspace:*",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
-    "hardhat-cannon": "2.16.3",
+    "hardhat-cannon": "2.17.0",
     "solidity-coverage": "^0.8.7"
   }
 }

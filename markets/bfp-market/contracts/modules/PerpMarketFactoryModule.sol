@@ -31,6 +31,8 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
     address immutable SYNTHETIX_SUSD;
     address immutable ORACLE_MANAGER;
 
+    uint32 constant DEFAULT_MIN_DELEGATE_TIME = 24 hours; // 86400 seconds
+
     constructor(address _synthetix) {
         SYNTHETIX_CORE = _synthetix;
         ISynthetixSystem core = ISynthetixSystem(_synthetix);
@@ -71,7 +73,14 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
         OwnableStorage.onlyOwner();
 
         uint128 id = ISynthetixSystem(SYNTHETIX_CORE).registerMarket(address(this));
-
+        if (data.minDelegateTime > 0) {
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(id, data.minDelegateTime);
+        } else {
+            ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(
+                id,
+                DEFAULT_MIN_DELEGATE_TIME
+            );
+        }
         PerpMarket.create(id, data.name);
         PerpMarket.load().activeMarketIds.push(id);
         emit MarketCreated(id, data.name);
@@ -163,29 +172,6 @@ contract PerpMarketFactoryModule is IPerpMarketFactoryModule {
             market.getMinimumCredit(
                 PerpMarketConfiguration.load(marketId),
                 market.getOraclePrice(addresses),
-                addresses
-            );
-    }
-
-    /// @notice includes the order sizeDelta in the calculation of the minimum credit amount
-    function minimumCreditWithTradeSize(
-        uint128 marketId,
-        int128 sizeDelta
-    ) external view returns (uint256) {
-        // Intuition for `market.size * price * ratio` is if all positions were to be closed immediately,
-        // how much credit would this market need in order to pay out traders. The `ratio` is there simply as a
-        // risk parameter to increase (or decrease) the min req credit needed to safely operate the market.
-        PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        AddressRegistry.Data memory addresses = AddressRegistry.Data({
-            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
-            sUsd: SYNTHETIX_SUSD,
-            oracleManager: ORACLE_MANAGER
-        });
-        return
-            market.getMinimumCreditWithTradeSize(
-                PerpMarketConfiguration.load(marketId),
-                market.getOraclePrice(addresses),
-                sizeDelta,
                 addresses
             );
     }

@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 const path = require('path');
 
 const CWD = process.cwd();

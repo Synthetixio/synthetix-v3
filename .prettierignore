@@ -27,6 +27,8 @@ lerna.json
 **/tests/.latest.json
 **/lib
 **/out
+storage.dump.json
+storage.new.dump.json
 
 utils/docgen/deployments/
 utils/docgen/abis/

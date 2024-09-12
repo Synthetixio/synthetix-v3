@@ -19,9 +19,9 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/v3-perps-opt-goerli"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.68.0",
-    "@graphprotocol/graph-ts": "^0.32.0",
-    "@usecannon/cli": "2.16.3",
+    "@graphprotocol/graph-cli": "^0.81.0",
+    "@graphprotocol/graph-ts": "^0.35.1",
+    "@usecannon/cli": "2.17.0",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.6.0",
     "prettier": "^3.2.5"

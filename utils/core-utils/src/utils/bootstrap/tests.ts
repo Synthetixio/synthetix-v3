@@ -2,8 +2,8 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { ethers } from 'ethers';
 import { glob, runTypeChain } from 'typechain';
 import { ChainBuilderContext, ContractMap } from './cannon-types';
 import { getHardhatSigners } from './get-hardhat-signers';
@@ -50,7 +50,6 @@ export function coreBootstrap<Contracts>(params: Params = { cannonfile: 'cannonf
       cannonInfo.provider
     ) as ethers.providers.Web3Provider;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     signers = await getHardhatSigners(hre, provider);
 
     for (const signer of signers) {

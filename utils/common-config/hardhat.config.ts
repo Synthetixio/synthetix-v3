@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
 import path from 'node:path';
 import dotenv from 'dotenv';
 
@@ -10,8 +8,8 @@ import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
-import 'hardhat-ignore-warnings';
 import '@synthetixio/hardhat-storage';
+import 'hardhat-ignore-warnings';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
@@ -116,6 +114,13 @@ const config = {
         process.env.NETWORK_ENDPOINT ||
         `https://testnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 13001,
+    },
+    ['snaxchain']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://mainnet.snaxchain.io/${process.env.SNAXCHAIN_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 2192,
     },
   },
@@ -151,10 +156,6 @@ const config = {
       '!contracts/routers/**',
       '!contracts/generated/**',
       '!contracts/mocks/**',
-    ],
-    skip: [
-      '@openzeppelin/contracts/**',
-      '@synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor',
     ],
   },
 };
