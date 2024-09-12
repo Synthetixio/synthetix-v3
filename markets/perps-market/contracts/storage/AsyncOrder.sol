@@ -355,14 +355,14 @@ library AsyncOrder {
             /// @custom:magnitude determines if more market credit is required
             /// when a position's magnitude is increased, more credit is required and risk increases
             /// when a position's magnitude is decreased, less credit is required and risk decreases
-            uint newMagnitude = MathUtil.abs(runtime.newPositionSize);
-            uint oldMagnitude = MathUtil.abs(oldPosition.size);
+            uint256 newMagnitude = MathUtil.abs(runtime.newPositionSize);
+            uint256 oldMagnitude = MathUtil.abs(oldPosition.size);
 
             /// @custom:side reflects if position is long or short; if side changes, further validation required
-            /// given new position size cannot be zero, it is inconsequential if old size is zero; 
+            /// given new position size cannot be zero, it is inconsequential if old size is zero;
             /// magnitude will necessarily be larger
             bool sameSide = runtime.newPositionSize > 0 == oldPosition.size > 0;
-            
+
             // require validation if magnitude has increased or side has not remained the same
             if (newMagnitude > oldMagnitude || !sameSide) {
                 int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
