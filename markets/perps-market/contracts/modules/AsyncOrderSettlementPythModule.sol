@@ -64,7 +64,7 @@ contract AsyncOrderSettlementPythModule is
      * @notice Settles an offchain order
      * @param price provided by offchain oracle
      * @param asyncOrder to be validated and settled
-     * @param settlementStrategy used to validate order and calculate settlement reward 
+     * @param settlementStrategy used to validate order and calculate settlement reward
      */
     function _settleOrder(
         uint256 price,
@@ -83,18 +83,11 @@ contract AsyncOrderSettlementPythModule is
         Position.Data storage oldPosition;
 
         // validate order request can be settled; call reverts if not
-        (
-            runtime.newPosition, 
-            runtime.totalFees, 
-            runtime.fillPrice, 
-            oldPosition
-        ) = asyncOrder.validateRequest(
-            settlementStrategy, 
-            price
-        );
+        (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
+            .validateRequest(settlementStrategy, price);
 
         // validate final fill price is acceptable relative to price specified by trader
-        asyncOrder.validateAcceptablePrice(runtime.fillPrice); 
+        asyncOrder.validateAcceptablePrice(runtime.fillPrice);
 
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
         PerpsAccount.Data storage perpsAccount = PerpsAccount.load(runtime.accountId);
@@ -106,7 +99,7 @@ contract AsyncOrderSettlementPythModule is
 
         runtime.chargedAmount = runtime.pnl - runtime.totalFees.toInt();
         perpsAccount.charge(runtime.chargedAmount);
-        
+
         emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
         // only update position state after pnl has been realized
@@ -136,7 +129,7 @@ contract AsyncOrderSettlementPythModule is
 
         {
             // order fees are total fees minus settlement reward
-            uint orderFees = runtime.totalFees - runtime.settlementReward;
+            uint256 orderFees = runtime.totalFees - runtime.settlementReward;
             GlobalPerpsMarketConfiguration.Data storage s = GlobalPerpsMarketConfiguration.load();
             s.collectFees(orderFees, asyncOrder.request.referrer, factory);
         }

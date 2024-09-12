@@ -123,7 +123,7 @@ library GlobalPerpsMarket {
     /// @dev negative values indicate credit capacity exceeded, and lp's are at risk of liquidation
     /// @return value of delegated collateral; negative values indicate credit capacity exceeded
     function getDelegatedCollateralValue(Data storage self) internal view returns (int256 value) {
-        // following call returns zero if market liabilities exceed assets 
+        // following call returns zero if market liabilities exceed assets
         // (i.e., total market collateral is insufficient to collateralize outstanding debt)
         uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
 
