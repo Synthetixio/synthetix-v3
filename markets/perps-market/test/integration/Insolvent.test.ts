@@ -136,7 +136,7 @@ describe('Insolvent test', () => {
       });
     });
 
-    it.only('reverts when attempting to open position above market credit capacity', async () => {
+    it('reverts when attempting to open position above market credit capacity', async () => {
       await assertRevert(
         systems()
           .PerpsMarket.connect(trader1())
