@@ -122,7 +122,7 @@ describe('Insolvent test', () => {
     );
   });
 
-  describe.only('open position', () => {
+  describe('open position', () => {
     const restore = snapshotCheckpoint(provider);
 
     before(async () => {
@@ -189,10 +189,9 @@ describe('Insolvent test', () => {
           referrer: ethers.constants.AddressZero,
           trackingCode: ethers.constants.HashZero,
         });
-
     });
 
-    // restore state for next test; 
+    // restore state for next test;
     // i.e., no pending order should exist
     after(restore);
 
