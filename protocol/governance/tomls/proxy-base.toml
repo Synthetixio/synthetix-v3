@@ -6,6 +6,7 @@ defaultValue = "governance"
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
 create2 = true
+salt = "<%= settings.salt %>"
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
