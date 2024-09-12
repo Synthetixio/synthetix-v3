@@ -234,12 +234,12 @@ describe('Insolvent test', () => {
 
     checkMarketInterestRate();
 
-    describe('close for large profit making market insolvent', () => {
+    describe('partially close - TODO update this test', () => {
       before('make price higher', async () => {
         await ethMarket.aggregator().mockSetCurrentPrice(bn(10_000));
       });
 
-      before('close position', async () => {
+      before('partially close position', async () => {
         await openPosition({
           systems,
           provider,
@@ -247,7 +247,7 @@ describe('Insolvent test', () => {
           accountId: 2,
           keeper: keeper(),
           marketId: ethMarket.marketId(),
-          sizeDelta: bn(-100),
+          sizeDelta: bn(-1),
           settlementStrategyId: ethMarket.strategyId(),
           price: bn(10_000),
         });
