@@ -1,8 +1,10 @@
 {
   "name": "@synthetixio/governance",
-  "version": "3.0.11",
+  "version": "3.6.1",
   "description": "On-Chain elections for all Synthetix councils",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
@@ -12,12 +14,12 @@
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "diff -uw storage.dump.json storage.new.dump.json",
-    "test": "yarn build-testable && hardhat test",
-    "coverage": "yarn build && hardhat coverage --network hardhat",
+    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "publish-contracts": "yarn build && cannon publish synthetix:$(node -p 'require(`./package.json`).version') --quiet",
-    "postpack": "yarn publish-contracts",
+    "publish-contracts": "cannon publish synthetix:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
     "docgen": "hardhat docgen"
   },
   "keywords": [],
