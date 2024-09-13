@@ -16,6 +16,7 @@ module.exports = [
     ignores: [
       '!**/.*',
       '!.circleci/test-batch.js',
+      '.yarn',
       '**/coverage',
       '**/dist',
       'utils/*/utils',
@@ -27,6 +28,8 @@ module.exports = [
       '**/subgraph/**/deployments',
       '**/subgraph/build',
       '**/subgraph/.bin',
+      '**/storage.dump.json',
+      '**/storage.new.dump.json',
       'markets/legacy-market/contracts/InitialModuleBundle.sol',
       'markets/perps-market/contracts/modules/CoreModule.sol',
       'markets/spot-market/contracts/modules/CoreModule.sol',

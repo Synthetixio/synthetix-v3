@@ -78,8 +78,7 @@ export async function compileSolidityFolder({
   return compileSolidityContents(contents, version);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function _getCompiler(version: string): Promise<any> {
+async function _getCompiler(version: string) {
   const downloader = new CompilerDownloader(
     CompilerDownloader.getCompilerPlatform(),
     await getCompilersDir()

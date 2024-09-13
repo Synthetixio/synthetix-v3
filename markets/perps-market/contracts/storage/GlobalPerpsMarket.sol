@@ -81,15 +81,24 @@ library GlobalPerpsMarket {
     }
 
     /**
-     * @notice Check whether, given the new locked credit delta, if the market is still solvent given its credit capacity from the core system.
+     * @notice assert the locked credit delta does not exceed market capacity
+     * @dev reverts if applying the delta exceeds the market's credit capacity
+     * @param self reference to the global perps market data
+     * @param lockedCreditDelta the proposed change in credit to be validated
      */
     function validateMarketCapacity(Data storage self, int256 lockedCreditDelta) internal view {
+        // establish amount of collateral currently collateralizing outstanding perp markets
         int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
-        int256 lockedCredit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt() +
-            lockedCreditDelta;
 
-        if (delegatedCollateralValue < lockedCredit) {
-            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, lockedCredit);
+        // establish amount of credit needed to collateralize outstanding perp markets
+        int256 credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
+
+        // calculate new accumulated credit following the addition of the new locked credit
+        credit += lockedCreditDelta;
+
+        // revert if accumulated credit value exceeds what is currently collateralizing the perp markets
+        if (delegatedCollateralValue < credit) {
+            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, credit);
         }
     }
 
@@ -108,9 +117,19 @@ library GlobalPerpsMarket {
         rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
     }
 
-    function getDelegatedCollateralValue(Data storage self) internal view returns (int256) {
+    /// @notice get the value of collateral that is currently delegated to the perps market
+    /// @dev value does not include trader provided collateral (i.e., margin)
+    /// @dev value returned is denominated in USD
+    /// @dev negative values indicate credit capacity exceeded, and lp's are at risk of liquidation
+    /// @return value of delegated collateral; negative values indicate credit capacity exceeded
+    function getDelegatedCollateralValue(Data storage self) internal view returns (int256 value) {
+        // following call returns zero if market liabilities exceed assets
+        // (i.e., total market collateral is insufficient to collateralize outstanding debt)
         uint256 withdrawableUsd = PerpsMarketFactory.totalWithdrawableUsd();
-        return withdrawableUsd.toInt() - totalCollateralValue(self).toInt();
+
+        /// @custom:insolvent when negative, the market has overdrawn its credit
+        /// and therefore cannot unwind all existing positions
+        value = withdrawableUsd.toInt() - totalCollateralValue(self).toInt();
     }
 
     function minimumCredit(

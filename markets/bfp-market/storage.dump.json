@@ -1,0 +1,1580 @@
+{
+  "contracts/modules/LiquidationModule.sol:LiquidationModule": {
+    "name": "LiquidationModule",
+    "kind": "contract",
+    "structs": {
+      "Runtime_liquidateCollateral": [
+        {
+          "type": "uint256",
+          "name": "availableSusd",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "supportedCollateralsLength",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "collateralAddress",
+          "size": 20,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "availableAccountCollateral",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "poolId",
+          "size": 16,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "poolCollateralTypesLength",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/modules/MarginModule.sol:MarginModule": {
+    "name": "MarginModule",
+    "kind": "contract",
+    "structs": {
+      "Runtime_setMarginCollateralConfiguration": [
+        {
+          "type": "uint256",
+          "name": "lengthBefore",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "lengthAfter",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxApproveAmount",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "previousSupportedCollaterals",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/modules/OrderModule.sol:OrderModule": {
+    "name": "OrderModule",
+    "kind": "contract",
+    "structs": {
+      "Runtime_commitOrder": [
+        {
+          "type": "uint256",
+          "name": "oraclePrice",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "commitmentTime",
+          "size": 8,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "addresses",
+          "members": [
+            {
+              "type": "address",
+              "name": "synthetix"
+            },
+            {
+              "type": "address",
+              "name": "sUsd"
+            },
+            {
+              "type": "address",
+              "name": "oracleManager"
+            }
+          ],
+          "size": 96,
+          "slot": "2",
+          "offset": 0
+        }
+      ],
+      "Runtime_settleOrder": [
+        {
+          "type": "uint256",
+          "name": "pythPrice",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "accruedFunding",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "accruedUtilization",
+          "size": 16,
+          "slot": "1",
+          "offset": 16
+        },
+        {
+          "type": "int256",
+          "name": "pricePnl",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fillPrice",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "updatedMarketSize",
+          "size": 16,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "updatedMarketSkew",
+          "size": 16,
+          "slot": "4",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "totalFees",
+          "size": 16,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "tradeParams",
+          "members": [
+            {
+              "type": "int128",
+              "name": "sizeDelta"
+            },
+            {
+              "type": "uint256",
+              "name": "oraclePrice"
+            },
+            {
+              "type": "uint256",
+              "name": "pythPrice"
+            },
+            {
+              "type": "uint256",
+              "name": "fillPrice"
+            },
+            {
+              "type": "uint128",
+              "name": "makerFee"
+            },
+            {
+              "type": "uint128",
+              "name": "takerFee"
+            },
+            {
+              "type": "uint256",
+              "name": "limitPrice"
+            },
+            {
+              "type": "uint128",
+              "name": "keeperFeeBufferUsd"
+            }
+          ],
+          "size": 224,
+          "slot": "6",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/modules/PerpAccountModule.sol:PerpAccountModule": {
+    "name": "PerpAccountModule",
+    "kind": "contract",
+    "structs": {
+      "Runtime_splitAccount": [
+        {
+          "type": "uint256",
+          "name": "oraclePrice",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "toIm",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromIm",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "debtToMove",
+          "size": 16,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "sizeToMove",
+          "size": 16,
+          "slot": "3",
+          "offset": 16
+        },
+        {
+          "type": "uint256",
+          "name": "supportedCollateralsLength",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "collateralAddress",
+          "size": 20,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "collateralToMove",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "newFromAmountCollateral",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromAccountCollateral",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "toCollateralUsd",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromCollateralUsd",
+          "size": 32,
+          "slot": "10",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "toDiscountedCollateralUsd",
+          "size": 32,
+          "slot": "11",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromDiscountedCollateralUsd",
+          "size": 32,
+          "slot": "12",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "collateralPrice",
+          "size": 32,
+          "slot": "13",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromAccountCollateralUsd",
+          "size": 32,
+          "slot": "14",
+          "offset": 0
+        }
+      ],
+      "Runtime_mergeAccounts": [
+        {
+          "type": "uint256",
+          "name": "oraclePrice",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "im",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromCollateralUsd",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromMarginUsd",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "toMarginUsd",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "mergedCollateralUsd",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "mergedDiscountedCollateralUsd",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "supportedCollateralsLength",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "collateralAddress",
+          "size": 20,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fromAccountCollateral",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "fromSize",
+          "size": 32,
+          "slot": "10",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/AddressRegistry.sol:AddressRegistry": {
+    "name": "AddressRegistry",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "synthetix",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "sUsd",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "oracleManager",
+          "size": 20,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Margin.sol:Margin": {
+    "name": "Margin",
+    "kind": "library",
+    "structs": {
+      "CollateralType": [
+        {
+          "type": "bytes32",
+          "name": "oracleNodeId",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "maxAllowable",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "skewScale",
+          "size": 16,
+          "slot": "1",
+          "offset": 16
+        },
+        {
+          "type": "address",
+          "name": "rewardDistributor",
+          "size": 20,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "exists",
+          "size": 1,
+          "slot": "2",
+          "offset": 20
+        }
+      ],
+      "MarginValues": [
+        {
+          "type": "uint256",
+          "name": "discountedMarginUsd",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "marginUsd",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "discountedCollateralUsd",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "collateralUsd",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        }
+      ],
+      "GlobalData": [
+        {
+          "type": "mapping",
+          "name": "supported",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "bytes32",
+                "name": "oracleNodeId"
+              },
+              {
+                "type": "uint128",
+                "name": "maxAllowable"
+              },
+              {
+                "type": "uint128",
+                "name": "skewScale"
+              },
+              {
+                "type": "address",
+                "name": "rewardDistributor"
+              },
+              {
+                "type": "bool",
+                "name": "exists"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "supportedCollaterals",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ],
+      "Data": [
+        {
+          "type": "uint128",
+          "name": "debtUsd",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "collaterals",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Order.sol:Order": {
+    "name": "Order",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "int128",
+          "name": "sizeDelta",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "commitmentTime",
+          "size": 8,
+          "slot": "0",
+          "offset": 16
+        },
+        {
+          "type": "uint256",
+          "name": "limitPrice",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "keeperFeeBufferUsd",
+          "size": 16,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "hooks",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/PerpMarket.sol:PerpMarket": {
+    "name": "PerpMarket",
+    "kind": "library",
+    "structs": {
+      "GlobalData": [
+        {
+          "type": "array",
+          "name": "activeMarketIds",
+          "value": {
+            "type": "uint128"
+          },
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        }
+      ],
+      "Data": [
+        {
+          "type": "bytes32",
+          "name": "name",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "id",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "__unused1",
+          "size": 8,
+          "slot": "1",
+          "offset": 16
+        },
+        {
+          "type": "uint64",
+          "name": "__unused2",
+          "size": 8,
+          "slot": "1",
+          "offset": 24
+        },
+        {
+          "type": "int128",
+          "name": "skew",
+          "size": 16,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "size",
+          "size": 16,
+          "slot": "2",
+          "offset": 16
+        },
+        {
+          "type": "uint64",
+          "name": "lastFundingTime",
+          "size": 8,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "lastUtilizationTime",
+          "size": 8,
+          "slot": "3",
+          "offset": 8
+        },
+        {
+          "type": "uint64",
+          "name": "__unused3",
+          "size": 8,
+          "slot": "3",
+          "offset": 16
+        },
+        {
+          "type": "uint64",
+          "name": "__unused4",
+          "size": 8,
+          "slot": "3",
+          "offset": 24
+        },
+        {
+          "type": "int128",
+          "name": "currentFundingRateComputed",
+          "size": 16,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "currentFundingAccruedComputed",
+          "size": 16,
+          "slot": "4",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "currentUtilizationRateComputed",
+          "size": 16,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "currentUtilizationAccruedComputed",
+          "size": 16,
+          "slot": "5",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "totalTraderDebtUsd",
+          "size": 16,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "debtCorrection",
+          "size": 16,
+          "slot": "6",
+          "offset": 16
+        },
+        {
+          "type": "mapping",
+          "name": "orders",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "int128",
+                "name": "sizeDelta"
+              },
+              {
+                "type": "uint64",
+                "name": "commitmentTime"
+              },
+              {
+                "type": "uint256",
+                "name": "limitPrice"
+              },
+              {
+                "type": "uint128",
+                "name": "keeperFeeBufferUsd"
+              },
+              {
+                "type": "array",
+                "name": "hooks",
+                "value": {
+                  "type": "address"
+                }
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "positions",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "int128",
+                "name": "size"
+              },
+              {
+                "type": "int128",
+                "name": "entryFundingAccrued"
+              },
+              {
+                "type": "uint128",
+                "name": "entryUtilizationAccrued"
+              },
+              {
+                "type": "uint256",
+                "name": "entryPythPrice"
+              },
+              {
+                "type": "uint256",
+                "name": "entryPrice"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "flaggedLiquidations",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "depositedCollateral",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "10",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "pastLiquidations",
+          "value": {
+            "type": "array",
+            "value": {
+              "type": "uint128"
+            },
+            "length": 2
+          },
+          "size": 32,
+          "slot": "11",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/PerpMarketConfiguration.sol:PerpMarketConfiguration": {
+    "name": "PerpMarketConfiguration",
+    "kind": "library",
+    "structs": {
+      "GlobalData": [
+        {
+          "type": "address",
+          "name": "pyth",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bytes32",
+          "name": "ethOracleNodeId",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "rewardDistributorImplementation",
+          "size": 20,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "pythPublishTimeMin",
+          "size": 8,
+          "slot": "2",
+          "offset": 20
+        },
+        {
+          "type": "uint64",
+          "name": "pythPublishTimeMax",
+          "size": 8,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "minOrderAge",
+          "size": 8,
+          "slot": "3",
+          "offset": 8
+        },
+        {
+          "type": "uint64",
+          "name": "maxOrderAge",
+          "size": 8,
+          "slot": "3",
+          "offset": 16
+        },
+        {
+          "type": "uint256",
+          "name": "minKeeperFeeUsd",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxKeeperFeeUsd",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "keeperProfitMarginUsd",
+          "size": 16,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "keeperProfitMarginPercent",
+          "size": 16,
+          "slot": "6",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "keeperSettlementGasUnits",
+          "size": 16,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "keeperCancellationGasUnits",
+          "size": 16,
+          "slot": "7",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "keeperLiquidationGasUnits",
+          "size": 16,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "keeperFlagGasUnits",
+          "size": 16,
+          "slot": "8",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "keeperLiquidateMarginGasUnits",
+          "size": 16,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "keeperLiquidationEndorsed",
+          "size": 20,
+          "slot": "10",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "collateralDiscountScalar",
+          "size": 16,
+          "slot": "11",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "minCollateralDiscount",
+          "size": 16,
+          "slot": "11",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "maxCollateralDiscount",
+          "size": 16,
+          "slot": "12",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "utilizationBreakpointPercent",
+          "size": 16,
+          "slot": "12",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "lowUtilizationSlopePercent",
+          "size": 16,
+          "slot": "13",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "highUtilizationSlopePercent",
+          "size": 16,
+          "slot": "13",
+          "offset": 16
+        }
+      ],
+      "Data": [
+        {
+          "type": "bytes32",
+          "name": "oracleNodeId",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bytes32",
+          "name": "pythPriceFeedId",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "makerFee",
+          "size": 16,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "takerFee",
+          "size": 16,
+          "slot": "2",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "maxMarketSize",
+          "size": 16,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "maxFundingVelocity",
+          "size": 16,
+          "slot": "3",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "skewScale",
+          "size": 16,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "fundingVelocityClamp",
+          "size": 16,
+          "slot": "4",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "minCreditPercent",
+          "size": 16,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "minMarginUsd",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "minMarginRatio",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "incrementalMarginScalar",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maintenanceMarginScalar",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxInitialMarginRatio",
+          "size": 32,
+          "slot": "10",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "liquidationRewardPercent",
+          "size": 32,
+          "slot": "11",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "liquidationLimitScalar",
+          "size": 16,
+          "slot": "12",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "liquidationWindowDuration",
+          "size": 16,
+          "slot": "12",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "liquidationMaxPd",
+          "size": 16,
+          "slot": "13",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Position.sol:Position": {
+    "name": "Position",
+    "kind": "library",
+    "structs": {
+      "TradeParams": [
+        {
+          "type": "int128",
+          "name": "sizeDelta",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "oraclePrice",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "pythPrice",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "fillPrice",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "makerFee",
+          "size": 16,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "takerFee",
+          "size": 16,
+          "slot": "4",
+          "offset": 16
+        },
+        {
+          "type": "uint256",
+          "name": "limitPrice",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "keeperFeeBufferUsd",
+          "size": 16,
+          "slot": "6",
+          "offset": 0
+        }
+      ],
+      "ValidatedTrade": [
+        {
+          "type": "struct",
+          "name": "newPosition",
+          "members": [
+            {
+              "type": "int128",
+              "name": "size"
+            },
+            {
+              "type": "int128",
+              "name": "entryFundingAccrued"
+            },
+            {
+              "type": "uint128",
+              "name": "entryUtilizationAccrued"
+            },
+            {
+              "type": "uint256",
+              "name": "entryPythPrice"
+            },
+            {
+              "type": "uint256",
+              "name": "entryPrice"
+            }
+          ],
+          "size": 128,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "orderFee",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "keeperFee",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "newMarginUsd",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "collateralUsd",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        }
+      ],
+      "HealthData": [
+        {
+          "type": "uint256",
+          "name": "healthFactor",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "accruedFunding",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "accruedUtilization",
+          "size": 16,
+          "slot": "1",
+          "offset": 16
+        },
+        {
+          "type": "int256",
+          "name": "pnl",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ],
+      "Runtime_validateLiquidation": [
+        {
+          "type": "address",
+          "name": "flagger",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "oldPositionSizeAbs",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "maxLiquidatableCapacity",
+          "size": 16,
+          "slot": "1",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "remainingCapacity",
+          "size": 16,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "lastLiquidationTime",
+          "size": 16,
+          "slot": "2",
+          "offset": 16
+        }
+      ],
+      "Runtime_validateTrade": [
+        {
+          "type": "uint256",
+          "name": "orderFee",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "keeperFee",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "positionDecreasing",
+          "size": 1,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "discountedNextMarginUsd",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "im",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "mm",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "ethPrice",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "fillPremium",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "sizeDelta",
+          "size": 16,
+          "slot": "8",
+          "offset": 0
+        }
+      ],
+      "Data": [
+        {
+          "type": "int128",
+          "name": "size",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "entryFundingAccrued",
+          "size": 16,
+          "slot": "0",
+          "offset": 16
+        },
+        {
+          "type": "uint128",
+          "name": "entryUtilizationAccrued",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "entryPythPrice",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "entryPrice",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SettlementHookConfiguration.sol:SettlementHookConfiguration": {
+    "name": "SettlementHookConfiguration",
+    "kind": "library",
+    "structs": {
+      "GlobalData": [
+        {
+          "type": "uint32",
+          "name": "maxHooksPerOrder",
+          "size": 4,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint32",
+          "name": "__unused1",
+          "size": 4,
+          "slot": "0",
+          "offset": 4
+        },
+        {
+          "type": "uint64",
+          "name": "__unused2",
+          "size": 8,
+          "slot": "0",
+          "offset": 8
+        },
+        {
+          "type": "uint64",
+          "name": "__unused3",
+          "size": 8,
+          "slot": "0",
+          "offset": 16
+        },
+        {
+          "type": "uint64",
+          "name": "__unused4",
+          "size": 8,
+          "slot": "0",
+          "offset": 24
+        },
+        {
+          "type": "mapping",
+          "name": "whitelisted",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "bool"
+          },
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "whitelistedHookAddresses",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SplitAccountConfiguration.sol:SplitAccountConfiguration": {
+    "name": "SplitAccountConfiguration",
+    "kind": "library",
+    "structs": {
+      "GlobalData": [
+        {
+          "type": "mapping",
+          "name": "whitelisted",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "bool"
+          },
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "whitelistedAddresses",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}

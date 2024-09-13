@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/core-modules",
-  "version": "3.4.0",
+  "version": "3.6.1",
   "publishConfig": {
     "access": "public"
   },
@@ -13,11 +13,12 @@
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",
-    "storage:verify": "hardhat compile --force && hardhat storage:verify",
-    "build:contracts": "hardhat compile --force",
+    "storage:verify": " hardhat storage:verify",
+    "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "storage:dump": "hardhat storage:dump --output storage.new.dump.json",
     "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
     "build-testable": "hardhat compile",
-    "check:storage": "git diff --exit-code storage.dump.sol",
+    "check:storage": "diff -uw storage.dump.json storage.new.dump.json",
     "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",

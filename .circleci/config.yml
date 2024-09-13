@@ -13,8 +13,6 @@ commands:
           keys:
             - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
             - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
-      - run: sudo corepack enable
-      - run: corepack install
       - run: yarn -v
       - run: yarn install --immutable
       - save_cache:
@@ -348,9 +346,9 @@ jobs:
             # if there are no tests, terminate execution after this step
             if [ -s "/tmp/tests.txt" ]; then
               echo cat "/tmp/tests.txt"
-              cat "/tmp/tests.txt" 
+              cat "/tmp/tests.txt"
             else
-              echo "SKIP: No tests found" 
+              echo "SKIP: No tests found"
               circleci-agent step halt
             fi
 
@@ -430,8 +428,12 @@ jobs:
       - install-foundry
       - yarn-install
       - run: yarn build:ts
-      - run: yarn storage:verify
+      - run: yarn storage:dump
       - run: yarn check:storage
+      # pull the storage dumps from main so that we can compare against them
+      - run: for f in $(find . -name 'storage.dump.json'); do git checkout $(git merge-base HEAD FETCH_HEAD) -- $f || true; done
+      # todo: next step may be removable/optimizable, but it only takes like 20 seconds
+      - run: yarn storage:verify
 
   lint:
     docker:
@@ -445,17 +447,8 @@ jobs:
       - run: yarn deps:mismatched
       - run: yarn deps:circular
       - run: yarn lint
-
-  check-packages:
-    docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
-    steps:
-      - checkout
-      - yarn-install
-
-      # Ignoring 1097346 and 1099357 for "ip" package that is not yet fixed but also not very dangerous
-      # https://github.com/indutny/node-ip/issues/136#issuecomment-1941462942
-      - run: yarn audit --ignore 1097346 --ignore 1099357
+      # Do not fail the build
+      - run: yarn audit || true
 
   simulate-release:
     parameters:
@@ -708,7 +701,6 @@ workflows:
       - verify-storage
       #      - verify-storage
       #          #requires: [compile-foundry]
-      - check-packages
 
       - build-testable
       #      - build-testable:

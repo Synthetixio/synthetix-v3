@@ -1,6 +1,6 @@
-import { Node, YulNode } from 'solidity-ast/node';
-import { SourceUnit } from 'solidity-ast/types';
 import { render } from './render';
+
+import type { ASTNode, AssemblyItem, BaseASTNode } from '@solidity-parser/parser/src/ast-types';
 
 export class ValidationError extends Error {}
 
@@ -10,26 +10,25 @@ export class ValidationError extends Error {}
  */
 export function createError({
   message,
-  sourceUnit,
+  sourceName,
   nodes = [],
 }: {
   message: string;
-  sourceUnit: SourceUnit;
-  nodes: (Node | YulNode)[];
+  sourceName: string;
+  nodes: (ASTNode | AssemblyItem)[];
 }) {
   const err = new ValidationError(message);
   const [title] = err.stack!.split('\n');
   const stack: string[] = [];
 
   try {
-    const { absolutePath } = sourceUnit;
     for (const node of nodes) {
-      const title = _getErrorTitle(node);
+      const title = _renderTitle(node);
       if (!title) continue;
-      stack.unshift(`    at ${title} (${absolutePath})`);
+      stack.unshift(`    at ${title} (${sourceName}${_renderLoc(node)})`);
     }
-  } catch {
-    console.warn('Could not render stack trace.');
+  } catch (err) {
+    console.warn('Could not render stack trace.', err);
   }
 
   stack.unshift(title);
@@ -37,14 +36,22 @@ export function createError({
   return err;
 }
 
-function _getErrorTitle(node: Node | YulNode) {
-  /* eslint-disable */
-  switch (node.nodeType) {
+function _renderTitle(node: ASTNode | AssemblyItem) {
+  switch (node.type) {
     case 'ContractDefinition':
-      return `${node.contractKind} ${node.name}`;
+      return `${node.kind} ${node.name}`;
     case 'VariableDeclaration':
       return render(node);
     default:
-      return (node as any).name as string;
+      return typeof (node as { name: string }).name === 'string'
+        ? (node as { name: string }).name
+        : node.type;
   }
+}
+
+function _renderLoc(node: BaseASTNode) {
+  if (!node.loc) return '';
+  const loc = [`:${node.loc.start.line}`];
+  if (node.loc.start.column) loc.push(`:${node.loc.start.column}`);
+  return loc.join('');
 }

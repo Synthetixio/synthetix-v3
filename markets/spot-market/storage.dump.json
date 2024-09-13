@@ -1,0 +1,501 @@
+{
+  "contracts/storage/AsyncOrder.sol:AsyncOrder": {
+    "name": "AsyncOrder",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint256",
+          "name": "totalEscrowedSynthShares",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "totalClaims",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/AsyncOrderClaim.sol:AsyncOrderClaim": {
+    "name": "AsyncOrderClaim",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint128",
+          "name": "id",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "owner",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "enum",
+          "name": "orderType",
+          "members": [
+            "NULL",
+            "BUY",
+            "SELL",
+            "ASYNC_BUY",
+            "ASYNC_SELL",
+            "WRAP",
+            "UNWRAP"
+          ],
+          "size": 1,
+          "slot": "1",
+          "offset": 20
+        },
+        {
+          "type": "uint256",
+          "name": "amountEscrowed",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "settlementStrategyId",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "commitmentTime",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "minimumSettlementAmount",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "settledAt",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "referrer",
+          "size": 20,
+          "slot": "7",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/AsyncOrderConfiguration.sol:AsyncOrderConfiguration": {
+    "name": "AsyncOrderConfiguration",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "array",
+          "name": "settlementStrategies",
+          "value": {
+            "type": "struct",
+            "name": "SettlementStrategy.Data",
+            "members": [
+              {
+                "type": "enum",
+                "name": "strategyType",
+                "members": [
+                  "ONCHAIN",
+                  "PYTH"
+                ]
+              },
+              {
+                "type": "uint256",
+                "name": "settlementDelay"
+              },
+              {
+                "type": "uint256",
+                "name": "settlementWindowDuration"
+              },
+              {
+                "type": "address",
+                "name": "priceVerificationContract"
+              },
+              {
+                "type": "bytes32",
+                "name": "feedId"
+              },
+              {
+                "type": "string",
+                "name": "url"
+              },
+              {
+                "type": "uint256",
+                "name": "settlementReward"
+              },
+              {
+                "type": "uint256",
+                "name": "priceDeviationTolerance"
+              },
+              {
+                "type": "uint256",
+                "name": "minimumUsdExchangeAmount"
+              },
+              {
+                "type": "uint256",
+                "name": "maxRoundingLoss"
+              },
+              {
+                "type": "bool",
+                "name": "disabled"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/MarketConfiguration.sol:MarketConfiguration": {
+    "name": "MarketConfiguration",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "mapping",
+          "name": "fixedFeeOverrides",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "atomicFixedFee",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "asyncFixedFee",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "utilizationFeeRate",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "collateralLeverage",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "wrapFixedFee",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "unwrapFixedFee",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "skewScale",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "feeCollector",
+          "size": 20,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "referrerShare",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/OrderFees.sol:OrderFees": {
+    "name": "OrderFees",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint256",
+          "name": "fixedFees",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "utilizationFees",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "skewFees",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "wrapperFees",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Price.sol:Price": {
+    "name": "Price",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bytes32",
+          "name": "buyFeedId",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bytes32",
+          "name": "sellFeedId",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "strictStalenessTolerance",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SettlementStrategy.sol:SettlementStrategy": {
+    "name": "SettlementStrategy",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "enum",
+          "name": "strategyType",
+          "members": [
+            "ONCHAIN",
+            "PYTH"
+          ],
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "settlementDelay",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "settlementWindowDuration",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "priceVerificationContract",
+          "size": 20,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "bytes32",
+          "name": "feedId",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "string",
+          "name": "url",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "settlementReward",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "priceDeviationTolerance",
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "minimumUsdExchangeAmount",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxRoundingLoss",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "disabled",
+          "size": 1,
+          "slot": "10",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SpotMarketFactory.sol:SpotMarketFactory": {
+    "name": "SpotMarketFactory",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "usdToken",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "oracle",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "synthetix",
+          "size": 20,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "synthImplementation",
+          "size": 20,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "marketOwners",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "nominatedMarketOwners",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Wrapper.sol:Wrapper": {
+    "name": "Wrapper",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "wrapCollateralType",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxWrappableAmount",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}

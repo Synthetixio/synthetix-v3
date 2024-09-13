@@ -1,0 +1,443 @@
+{
+  "contracts/storage/Ballot.sol:Ballot": {
+    "name": "Ballot",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint256",
+          "name": "votingPower",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "votedCandidates",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "amounts",
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Council.sol:Council": {
+    "name": "Council",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bool",
+          "name": "initialized",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "currentElectionId",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/CouncilMembers.sol:CouncilMembers": {
+    "name": "CouncilMembers",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "councilToken",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "councilMembers",
+          "members": [
+            {
+              "type": "struct",
+              "name": "raw",
+              "members": [
+                {
+                  "type": "array",
+                  "name": "_values",
+                  "value": {
+                    "type": "bytes32"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "name": "_positions",
+                  "key": {
+                    "type": "bytes32"
+                  },
+                  "value": {
+                    "type": "uint256"
+                  }
+                }
+              ]
+            }
+          ],
+          "size": 96,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/CrossChainDebtShare.sol:CrossChainDebtShare": {
+    "name": "CrossChainDebtShare",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bytes32",
+          "name": "merkleRoot",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "merkleRootBlockNumber",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "debtShares",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Election.sol:Election": {
+    "name": "Election",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bool",
+          "name": "evaluated",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "numEvaluatedBallots",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "nominees",
+          "members": [
+            {
+              "type": "struct",
+              "name": "raw",
+              "members": [
+                {
+                  "type": "array",
+                  "name": "_values",
+                  "value": {
+                    "type": "bytes32"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "name": "_positions",
+                  "key": {
+                    "type": "bytes32"
+                  },
+                  "value": {
+                    "type": "uint256"
+                  }
+                }
+              ]
+            }
+          ],
+          "size": 96,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "winners",
+          "members": [
+            {
+              "type": "struct",
+              "name": "raw",
+              "members": [
+                {
+                  "type": "array",
+                  "name": "_values",
+                  "value": {
+                    "type": "bytes32"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "name": "_positions",
+                  "key": {
+                    "type": "bytes32"
+                  },
+                  "value": {
+                    "type": "uint256"
+                  }
+                }
+              ]
+            }
+          ],
+          "size": 96,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "ballotPtrs",
+          "members": [
+            {
+              "type": "array",
+              "name": "_values",
+              "value": {
+                "type": "bytes32"
+              }
+            },
+            {
+              "type": "mapping",
+              "name": "_positions",
+              "key": {
+                "type": "bytes32"
+              },
+              "value": {
+                "type": "uint256"
+              }
+            }
+          ],
+          "size": 64,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "candidateVoteTotals",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "10",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/ElectionSettings.sol:ElectionSettings": {
+    "name": "ElectionSettings",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint8",
+          "name": "epochSeatCount",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint8",
+          "name": "minimumActiveMembers",
+          "size": 1,
+          "slot": "0",
+          "offset": 1
+        },
+        {
+          "type": "uint64",
+          "name": "epochDuration",
+          "size": 8,
+          "slot": "0",
+          "offset": 2
+        },
+        {
+          "type": "uint64",
+          "name": "nominationPeriodDuration",
+          "size": 8,
+          "slot": "0",
+          "offset": 10
+        },
+        {
+          "type": "uint64",
+          "name": "votingPeriodDuration",
+          "size": 8,
+          "slot": "0",
+          "offset": 18
+        },
+        {
+          "type": "uint64",
+          "name": "maxDateAdjustmentTolerance",
+          "size": 8,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Epoch.sol:Epoch": {
+    "name": "Epoch",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint64",
+          "name": "startDate",
+          "size": 8,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "nominationPeriodStartDate",
+          "size": 8,
+          "slot": "0",
+          "offset": 8
+        },
+        {
+          "type": "uint64",
+          "name": "votingPeriodStartDate",
+          "size": 8,
+          "slot": "0",
+          "offset": 16
+        },
+        {
+          "type": "uint64",
+          "name": "endDate",
+          "size": 8,
+          "slot": "0",
+          "offset": 24
+        }
+      ]
+    }
+  },
+  "contracts/storage/SnapshotVotePower.sol:SnapshotVotePower": {
+    "name": "SnapshotVotePower",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bool",
+          "name": "enabled",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "enum",
+          "name": "weight",
+          "members": [
+            "Sqrt",
+            "Linear",
+            "Scaled"
+          ],
+          "size": 1,
+          "slot": "0",
+          "offset": 1
+        },
+        {
+          "type": "uint256",
+          "name": "scale",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "epochs",
+          "key": {
+            "type": "uint128"
+          },
+          "value": {
+            "type": "struct",
+            "members": [
+              {
+                "type": "uint128",
+                "name": "snapshotId"
+              },
+              {
+                "type": "mapping",
+                "name": "recordedVotingPower",
+                "key": {
+                  "type": "address"
+                },
+                "value": {
+                  "type": "uint256"
+                }
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SnapshotVotePowerEpoch.sol:SnapshotVotePowerEpoch": {
+    "name": "SnapshotVotePowerEpoch",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint128",
+          "name": "snapshotId",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "recordedVotingPower",
+          "key": {
+            "type": "address"
+          },
+          "value": {
+            "type": "uint256"
+          },
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}
