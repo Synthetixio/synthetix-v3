@@ -42,7 +42,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('should set snapshot contract', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, ethers.utils.parseEther('1'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        0,
+        ethers.utils.parseEther('1'),
+        true
+      );
       assert.equal(
         await c.GovernanceProxy.SnapshotVotePower_get_enabled(c.SnapshotRecordMock.address),
         true
@@ -50,7 +55,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('should unset snapshot contract', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, ethers.utils.parseEther('1'), false);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        0,
+        ethers.utils.parseEther('1'),
+        false
+      );
       assert.equal(
         await c.GovernanceProxy.SnapshotVotePower_get_enabled(c.SnapshotRecordMock.address),
         false
@@ -64,11 +74,26 @@ describe('SnapshotVotePowerModule', function () {
     const disabledSnapshotContract = ethers.Wallet.createRandom().address;
     before('setup snapshot contracts', async function () {
       // setup main snapshot contract
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, ethers.utils.parseEther('1'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        0,
+        ethers.utils.parseEther('1'),
+        true
+      );
 
       // setup and disable an snapshot contract
-      await c.GovernanceProxy.setSnapshotContract(disabledSnapshotContract, 0, ethers.utils.parseEther('1'), true);
-      await c.GovernanceProxy.setSnapshotContract(disabledSnapshotContract, 0, ethers.utils.parseEther('1'), false);
+      await c.GovernanceProxy.setSnapshotContract(
+        disabledSnapshotContract,
+        0,
+        ethers.utils.parseEther('1'),
+        true
+      );
+      await c.GovernanceProxy.setSnapshotContract(
+        disabledSnapshotContract,
+        0,
+        ethers.utils.parseEther('1'),
+        false
+      );
     });
 
     it('should revert when not correct epoch phase', async function () {
@@ -136,12 +161,27 @@ describe('SnapshotVotePowerModule', function () {
 
     before('setup disabled snapshot contract', async function () {
       // setup and disable an snapshot contract
-      await c.GovernanceProxy.setSnapshotContract(disabledSnapshotContract, 0, ethers.utils.parseEther('1'), true);
-      await c.GovernanceProxy.setSnapshotContract(disabledSnapshotContract, 0, ethers.utils.parseEther('1'), false);
+      await c.GovernanceProxy.setSnapshotContract(
+        disabledSnapshotContract,
+        0,
+        ethers.utils.parseEther('1'),
+        true
+      );
+      await c.GovernanceProxy.setSnapshotContract(
+        disabledSnapshotContract,
+        0,
+        ethers.utils.parseEther('1'),
+        false
+      );
     });
 
     before('set snapshot contract', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, ethers.utils.parseEther('1'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        0,
+        ethers.utils.parseEther('1'),
+        true
+      );
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
       await c.GovernanceProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
@@ -210,7 +250,12 @@ describe('SnapshotVotePowerModule', function () {
     this.beforeEach(restore);
 
     it('calculates sqrt', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, ethers.utils.parseEther('1'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        0,
+        ethers.utils.parseEther('1'),
+        true
+      );
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
       await c.GovernanceProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
@@ -235,7 +280,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates linear', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 1, ethers.utils.parseEther('1'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        1,
+        ethers.utils.parseEther('1'),
+        true
+      );
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
       await c.GovernanceProxy.takeVotePowerSnapshot(c.SnapshotRecordMock.address);
@@ -260,7 +310,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with linear weight of 0.5', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 3, ethers.utils.parseEther('0.5'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        3,
+        ethers.utils.parseEther('0.5'),
+        true
+      );
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
@@ -286,7 +341,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with linear weight of 2', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 3, ethers.utils.parseEther('2'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        3,
+        ethers.utils.parseEther('2'),
+        true
+      );
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
@@ -312,7 +372,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with quadratic weight of 0.5', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 2, ethers.utils.parseEther('0.5'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        2,
+        ethers.utils.parseEther('0.5'),
+        true
+      );
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
@@ -338,7 +403,12 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with quadratic weight of 2', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 2, ethers.utils.parseEther('2'), true);
+      await c.GovernanceProxy.setSnapshotContract(
+        c.SnapshotRecordMock.address,
+        2,
+        ethers.utils.parseEther('2'),
+        true
+      );
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());

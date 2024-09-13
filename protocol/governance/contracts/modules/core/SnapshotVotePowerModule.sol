@@ -24,6 +24,10 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     );
 
     ///@notice Sets a snapshot contract to be used for voting power calculations
+    ///@param snapshotContract The address of the snapshot contract
+    ///@param weight The weight type to be used for voting power calculations
+    ///@param scale The scale to be used for voting power calculations (18 decimals)
+    ///@param enabled Whether the snapshot contract is enabled
     function setSnapshotContract(
         address snapshotContract,
         SnapshotVotePower.WeightType weight,
