@@ -33,20 +33,21 @@ library SnapshotVotePower {
     function calculateVotingPower(
         SnapshotVotePower.Data storage self,
         uint256 ballotBalance
-    ) internal view returns (uint256 votePower) {
+    ) internal view returns (uint256) {
         if (self.weight == WeightType.Sqrt) {
-            votePower = MathUtil.sqrt(ballotBalance);
+            return MathUtil.sqrt(ballotBalance);
         }
         if (self.weight == WeightType.Linear) {
-            votePower = ballotBalance;
+            return ballotBalance;
         }
         if (self.weight == WeightType.ScaledSqrt) {
             uint256 quadraticBalance = MathUtil.sqrt(ballotBalance);
-            votePower = quadraticBalance * self.scale;
+            return (quadraticBalance * self.scale) / 1e18;
         }
         if (self.weight == WeightType.ScaledLinear) {
-            votePower = ballotBalance * self.scale;
+            return (ballotBalance * self.scale) / 1e18;
+        } else {
+            revert InvalidWeightType();
         }
-        revert InvalidWeightType();
     }
 }
