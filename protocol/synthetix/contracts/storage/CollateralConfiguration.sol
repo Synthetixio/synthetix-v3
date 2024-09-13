@@ -230,7 +230,7 @@ library CollateralConfiguration {
      */
     function verifyIssuanceRatio(
         Data storage self,
-        uint256 debtD18,
+        int256 debtD18,
         uint256 collateralValueD18,
         uint256 minIssuanceRatioD18
     ) internal view {
@@ -239,13 +239,14 @@ library CollateralConfiguration {
             : minIssuanceRatioD18;
 
         if (
-            debtD18 != 0 &&
-            (collateralValueD18 == 0 || collateralValueD18.divDecimal(debtD18) < issuanceRatioD18)
+            debtD18 > 0 &&
+            (collateralValueD18 == 0 ||
+                collateralValueD18.divDecimal(debtD18.toUint()) < issuanceRatioD18)
         ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
-                debtD18,
-                collateralValueD18.divDecimal(debtD18),
+                debtD18.toUint(),
+                collateralValueD18.divDecimal(debtD18.toUint()),
                 issuanceRatioD18
             );
         }
@@ -259,21 +260,20 @@ library CollateralConfiguration {
      */
     function verifyLiquidationRatio(
         Data storage self,
-        uint256 debtD18,
-        uint256 collateralValueD18,
-        uint256 minIssuanceRatioD18
+        int256 debtD18,
+        uint256 collateralValueD18
     ) internal view {
         uint256 liquidationRatioD18 = self.liquidationRatioD18;
 
         if (
-            debtD18 != 0 &&
+            debtD18 > 0 &&
             (collateralValueD18 == 0 ||
-                collateralValueD18.divDecimal(debtD18) < liquidationRatioD18)
+                collateralValueD18.divDecimal(debtD18.toUint()) < liquidationRatioD18)
         ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
-                debtD18,
-                collateralValueD18.divDecimal(debtD18),
+                debtD18.toUint(),
+                collateralValueD18.divDecimal(debtD18.toUint()),
                 liquidationRatioD18
             );
         }

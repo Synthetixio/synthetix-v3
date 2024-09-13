@@ -82,13 +82,11 @@ contract IssueUSDModule is IIssueUSDModule {
 
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
-        if (newDebt > 0) {
-            config.verifyIssuanceRatio(
-                newDebt.toUint(),
-                collateralValue,
-                pool.collateralConfigurations[collateralType].issuanceRatioD18
-            );
-        }
+        config.verifyIssuanceRatio(
+            newDebt,
+            collateralValue,
+            pool.collateralConfigurations[collateralType].issuanceRatioD18
+        );
 
         // Increase the debt of the position
         pool.assignDebtToAccount(collateralType, accountId, amount.toInt());
@@ -99,11 +97,7 @@ contract IssueUSDModule is IIssueUSDModule {
         // Confirm that the vault debt is not in liquidation
         int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint256 vaultCollateralValue) = pool.currentVaultCollateral(collateralType);
-        config.verifyLiquidationRatio(
-            rawVaultDebt.toUint(),
-            vaultCollateralValue,
-            pool.collateralConfigurations[collateralType].issuanceRatioD18
-        );
+        config.verifyLiquidationRatio(rawVaultDebt, vaultCollateralValue);
 
         AssociatedSystem.Data storage usdToken = AssociatedSystem.load(_USD_TOKEN);
 
