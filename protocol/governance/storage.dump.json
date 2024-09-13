@@ -366,7 +366,9 @@
           "name": "weight",
           "members": [
             "Sqrt",
-            "Linear"
+            "Linear",
+            "ScaledSqrt",
+            "ScaledLinear"
           ],
           "size": 1,
           "slot": "0",
