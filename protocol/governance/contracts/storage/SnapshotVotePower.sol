@@ -9,7 +9,9 @@ library SnapshotVotePower {
 
     enum WeightType {
         Sqrt,
-        Linear
+        Linear,
+        ScaledSqrt,
+        ScaledLinear
     }
 
     struct Data {
@@ -33,11 +35,16 @@ library SnapshotVotePower {
         uint256 ballotBalance
     ) internal view returns (uint256 votePower) {
         if (self.weight == WeightType.Sqrt) {
+            votePower = MathUtil.sqrt(ballotBalance);
+        }
+        if (self.weight == WeightType.Linear) {
+            votePower = ballotBalance;
+        }
+        if (self.weight == WeightType.ScaledSqrt) {
             uint256 quadraticBalance = MathUtil.sqrt(ballotBalance);
             votePower = quadraticBalance * self.scale;
         }
-
-        if (self.weight == WeightType.Linear) {
+        if (self.weight == WeightType.ScaledLinear) {
             votePower = ballotBalance * self.scale;
         }
         revert InvalidWeightType();

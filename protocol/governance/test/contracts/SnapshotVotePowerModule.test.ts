@@ -260,7 +260,7 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with linear weight of 0.5', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 1, 0.5, true);
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 3, 0.5, true);
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
@@ -286,7 +286,7 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with linear weight of 2', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 1, 2, true);
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 3, 2, true);
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
@@ -312,7 +312,7 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with quadratic weight of 0.5', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, 0.5, true);
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 2, 0.5, true);
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
@@ -338,7 +338,7 @@ describe('SnapshotVotePowerModule', function () {
     });
 
     it('calculates with quadratic weight of 2', async function () {
-      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 0, 2, true);
+      await c.GovernanceProxy.setSnapshotContract(c.SnapshotRecordMock.address, 2, 2, true);
 
       const settings = await c.GovernanceProxy.getEpochSchedule();
       await fastForwardTo(settings.nominationPeriodStartDate.toNumber(), getProvider());
