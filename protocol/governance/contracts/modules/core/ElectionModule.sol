@@ -284,7 +284,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint256[] calldata amounts
     ) external override {
         WormholeCrossChain.onlyCrossChain();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
+        //We accept votes during evaluation period incase votes were sent at the end of the voting period and through crosschain messaging arrive in the evaluation period. Additionally, the `cast` function only allows votes to be cast during the voting period, so this is secure.
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Vote, Epoch.ElectionPeriod.Evaluation);
         if (candidates.length > _MAX_BALLOT_SIZE) {
             revert ParameterError.InvalidParameter("candidates", "too many candidates");
         }
