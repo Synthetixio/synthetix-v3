@@ -124,12 +124,6 @@ library Council {
                 nominationPeriodDuration,
                 settings.nominationPeriodDuration
             );
-        } else if (votingPeriodDuration < settings.votingPeriodDuration) {
-            revert InvalidEpochConfiguration(
-                6,
-                votingPeriodDuration,
-                settings.votingPeriodDuration
-            );
         }
     }
 
