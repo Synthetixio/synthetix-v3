@@ -2,6 +2,16 @@
   "name": "@synthetixio/bfp-market",
   "version": "3.6.1",
   "description": "L1 perp market implementation",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "build": "yarn build:contracts",
     "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",

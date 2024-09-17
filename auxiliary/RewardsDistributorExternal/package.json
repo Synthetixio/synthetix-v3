@@ -7,8 +7,8 @@
   "main": "index.js",
   "files": [
     "src",
-    "package.json",
-    "README.md"
+    "storage.dump.json",
+    "*.toml"
   ],
   "repository": "Synthetixio/synthetix-v3",
   "author": "Synthetix",
