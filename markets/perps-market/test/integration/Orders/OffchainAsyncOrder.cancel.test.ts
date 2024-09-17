@@ -309,7 +309,7 @@ describe('Cancel Offchain Async Order test', () => {
     });
   }
 
-  describe.skip('cancel order due to market insolvency', () => {
+  describe('cancel order due to market insolvency', () => {
     let tx: ethers.ContractTransaction;
     let startTime: number;
 

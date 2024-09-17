@@ -110,7 +110,8 @@ library GlobalPerpsMarket {
         // calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
 
-        isMarketSolvent = credit >= delegatedCollateralValue;
+        // Market insolvent delegatedCollateralValue < credit
+        isMarketSolvent = delegatedCollateralValue >= credit;
     }
 
     function utilizationRate(
