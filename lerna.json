@@ -18,7 +18,11 @@
     },
     "command": {
       "publish": {
-        "removePackageFields": ["devDependencies", "scripts", "depcheck"]
+        "removePackageFields": [
+          "devDependencies",
+          "scripts",
+          "depcheck"
+        ]
       }
     }
   }
