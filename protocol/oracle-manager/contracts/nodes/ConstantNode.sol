@@ -7,9 +7,8 @@ import "../storage/NodeOutput.sol";
 library ConstantNode {
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
-        nodeOutput = NodeOutput.Data(abi.decode(parameters, (int256)), block.timestamp, 0, 0);
-        possibleError = new bytes(0);
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+        return NodeOutput.Data(abi.decode(parameters, (int256)), block.timestamp, 0, 0);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {

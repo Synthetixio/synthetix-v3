@@ -9,11 +9,6 @@ contract MockV3Aggregator is IAggregatorV3Interface {
     uint256 private _price;
     uint8 private _decimals;
 
-    uint256 private _failing;
-
-    // used to test node failures
-    error SomeError(uint256);
-
     function decimals() external view override returns (uint8) {
         return _decimals;
     }
@@ -31,10 +26,6 @@ contract MockV3Aggregator is IAggregatorV3Interface {
         _timestamp = block.timestamp;
         _roundId++;
         _decimals = decimal;
-    }
-
-    function mockSetFails(uint256 failing) external {
-        _failing = failing;
     }
 
     // getRoundData and latestRoundData should both raise "No data present"
@@ -69,9 +60,6 @@ contract MockV3Aggregator is IAggregatorV3Interface {
             uint80 answeredInRound
         )
     {
-        if (_failing != 0) {
-            revert SomeError(1234);
-        }
         // solhint-disable-next-line numcast/safe-cast
         return (_roundId, int256(_price), _timestamp, _timestamp, _roundId);
     }

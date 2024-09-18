@@ -19,7 +19,7 @@ library PythOffchainLookupNode {
         bytes memory parameters,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal pure returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
+    ) internal pure returns (NodeOutput.Data memory) {
         (address pythAddress, bytes32 priceId, uint256 stalenessTolerance) = abi.decode(
             parameters,
             (address, bytes32, uint256)
@@ -53,8 +53,7 @@ library PythOffchainLookupNode {
         // }
         //
         // This contract only implements the PythQuery::NoOlderThan
-        possibleError = abi.encodeWithSelector(
-            OracleDataRequired.selector,
+        revert OracleDataRequired(
             pythAddress,
             abi.encode(
                 // solhint-disable-next-line numcast/safe-cast
