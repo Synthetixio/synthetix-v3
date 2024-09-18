@@ -14,6 +14,7 @@
     "solidity"
   ],
   "files": [
+    "src",
     "dist/**/*.js",
     "dist/**/*.js.map",
     "dist/**/*.d.ts",

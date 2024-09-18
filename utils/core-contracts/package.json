@@ -4,6 +4,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "description": "Base solidity contracts",
   "author": "Synthetix",
   "license": "MIT",
@@ -12,10 +19,6 @@
     "solidity",
     "proxy",
     "ownership"
-  ],
-  "files": [
-    "contracts",
-    "!contracts/mocks"
   ],
   "scripts": {
     "clean": "hardhat clean",

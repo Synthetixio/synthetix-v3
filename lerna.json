@@ -15,6 +15,15 @@
       "allowBranch": [
         "main"
       ]
+    },
+    "command": {
+      "publish": {
+        "removePackageFields": [
+          "devDependencies",
+          "scripts",
+          "depcheck"
+        ]
+      }
     }
   }
 }

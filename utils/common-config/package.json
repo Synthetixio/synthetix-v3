@@ -4,6 +4,11 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts"
+  ],
   "description": "Common configuration used by all Hardhat packages",
   "scripts": {
     "build": "yarn build:ts",

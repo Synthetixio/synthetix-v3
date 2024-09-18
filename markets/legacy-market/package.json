@@ -2,7 +2,16 @@
   "name": "@synthetixio/legacy-market",
   "version": "3.3.6",
   "description": "Contract for migration from v2x to v3",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "storage:dump": "hardhat storage:dump --output storage.new.dump.json",
