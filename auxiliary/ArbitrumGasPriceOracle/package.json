@@ -1,10 +1,17 @@
 {
   "name": "@synthetixio/arbitrum-gas-price-oracle",
-  "version": "3.6.1",
+  "version": "3.6.4",
   "description": "Arbitrum Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "clean": "hardhat clean",
     "build": "yarn build:contracts",

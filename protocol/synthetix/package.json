@@ -1,10 +1,17 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.6.1",
+  "version": "3.6.4",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",

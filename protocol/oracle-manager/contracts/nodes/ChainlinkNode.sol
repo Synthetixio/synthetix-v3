@@ -17,31 +17,23 @@ library ChainlinkNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         (address chainlinkAddr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
             (address, uint256, uint8)
         );
         IAggregatorV3Interface chainlink = IAggregatorV3Interface(chainlinkAddr);
-        try chainlink.latestRoundData() returns (
-            uint80 roundId,
-            int256 price,
-            uint256,
-            uint256 updatedAt,
-            uint80
-        ) {
-            int256 finalPrice = twapTimeInterval == 0
-                ? price
-                : getTwapPrice(chainlink, roundId, price, twapTimeInterval);
+        (uint80 roundId, int256 price, , uint256 updatedAt, ) = chainlink.latestRoundData();
 
-            finalPrice = decimals > PRECISION
-                ? finalPrice.downscale(decimals - PRECISION)
-                : finalPrice.upscale(PRECISION - decimals);
+        int256 finalPrice = twapTimeInterval == 0
+            ? price
+            : getTwapPrice(chainlink, roundId, price, twapTimeInterval);
 
-            nodeOutput = NodeOutput.Data(finalPrice, updatedAt, 0, 0);
-        } catch (bytes memory err) {
-            possibleError = err;
-        }
+        finalPrice = decimals > PRECISION
+            ? finalPrice.downscale(decimals - PRECISION)
+            : finalPrice.upscale(PRECISION - decimals);
+
+        return NodeOutput.Data(finalPrice, updatedAt, 0, 0);
     }
 
     function getTwapPrice(

@@ -44,11 +44,11 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     });
 
     it('expect process to revert for prices = [1, 0.5]', async () => {
-      await assertRevert(NodeModule.process(node1), '0xdcac0919', NodeModule);
+      await assertRevert(NodeModule.process(node1), 'DeviationToleranceExceeded', NodeModule);
     });
 
     it('expect process to revert for prices = [1, 1.5]', async () => {
-      await assertRevert(NodeModule.process(node2), '0xdcac0919', NodeModule);
+      await assertRevert(NodeModule.process(node2), 'DeviationToleranceExceeded', NodeModule);
     });
   });
 
@@ -92,7 +92,7 @@ describe('PriceDeviationCircuitBreakerNode', function () {
     });
 
     it('expect process to return first node price since prices are 50% different', async () => {
-      await assertRevert(NodeModule.process(nodeId), '0x014cc071', NodeModule);
+      await assertRevert(NodeModule.process(nodeId), 'InvalidInputPrice', NodeModule);
     });
   });
 

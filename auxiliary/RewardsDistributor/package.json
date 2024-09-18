@@ -1,14 +1,14 @@
 {
   "name": "@synthetixio/rewards-distributor",
-  "version": "3.6.1",
+  "version": "3.6.4",
   "publishConfig": {
     "access": "public"
   },
   "main": "index.js",
   "files": [
     "src",
-    "package.json",
-    "README.md"
+    "storage.dump.json",
+    "*.toml"
   ],
   "repository": "Synthetixio/synthetix-v3",
   "author": "Synthetix",

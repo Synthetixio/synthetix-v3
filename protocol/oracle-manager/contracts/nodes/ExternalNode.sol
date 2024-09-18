@@ -13,15 +13,9 @@ library ExternalNode {
         bytes memory parameters,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput) {
         IExternalNode externalNode = IExternalNode(abi.decode(parameters, (address)));
-        try externalNode.process(prices, parameters, runtimeKeys, runtimeValues) returns (
-            NodeOutput.Data memory out
-        ) {
-            nodeOutput = out;
-        } catch (bytes memory reason) {
-            possibleError = reason;
-        }
+        return externalNode.process(prices, parameters, runtimeKeys, runtimeValues);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal returns (bool valid) {

@@ -17,7 +17,7 @@ library PriceDeviationCircuitBreakerNode {
     function process(
         NodeOutput.Data[] memory parentNodeOutputs,
         bytes memory parameters
-    ) internal pure returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
+    ) internal pure returns (NodeOutput.Data memory nodeOutput) {
         uint256 deviationTolerance = abi.decode(parameters, (uint256));
 
         int256 primaryPrice = parentNodeOutputs[0].price;
@@ -29,23 +29,18 @@ library PriceDeviationCircuitBreakerNode {
                 primaryPrice == 0 || deviationTolerance.toInt() < (difference / abs(primaryPrice))
             ) {
                 if (parentNodeOutputs.length > 2) {
-                    nodeOutput = parentNodeOutputs[2];
+                    return parentNodeOutputs[2];
                 } else {
                     if (primaryPrice == 0) {
-                        possibleError = abi.encodeWithSelector(InvalidInputPrice.selector);
+                        revert InvalidInputPrice();
                     } else {
-                        possibleError = abi.encodeWithSelector(
-                            DeviationToleranceExceeded.selector,
-                            difference / abs(primaryPrice)
-                        );
+                        revert DeviationToleranceExceeded(difference / abs(primaryPrice));
                     }
                 }
-
-                return (nodeOutput, possibleError);
             }
         }
 
-        nodeOutput = parentNodeOutputs[0];
+        return parentNodeOutputs[0];
     }
 
     function abs(int256 x) private pure returns (int256 result) {

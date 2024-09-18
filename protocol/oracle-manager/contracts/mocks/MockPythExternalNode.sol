@@ -11,10 +11,7 @@ contract MockPythExternalNode is IExternalNode {
 
     uint256 private constant ONE_MONTH = 2592000;
 
-    uint256 failureCode;
-
     error OracleDataRequired();
-    error MiscFailure(uint256 failureCode);
 
     function mockSetCurrentPrice(uint256 currentPrice) external {
         _price = currentPrice;
@@ -22,10 +19,6 @@ contract MockPythExternalNode is IExternalNode {
 
     function mockSetMonthlyTolerancePrice(uint256 price) external {
         _monthlyTolerancePrice = price;
-    }
-
-    function mockFailure(uint256 _failureCode) external {
-        failureCode = _failureCode;
     }
 
     function getCurrentPrice() external view returns (uint256) {
@@ -38,11 +31,6 @@ contract MockPythExternalNode is IExternalNode {
         bytes32[] memory,
         bytes32[] memory runtimeValues
     ) external view override returns (NodeOutput.Data memory) {
-        // in order to mock cases where the oracle is failing
-        if (failureCode != 0) {
-            revert MiscFailure(failureCode);
-        }
-
         // Note: when it's 50 seconds, it should revert.  This is a way to test the right
         // tolerance is being sent in during different situations (like liquidations on perps, we should use a strict staleness tolerance)
         if (runtimeValues.length > 0) {
