@@ -170,7 +170,14 @@ Do **NOT** manually update `package.json` of any package.
     Underlying command can always be checked in `package.json` scripts. Full version is:
 
     ```sh
-    lerna publish from-package --force-publish --dist-tag dev --no-git-reset
+    yarn lerna publish from-package --force-publish --dist-tag dev --no-git-reset
+    ```
+
+    If there is no intention to publish to NPM or cannon registry at all for testing locally only, you can do a dry-run instead
+    It will not run npm publish but still will do all the necessary updates to local package.json files.
+
+    ```sh
+    yarn publish:dev --dry-run
     ```
 
 4.  Deploy each individual package to cannon, make sure you still have all the results of steps 2 and 3 in working tree.
