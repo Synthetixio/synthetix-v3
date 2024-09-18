@@ -404,6 +404,17 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
                 election.evaluated = true;
                 emit ElectionEvaluated(currentEpochIndex, totalBallots);
             }
+
+            // issue refund if eth sent with call that does not broadcast
+            (bool success, bytes memory result) = ERC2771Context._msgSender().call{
+                value: msg.value
+            }("");
+            if (!success) {
+                uint256 len = result.length;
+                assembly {
+                    revert(add(result, 0x20), len)
+                }
+            }
         }
     }
 
