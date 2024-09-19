@@ -3,6 +3,7 @@ import { OpenPositionData, depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { Signer, ethers } from 'ethers';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('Market Debt - single market', () => {
   const orderFees = {
@@ -332,6 +333,25 @@ describe('Market Debt - single market', () => {
             await systems().PerpsMarket.reportedDebt(superMarketId()),
             marketActivity.expected!.marketDebt
           );
+        });
+
+        describe('on invalid price feed', () => {
+          const restoreFeed = snapshotCheckpoint(provider);
+
+          before(async () => {
+            // cause a failure on one of the perp market price feeds
+            await perpsMarkets()[0].aggregator().mockFailure(828);
+          });
+
+          it('should fail with Errors event, returning all failed price feeds at once', async () => {
+            await assertRevert(
+              systems().PerpsMarket.reportedDebt(superMarketId()),
+              'Errors(',
+              systems().OracleManager
+            );
+          });
+
+          after(restoreFeed);
         });
       });
     });
