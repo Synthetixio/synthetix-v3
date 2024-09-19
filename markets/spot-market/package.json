@@ -1,7 +1,17 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.6.1",
+  "version": "3.7.1",
   "description": "Spot Market implementation",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",

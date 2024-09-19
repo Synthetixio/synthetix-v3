@@ -1,10 +1,17 @@
 {
   "name": "@synthetixio/owned-fee-collector",
-  "version": "3.6.1",
+  "version": "3.7.0",
   "description": "Colelcts fees on behalf of an owner",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",
