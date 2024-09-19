@@ -26,7 +26,7 @@ library UniswapNode {
 
     function process(
         bytes memory parameters
-    ) internal view returns (NodeOutput.Data memory nodeOutput) {
+    ) internal view returns (NodeOutput.Data memory nodeOutput, bytes memory possibleError) {
         (
             address token,
             address stablecoin,
@@ -40,9 +40,15 @@ library UniswapNode {
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;
 
-        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondsAgos);
-
-        int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
+        int56 tickCumulativesDelta;
+        try IUniswapV3Pool(pool).observe(secondsAgos) returns (
+            int56[] memory tickCumulatives,
+            uint160[] memory _unused
+        ) {
+            tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
+        } catch (bytes memory reason) {
+            return (nodeOutput, reason);
+        }
 
         int24 tick = (tickCumulativesDelta / secondsAgo.to56().toInt()).to24();
 
@@ -60,7 +66,8 @@ library UniswapNode {
             ? price.upscale(scale.toUint())
             : price.downscale((-scale).toUint());
 
-        return NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
+        nodeOutput = NodeOutput.Data(finalPrice, block.timestamp, 0, 0);
+        possibleError = new bytes(0);
     }
 
     function getQuoteAtTick(
