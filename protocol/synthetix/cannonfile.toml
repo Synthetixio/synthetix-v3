@@ -15,7 +15,7 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.oracle_manager_source]
+[setting.oracle_manager_package]
 defaultValue = "oracle-manager"
 
 [setting.usd_token_name]
@@ -30,15 +30,14 @@ defaultValue = "Synthetix Account"
 [setting.account_token_symbol]
 defaultValue = "SACCT"
 
-[provision.oracle_manager]
-source = "<%= settings.oracle_manager_source %>"
-options.owner = "<%= settings.owner %>"
-options.salt = "<%= settings.salt %>-oracle"
+[import.oracle_manager]
+source = "<%= settings.oracle_manager_package %>"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 salt = "<%= settings.bundleSalt !== 'main' ? settings.bundleSalt : settings.salt %>"
 create2 = true
+ifExists = "continue"
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
