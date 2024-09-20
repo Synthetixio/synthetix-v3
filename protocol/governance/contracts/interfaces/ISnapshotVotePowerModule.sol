@@ -13,6 +13,7 @@ interface ISnapshotVotePowerModule {
     function setSnapshotContract(
         address snapshotContract,
         SnapshotVotePower.WeightType weight,
+        uint256 scale,
         bool enabled
     ) external;
 
