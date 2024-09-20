@@ -151,7 +151,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 newEpochEndDate
     ) external payable override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
         Council.Data storage council = Council.load();
 
         Epoch.Data storage currentEpoch = council.getCurrentEpoch();
@@ -187,6 +187,23 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         );
     }
 
+    //TODO: remove this function after the election
+    function setCurrentEpochSeatCountAndMinimumActiveMembers(
+        uint8 epochSeatCount,
+        uint8 minimumActiveMembers
+    ) external override {
+        OwnableStorage.onlyOwner();
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Nomination, Epoch.ElectionPeriod.Vote);
+
+        Council.Data storage council = Council.load();
+        ElectionSettings.Data storage currentSettings = council.getCurrentElectionSettings();
+        if (epochSeatCount == 0 || minimumActiveMembers == 0) {
+            revert ParameterError.InvalidParameter("epochSeatCount", "minimumActiveMembers");
+        }
+        currentSettings.epochSeatCount = epochSeatCount;
+        currentSettings.minimumActiveMembers = minimumActiveMembers;
+    }
+
     /// @inheritdoc	IElectionModule
     function setNextElectionSettings(
         uint8 epochSeatCount,
@@ -197,7 +214,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint64 maxDateAdjustmentTolerance
     ) external override {
         OwnableStorage.onlyOwner();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Administration, Epoch.ElectionPeriod.Nomination);
 
         Council.load().getNextElectionSettings().setElectionSettings(
             epochSeatCount,
@@ -284,8 +301,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint256[] calldata amounts
     ) external override {
         WormholeCrossChain.onlyCrossChain();
-        //We accept votes during evaluation period incase votes were sent at the end of the voting period and through crosschain messaging arrive in the evaluation period. Additionally, the `cast` function only allows votes to be cast during the voting period, so this is secure.
-        Council.onlyInPeriods(Epoch.ElectionPeriod.Vote, Epoch.ElectionPeriod.Evaluation);
+        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
         if (candidates.length > _MAX_BALLOT_SIZE) {
             revert ParameterError.InvalidParameter("candidates", "too many candidates");
         }
@@ -403,17 +419,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             } else {
                 election.evaluated = true;
                 emit ElectionEvaluated(currentEpochIndex, totalBallots);
-            }
-
-            // issue refund if eth sent with call that does not broadcast
-            (bool success, bytes memory result) = ERC2771Context._msgSender().call{
-                value: msg.value
-            }("");
-            if (!success) {
-                uint256 len = result.length;
-                assembly {
-                    revert(add(result, 0x20), len)
-                }
             }
         }
     }

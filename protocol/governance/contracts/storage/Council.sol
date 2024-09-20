@@ -184,7 +184,10 @@ library Council {
             newEpoch.endDate
         );
 
-        if (Epoch.getPeriodFor(newEpoch) != Epoch.ElectionPeriod.Administration) {
+        if (
+            Epoch.getPeriodFor(newEpoch) != Epoch.ElectionPeriod.Administration &&
+            Epoch.getPeriodFor(newEpoch) != Epoch.ElectionPeriod.Nomination
+        ) {
             revert ChangesCurrentPeriod();
         }
     }
