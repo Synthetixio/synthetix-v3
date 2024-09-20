@@ -1,6 +1,6 @@
 import { BigInt, ethereum, Address } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { MaxLiquidationParametersSet as MaxLiquidationParametersSetEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { MaxLiquidationParametersSet as MaxLiquidationParametersSetEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createMaxLiquidationParametersSetEvent(
   marketId: i32,

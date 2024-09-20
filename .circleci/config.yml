@@ -592,7 +592,7 @@ jobs:
           command: |
             export CANNON_REGISTRY_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
             export CANNON_PROVIDER_URL="https://mainnet.infura.io/v3/$INFURA_API_KEY"
-            yarn subgraphgen
+            yarn subgraph:codegen
 
       - run: yarn workspace @synthetixio/core-subgraph test
       - run: yarn workspace @synthetixio/spot-market-subgraph test
@@ -785,45 +785,45 @@ workflows:
           name: "test-subgraph-perps-market"
           workspace: "@synthetixio/perps-market-subgraph"
 
-      - simulate-release:
-          name: "synthetix--base-mainnet-andromeda"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialCoreProxy"
+      #- simulate-release:
+      #    name: "synthetix--base-mainnet-andromeda"
+      #    requires: [compile-foundry]
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialCoreProxy"
 
-      - simulate-release:
-          name: "synthetix--base-sepolia-andromeda"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-sepolia"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialCoreProxy"
+      #- simulate-release:
+      #    name: "synthetix--base-sepolia-andromeda"
+      #    requires: [compile-foundry]
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-sepolia"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialCoreProxy"
 
-      - simulate-release:
-          name: "synthetix--optimism-mainnet"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix:latest"
-          cannonPreset: "main"
-          hardhatNetwork: "optimistic-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialCoreProxy"
+      #- simulate-release:
+      #    name: "synthetix--optimism-mainnet"
+      #    requires: [compile-foundry]
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix:latest"
+      #    cannonPreset: "main"
+      #    hardhatNetwork: "optimistic-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialCoreProxy"
 
-      - simulate-release:
-          name: "synthetix--mainnet"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix:latest"
-          cannonPreset: "main"
-          hardhatNetwork: "mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialCoreProxy"
+      #- simulate-release:
+      #    name: "synthetix--mainnet"
+      #    requires: [compile-foundry]
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix:latest"
+      #    cannonPreset: "main"
+      #    hardhatNetwork: "mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialCoreProxy"
 
       - simulate-release:
           name: "oracle-manager--base-mainnet-andromeda"

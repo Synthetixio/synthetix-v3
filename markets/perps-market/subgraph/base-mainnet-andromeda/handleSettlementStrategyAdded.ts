@@ -15,7 +15,7 @@ export function handleSettlementStrategyAdded(event: SettlementStrategyAdded): v
     event.params.strategy.priceVerificationContract.toHexString();
   strategy.feedId = event.params.strategy.feedId;
   strategy.settlementReward = event.params.strategy.settlementReward;
-  strategy.enabled = !event.params.strategy.disabled;
+  strategy.disabled = event.params.strategy.disabled;
   strategy.commitmentPriceDelay = event.params.strategy.commitmentPriceDelay;
 
   strategy.save();

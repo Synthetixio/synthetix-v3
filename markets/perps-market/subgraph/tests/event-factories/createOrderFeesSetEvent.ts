@@ -1,6 +1,6 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { OrderFeesSet as OrderFeesSetEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { OrderFeesSet as OrderFeesSetEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createOrderFeesSetEvent(
   marketId: i32,

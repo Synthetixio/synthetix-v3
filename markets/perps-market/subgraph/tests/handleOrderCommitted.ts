@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleMarketCreated, handleOrderCommitted } from '../optimism-goerli';
+import { handleMarketCreated, handleOrderCommitted } from '../base-mainnet-andromeda';
 import { createMarketCreatedEvent } from './event-factories/createMarketCreatedEvent';
 import { createOrderCommittedEvent } from './event-factories/createOrderCommittedEvent';
 
@@ -34,6 +34,8 @@ export default function test(): void {
   let orderType = 2;
   let sizeDelta = 300;
   let acceptablePrice = 400;
+  let commitmentTime = 700;
+  let expectedPriceTime = 800;
   let settlementTime = 500;
   let expirationTime = 600;
   let trackingCode = '0xbebebe';
@@ -46,6 +48,8 @@ export default function test(): void {
       orderType,
       sizeDelta,
       acceptablePrice,
+      commitmentTime,
+      expectedPriceTime,
       settlementTime,
       expirationTime,
       trackingCode,
@@ -66,6 +70,8 @@ export default function test(): void {
   assert.fieldEquals('Order', orderId, 'marketId', perpsMarketId.toString());
   assert.fieldEquals('Order', orderId, 'accountId', accountId.toString());
   assert.fieldEquals('Order', orderId, 'acceptablePrice', acceptablePrice.toString());
+  assert.fieldEquals('Order', orderId, 'commitmentTime', commitmentTime.toString());
+  assert.fieldEquals('Order', orderId, 'expectedPriceTime', expectedPriceTime.toString());
   assert.fieldEquals('Order', orderId, 'settlementTime', settlementTime.toString());
   assert.fieldEquals('Order', orderId, 'trackingCode', trackingCode);
   assert.fieldEquals('Order', orderId, 'owner', sender);
@@ -88,6 +94,18 @@ export default function test(): void {
   assert.fieldEquals(
     'OrderCommitted',
     orderCommittedId,
+    'commitmentTime',
+    commitmentTime.toString()
+  );
+  assert.fieldEquals(
+    'OrderCommitted',
+    orderCommittedId,
+    'expectedPriceTime',
+    expectedPriceTime.toString()
+  );
+  assert.fieldEquals(
+    'OrderCommitted',
+    orderCommittedId,
     'settlementTime',
     settlementTime.toString()
   );
@@ -103,6 +121,8 @@ export default function test(): void {
       orderType,
       sizeDelta,
       acceptablePrice,
+      commitmentTime,
+      expectedPriceTime,
       800,
       expirationTime,
       trackingCode,

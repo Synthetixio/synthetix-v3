@@ -23,7 +23,6 @@ dataSources:
         - Order
         - SettlementStrategy
         - CollateralModified
-        - AccountLiquidated
         - PositionLiquidated
         - OrderCommitted
         - OrderSettled
@@ -64,9 +63,6 @@ dataSources:
           handler: handlePreviousOrderExpired
         - event: PositionLiquidated(indexed uint128,indexed uint128,uint256,int128)
           handler: handlePositionLiquidated
-        # TODO: figure out what happened to AccountLiquidated and what to replace it with
-        #- event: AccountLiquidated(indexed uint128,uint256,bool)
-        #  handler: handleAccountLiquidated
         - event:
             CollateralModified(indexed uint128,indexed uint128,int256,indexed
             address)

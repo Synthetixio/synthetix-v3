@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, clearStore, describe, logStore, test } from 'matchstick-as';
 
 import handleAccountCreated from './handleAccountCreated';
-import handleAccountLiquidated from './handleAccountLiquidated';
 import handleCollateralModified from './handleCollateralModified';
 import handleFundingParametersSet from './handleFundingParametersSet';
 import handleLiquidationParametersSet from './handleLiquidationParametersSet';
@@ -17,7 +16,7 @@ import handlePositionLiquidated from './handlePositionLiquidated';
 import handlePreviousOrderExpired from './handlePreviousOrderExpired';
 import handleReferrerShareUpdated from './handleReferrerShareUpdated';
 import handleSettlementStrategyAdded from './handleSettlementStrategyAdded';
-import handleSettlementStrategyEnabled from './handleSettlementStrategyEnabled';
+import handleSettlementStrategySet from './handleSettlementStrategySet';
 
 describe('PerpsMarketProxy', () => {
   beforeEach(() => {
@@ -29,7 +28,6 @@ describe('PerpsMarketProxy', () => {
   });
 
   test('handleAccountCreated', handleAccountCreated);
-  test('handleAccountLiquidated', handleAccountLiquidated);
   test('handleCollateralModified', handleCollateralModified);
   test('handleFundingParametersSet', handleFundingParametersSet);
   test('handleLiquidationParametersSet', handleLiquidationParametersSet);
@@ -45,5 +43,5 @@ describe('PerpsMarketProxy', () => {
   test('handlePreviousOrderExpired', handlePreviousOrderExpired);
   test('handleReferrerShareUpdated', handleReferrerShareUpdated);
   test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
-  test('handleSettlementStrategyEnabled', handleSettlementStrategyEnabled);
+  test('handleSettlementStrategySet', handleSettlementStrategySet);
 });
