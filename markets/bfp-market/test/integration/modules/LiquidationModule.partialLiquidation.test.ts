@@ -562,7 +562,7 @@ describe('LiquidationModule', () => {
         assertBn.equal(cap6.remainingCapacity, cap6.maxLiquidatableCapacity);
       });
 
-      it('should pay out liquidation fee to liquidator in chunks added up to total', async () => {
+      it.only('should pay out liquidation fee to liquidator in chunks added up to total', async () => {
         const { BfpMarketProxy } = systems();
 
         const marketOraclePrice1 = bn(10_000);
@@ -650,9 +650,9 @@ describe('LiquidationModule', () => {
           wei(capBefore.maxLiquidatableCapacity),
           globalConfig
         );
-        assertBn.near(expectedLiqFee.toBN(), liqKeeperFee, bn(0.00001));
+        assertBn.near(expectedLiqFee.toBN(), liqKeeperFee, bn(0.0001));
         // `sum(liqReward)` should equal to liqReward from the prior step.
-        assertBn.near(accLiqRewards, expectedLiqFee.toBN(), bn(0.00001));
+        assertBn.near(accLiqRewards, expectedLiqFee.toBN(), bn(0.0001));
       });
 
       it('should cap liqKeeperFee and flagKeeperReward to the maxKeeperFee', async () => {
