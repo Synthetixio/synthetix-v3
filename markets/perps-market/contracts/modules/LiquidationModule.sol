@@ -35,6 +35,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using KeeperCosts for KeeperCosts.Data;
+    using AsyncOrder for AsyncOrder.Data;
 
     /**
      * @inheritdoc ILiquidationModule
