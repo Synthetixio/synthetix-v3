@@ -132,7 +132,7 @@ library Account {
             self.collaterals[collateralType].amountAvailableForDelegationD18;
 
         uint256 len = locks.length;
-        if (offset == 0 && count >= len && totalLocked > totalDeposited) {
+        if (offset == 0 && (count == 0 || count >= len) && totalLocked > totalDeposited) {
             // something happened (ex. liquidation) and the amount of collateral in the account is greater than the total locked
             // so scale the remaining locks down
             // NOTE: ideally we would scale based on the time that the user's deposited balance got reduced, but if this function
@@ -259,5 +259,22 @@ library Account {
         ) {
             revert ICollateralModule.InsufficientAccountCollateral(amountD18);
         }
+    }
+
+    // from here are convenience functions for testing purposes
+    function increaseAvailableCollateral(
+        Data storage self,
+        address collateralType,
+        uint256 amountD18
+    ) internal {
+        self.collaterals[collateralType].increaseAvailableCollateral(amountD18);
+    }
+
+    function decreaseAvailableCollateral(
+        Data storage self,
+        address collateralType,
+        uint256 amountD18
+    ) internal {
+        self.collaterals[collateralType].decreaseAvailableCollateral(amountD18);
     }
 }
