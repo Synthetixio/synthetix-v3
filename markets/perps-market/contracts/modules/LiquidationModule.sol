@@ -19,6 +19,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
 
 /**
  * @title Module for liquidating accounts.
