@@ -46,8 +46,7 @@ dataSources:
           handler: handleWrapperSet
         - event: SettlementStrategyAdded(indexed uint128,indexed uint256)
           handler: handleSettlementStrategyAdded
-        # TODO: Need to implement handler for SettlementStrategySet (replaces SettlementStrategyUpdated)
-        #- event: SettlementStrategySet(indexed uint128,indexed uint256,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool))
-        #  handler: handleSettlementStrategySet
+        - event: SettlementStrategySet(indexed uint128,indexed uint256,(uint8,uint256,uint256,address,bytes32,string,uint256,uint256,uint256,uint256,bool))
+          handler: handleSettlementStrategySet
         - event: SynthPriceDataUpdated(indexed uint256,indexed bytes32,indexed bytes32,uint256)
           handler: handleSynthPriceDataUpdated

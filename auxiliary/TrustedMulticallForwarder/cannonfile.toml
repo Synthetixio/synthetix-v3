@@ -1,5 +1,5 @@
 name = "trusted-multicall-forwarder"
-version = "0.0.3"
+version = "0.0.4"
 description = "ERC-2771 compliant trusted forwarder including Multicall3 functionality with error bubbling"
 
 [setting.salt]
@@ -9,3 +9,4 @@ defaultValue = "salt"
 artifact = "TrustedMulticallForwarder"
 salt = "<%= settings.salt %>"
 create2 = true
+ifExists = "continue"

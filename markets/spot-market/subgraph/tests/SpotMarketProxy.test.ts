@@ -4,13 +4,13 @@ import handleOrderCancelled from './handleOrderCancelled';
 import handleOrderCommitted from './handleOrderCommitted';
 import handleOrderSettled from './handleOrderSettled';
 import handleSettlementStrategyAdded from './handleSettlementStrategyAdded';
-import handleSettlementStrategyUpdated from './handleSettlementStrategyUpdated';
+import handleSettlementStrategySet from './handleSettlementStrategySet';
 import handleSynthPriceDataUpdated from './handleSynthPriceDataUpdated';
 import handleSynthUnwrapped from './handleSynthUnwrapped';
 import handleSynthWrapped from './handleSynthWrapped';
 import handleWrapperSet from './handleWrapperSet';
 
-describe('PerpsMarketProxy', () => {
+describe('SpotMarketProxy', () => {
   beforeEach(() => {
     clearStore();
   });
@@ -23,7 +23,7 @@ describe('PerpsMarketProxy', () => {
   test('handleOrderCommitted', handleOrderCommitted);
   test('handleOrderSettled', handleOrderSettled);
   test('handleSettlementStrategyAdded', handleSettlementStrategyAdded);
-  test('handleSettlementStrategyUpdated', handleSettlementStrategyUpdated);
+  test('handleSettlementStrategySet', handleSettlementStrategySet);
   test('handleSynthPriceDataUpdated', handleSynthPriceDataUpdated);
   test('handleSynthUnwrapped', handleSynthUnwrapped);
   test('handleSynthWrapped', handleSynthWrapped);

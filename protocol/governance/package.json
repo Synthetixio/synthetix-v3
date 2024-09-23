@@ -1,10 +1,17 @@
 {
   "name": "@synthetixio/governance",
-  "version": "3.6.2",
+  "version": "3.7.0",
   "description": "On-Chain elections for all Synthetix councils",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "clean": "hardhat clean && rm -rf contracts/generated",
     "build": "yarn build:contracts",

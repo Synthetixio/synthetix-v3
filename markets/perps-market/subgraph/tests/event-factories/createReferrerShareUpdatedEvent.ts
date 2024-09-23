@@ -1,6 +1,6 @@
 import { BigInt, ethereum, Address } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { ReferrerShareUpdated as ReferrerShareUpdatedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { ReferrerShareUpdated as ReferrerShareUpdatedEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createReferrerShareUpdatedEvent(
   referrer: string,

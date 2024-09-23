@@ -14,12 +14,11 @@ export function handleOrderCancelled(event: OrderCancelled): void {
 
   order.status = 'Cancelled';
 
-  let claim = event.params.asyncOrderClaim;
-  order.amountEscrowed = claim.amountEscrowed;
-  order.settlementStrategyId = claim.settlementStrategyId;
-  order.settlementTime = claim.settlementTime;
-  order.minimumSettlementAmount = claim.minimumSettlementAmount;
-  order.settledAt = claim.settledAt;
+  order.amountEscrowed = event.params.asyncOrderClaim.amountEscrowed;
+  order.settlementStrategyId = event.params.asyncOrderClaim.settlementStrategyId;
+  order.commitmentTime = event.params.asyncOrderClaim.commitmentTime;
+  order.minimumSettlementAmount = event.params.asyncOrderClaim.minimumSettlementAmount;
+  order.settledAt = event.params.asyncOrderClaim.settledAt;
 
   order.save();
 }

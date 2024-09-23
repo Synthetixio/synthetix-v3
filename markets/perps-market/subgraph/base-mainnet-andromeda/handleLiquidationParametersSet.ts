@@ -7,8 +7,9 @@ export function handleLiquidationParametersSet(event: LiquidationParametersSet):
 
   if (market) {
     market.initialMarginRatioD18 = event.params.initialMarginRatioD18;
-    market.liquidationRewardRatioD18 = event.params.liquidationRewardRatioD18;
     market.maintenanceMarginRatioD18 = event.params.maintenanceMarginRatioD18;
+    market.minimumInitialMarginRatioD18 = event.params.minimumInitialMarginRatioD18;
+    market.flagRewardRatioD18 = event.params.flagRewardRatioD18;
     market.minimumPositionMargin = event.params.minimumPositionMargin;
     market.save();
   }

@@ -1,11 +1,12 @@
 {
   "name": "@synthetixio/core-utils",
-  "version": "3.6.1",
+  "version": "3.6.4",
   "publishConfig": {
     "access": "public"
   },
   "description": "Common JS utils for Synthetix",
   "files": [
+    "src",
     "utils/**/*.js",
     "utils/**/*.js.map",
     "utils/**/*.d.ts",

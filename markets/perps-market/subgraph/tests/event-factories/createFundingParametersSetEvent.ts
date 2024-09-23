@@ -1,6 +1,6 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { FundingParametersSet as FundingParametersSetEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { FundingParametersSet as FundingParametersSetEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createFundingParametersSetEvent(
   id: i32,
