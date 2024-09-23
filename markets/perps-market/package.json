@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.6.4",
+  "version": "3.7.1",
   "description": "Perps Market implementation",
   "publishConfig": {
     "access": "public"

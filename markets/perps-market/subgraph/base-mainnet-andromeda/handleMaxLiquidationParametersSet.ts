@@ -6,9 +6,12 @@ export function handleMaxLiquidationParametersSet(event: MaxLiquidationParameter
   const market = Market.load(id);
 
   if (market) {
-    market.maxSecondsInLiquidationWindow = event.params.maxSecondsInLiquidationWindow;
     market.maxLiquidationLimitAccumulationMultiplier =
       event.params.maxLiquidationLimitAccumulationMultiplier;
+    market.maxSecondsInLiquidationWindow = event.params.maxSecondsInLiquidationWindow;
+    market.maxLiquidationPd = event.params.maxLiquidationPd;
+    market.endorsedLiquidator = event.params.endorsedLiquidator.toHexString();
+
     market.save();
   }
 }
