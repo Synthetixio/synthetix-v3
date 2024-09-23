@@ -562,7 +562,7 @@ describe('LiquidationModule', () => {
         assertBn.equal(cap6.remainingCapacity, cap6.maxLiquidatableCapacity);
       });
 
-      it.only('should pay out liquidation fee to liquidator in chunks added up to total', async () => {
+      it('should pay out liquidation fee to liquidator in chunks added up to total', async () => {
         const { BfpMarketProxy } = systems();
 
         const marketOraclePrice1 = bn(10_000);
