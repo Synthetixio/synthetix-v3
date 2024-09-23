@@ -77,11 +77,11 @@ export function bootstrapWithNodes() {
       [failingAggregator.address, 0, 6]
     );
 
-    console.log('params fail', paramsFailing);
-
     const registerNode = async (params: string) => {
       const tx = await NodeModule.registerNode(NodeTypes.CHAINLINK, params, []);
       await tx.wait();
+      // this may help with some ci flakes
+      await r.getProvider().send('evm_snapshot', []);
       return await NodeModule.getNodeId(NodeTypes.CHAINLINK, params, []);
     };
 
