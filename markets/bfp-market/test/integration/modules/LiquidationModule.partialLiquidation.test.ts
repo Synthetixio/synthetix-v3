@@ -618,7 +618,7 @@ describe('LiquidationModule', () => {
             }),
           provider()
         );
-
+        let lastBlockNumber = (await provider().getBlock('latest')).number;
         let accLiqRewards = bn(0);
         let remainingSize = bn(-1);
 
@@ -640,8 +640,9 @@ describe('LiquidationModule', () => {
 
           accLiqRewards = accLiqRewards.add(liqKeeperFee);
           remainingSize = _remSize;
+          lastBlockNumber = receipt.blockNumber;
         }
-        const baseFeePerGas = (await provider().getBlock('latest')).baseFeePerGas ?? bn(0);
+        const baseFeePerGas = (await provider().getBlock(lastBlockNumber)).baseFeePerGas ?? bn(0);
         const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
         const expectedLiqFee = calcLiquidationKeeperFee(
           ethPrice,
