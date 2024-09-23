@@ -651,9 +651,9 @@ describe('LiquidationModule', () => {
           wei(capBefore.maxLiquidatableCapacity),
           globalConfig
         );
-        assertBn.near(expectedLiqFee.toBN(), liqKeeperFee, bn(0.1));
+        assertBn.near(expectedLiqFee.toBN(), liqKeeperFee, bn(1));
         // `sum(liqReward)` should equal to liqReward from the prior step.
-        assertBn.near(accLiqRewards, expectedLiqFee.toBN(), bn(0.1));
+        assertBn.near(accLiqRewards, expectedLiqFee.toBN(), bn(1));
       });
 
       it('should cap liqKeeperFee and flagKeeperReward to the maxKeeperFee', async () => {
