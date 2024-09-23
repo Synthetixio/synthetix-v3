@@ -122,6 +122,8 @@ library Account {
     ) internal returns (uint256) {
         CollateralLock.Data[] storage locks = self.collaterals[collateralType].locks;
 
+        uint256 len = locks.length;
+
         (, uint256 totalLocked) = self.collaterals[collateralType].cleanExpiredLocks(offset, count);
 
         if (totalLocked == 0) {
@@ -131,13 +133,13 @@ library Account {
         uint256 totalDeposited = getAssignedCollateral(self, collateralType) +
             self.collaterals[collateralType].amountAvailableForDelegationD18;
 
-        uint256 len = locks.length;
         if (offset == 0 && (count == 0 || count >= len) && totalLocked > totalDeposited) {
             // something happened (ex. liquidation) and the amount of collateral in the account is greater than the total locked
             // so scale the remaining locks down
             // NOTE: ideally we would scale based on the time that the user's deposited balance got reduced, but if this function
             // is called late we may not actually be able to scale it perfectly for the users situation. oh well.
-            for (uint256 i = 0; i < len; i++) {
+            uint256 updatedLocksLength = locks.length;
+            for (uint256 i = 0; i < updatedLocksLength; i++) {
                 locks[i].amountD18 = ((locks[i].amountD18 * totalDeposited) / totalLocked).to128();
             }
 

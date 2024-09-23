@@ -14,7 +14,7 @@ describe('AccountLocks', () => {
   let user1: ethers.Signer;
 
   before('identify signers', async () => {
-    [user1] = signers();
+    [, user1] = signers();
   });
 
   before('create dummy locks', async () => {
@@ -79,11 +79,6 @@ describe('AccountLocks', () => {
           collateralAddress(),
           collatInfo2.totalDeposited.sub(collatInfo2.totalLocked.div(2))
         );
-
-        console.log(
-          'collateral situation',
-          await systems().Core.getAccountCollateral(accountId, collateralAddress())
-        );
       });
 
       it('does not scale when it cannot', async () => {
@@ -94,12 +89,14 @@ describe('AccountLocks', () => {
         assertBn.equal(locks[1].amountD18, collatInfo.totalDeposited.div(8));
         assertBn.equal(locks[2].amountD18, collatInfo.totalDeposited.div(2));
 
+        // edge case: have one of the locks expire, shortening the array, but it should still not scale
+        await fastForwardTo(lockTime + 1001, provider());
         await systems().Core.Account_cleanAccountLocks(accountId, collateralAddress(), 0, 2);
         locks = await systems().Core.getLocks(accountId, collateralAddress(), 0, 999);
 
-        assertBn.equal(locks[0].amountD18, collatInfo.totalDeposited.div(4));
+        // only 2 of the locks are left and they are not scaled. also the order gets changed because of array replacement
+        assertBn.equal(locks[0].amountD18, collatInfo.totalDeposited.div(2));
         assertBn.equal(locks[1].amountD18, collatInfo.totalDeposited.div(8));
-        assertBn.equal(locks[2].amountD18, collatInfo.totalDeposited.div(2));
       });
 
       it('scales properly', async () => {
@@ -119,6 +116,19 @@ describe('AccountLocks', () => {
         assertBn.equal(locks[0].amountD18, collatInfo.totalDeposited.div(4).div(2));
         assertBn.equal(locks[1].amountD18, collatInfo.totalDeposited.div(8).div(2));
         assertBn.equal(locks[2].amountD18, collatInfo.totalDeposited.div(2).div(2));
+      });
+
+      it('works if scale and expire happen at the same time', async () => {
+        await fastForwardTo(lockTime + 1001, provider());
+
+        await systems().Core.Account_cleanAccountLocks(accountId, collateralAddress(), 0, 3);
+        const locks = await systems().Core.getLocks(accountId, collateralAddress(), 0, 999);
+
+        assert(locks[0].length === 2);
+        assertBn.equal(
+          locks[0].amountD18.add(locks[1].amountD18),
+          collatInfo.totalDeposited.div(8).mul(7).div(2)
+        );
       });
     });
   });
