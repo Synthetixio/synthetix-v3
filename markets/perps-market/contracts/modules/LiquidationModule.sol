@@ -101,6 +101,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             // clear debt
             account.updateAccountDebt(-(account.debt.toInt()));
 
+            // clean pending orders
+            AsyncOrder.load(accountId).reset();
+
             emit AccountMarginLiquidation(accountId, seizedMarginValue, liquidationReward);
         } else {
             revert NotEligibleForMarginLiquidation(accountId);
