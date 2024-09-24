@@ -28,6 +28,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
+    using Market for Market.Data;
     using VaultEpoch for VaultEpoch.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using ScalableMapping for ScalableMapping.Data;
@@ -58,6 +59,9 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // Remove the pro-rata debt we are about to assign from the market level (ensures it does not leak down to any other pools or vaults that may be connected)
         marketData.poolsDebtDistribution.distributeValue(-amount.toInt());
+
+        // Ensure any pools that have had debt removed from are bumped in
+        marketData.distributeDebtToPools(999999999);
 
         // Refresh latest account debt (do this before hasMarket check to verify max debt per share)
         poolData.updateAccountDebt(collateralType, accountId);
