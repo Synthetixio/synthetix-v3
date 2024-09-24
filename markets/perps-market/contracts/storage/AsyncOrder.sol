@@ -237,7 +237,6 @@ library AsyncOrder {
         uint256 availableMargin;
         uint256 currentLiquidationMargin;
         uint256 accumulatedLiquidationRewards;
-        uint256 currentLiquidationReward;
         int128 newPositionSize;
         uint256 newNotionalValue;
         int256 currentAvailableMargin;
@@ -282,7 +281,7 @@ library AsyncOrder {
             runtime.currentAvailableMargin,
             runtime.requiredInitialMargin,
             ,
-            runtime.currentLiquidationReward
+
         ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
 
         if (runtime.isEligible) {
