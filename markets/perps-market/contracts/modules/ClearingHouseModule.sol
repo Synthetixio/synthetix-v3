@@ -52,6 +52,8 @@ contract ClearinghouseModule is IClearinghouse {
         for (uint256 i = 0; i < wordPosCount; i++) {
             Clearinghouse.invalidateUnorderedNonces(data, accountId, wordPositions[i], bitmasks[i]);
         }
+
+        emit OrdersCanceled(accountId, nonces);
     }
 
     /*//////////////////////////////////////////////////////////////
