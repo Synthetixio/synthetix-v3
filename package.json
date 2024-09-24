@@ -50,7 +50,10 @@
     "check-staged": "lint-staged",
     "copy-storage": "bash -c 'for f in $(find . -name 'storage.new.dump.json'); do cp $f $(dirname $f)/storage.dump.json; git add $(dirname $f)/storage.dump.json; done'",
     "changed": "lerna changed --long",
-    "audit": "yarn npm audit --all --recursive --severity high"
+    "audit": "yarn npm audit --all --recursive --severity high",
+    "cannon:hotfix": "yarn up @usecannon/builder@hotfix @usecannon/cli@hotfix hardhat-cannon@hotfix --exact && yarn dedupe",
+    "cannon:latest": "yarn up @usecannon/builder@latest @usecannon/cli@latest hardhat-cannon@latest --exact && yarn dedupe",
+    "cannon:alpha": "yarn up @usecannon/builder@alpha @usecannon/cli@alpha hardhat-cannon@alpha --exact && yarn dedupe"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
