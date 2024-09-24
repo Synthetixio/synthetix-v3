@@ -146,6 +146,12 @@ interface IClearinghouse {
                                SETTLEMENT
     //////////////////////////////////////////////////////////////*/
 
+    /// TODO comments
+    function cancelOrders(
+    uint128 _accountId,
+    uint256[] calldata _nonces
+    ) external;
+
     /// @notice Settle (i.e., "Clear") the orders requested
     /// @dev Reverts if settlement would impact net market exposure
     /// @param request the orders to settle
