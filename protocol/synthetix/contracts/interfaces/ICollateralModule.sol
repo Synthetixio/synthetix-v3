@@ -65,6 +65,9 @@ interface ICollateralModule {
     /**
      * @notice Deposits `tokenAmount` of collateral of type `collateralType` into account `accountId`.
      * @dev Anyone can deposit into anyone's active account without restriction.
+     * @dev Depositing to account will automatically clear expired locks on a user's account. If there are an
+     * extremely large number of locks to process, it may not be possible to call `deposit` due to the block gas
+     * limit. In cases such as these, `cleanExpiredLocks` must be called first to clear any outstanding locks.
      * @param accountId The id of the account that is making the deposit.
      * @param collateralType The address of the token to be deposited.
      * @param tokenAmount The amount being deposited, denominated in the token's native decimal representation.
