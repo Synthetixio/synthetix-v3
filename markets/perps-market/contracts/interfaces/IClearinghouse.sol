@@ -5,7 +5,6 @@ pragma solidity >=0.8.11 <0.9.0;
 /// @author wasp in bush
 /// @notice Defines order structure and settlement procedures for peer-to-peer trading
 interface IClearinghouse {
-
     /*//////////////////////////////////////////////////////////////
                                 GLOSSARY
     //////////////////////////////////////////////////////////////*/
@@ -100,7 +99,7 @@ interface IClearinghouse {
 
     /// @notice Defines some condition that must be satisfied at settlement
     /// @dev Mechanism to allow for arbitrary settlement logic
-    /// @custom:caution Condition can be malicious; 
+    /// @custom:caution Condition can be malicious;
     /// prior off-chain sanitation is mandatory
     struct Condition {
         // address of the contract to staticcall
@@ -128,7 +127,6 @@ interface IClearinghouse {
 
     event OrdersCanceled(uint128 indexed accountId, uint256[] nonces);
 
-
     /*//////////////////////////////////////////////////////////////
                            SETTLEMENT OBJECTS
     //////////////////////////////////////////////////////////////*/
@@ -154,20 +152,13 @@ interface IClearinghouse {
     //////////////////////////////////////////////////////////////*/
 
     /// TODO comments
-    function cancelOrders(
-    uint128 _accountId,
-    uint256[] calldata _nonces
-    ) external;
+    function cancelOrders(uint128 _accountId, uint256[] calldata _nonces) external;
 
     /// @notice Settle (i.e., "Clear") the orders requested
     /// @dev Reverts if settlement would impact net market exposure
     /// @param request the orders to settle
     /// @return response of the settlement procedure
-    function settle(
-        Request calldata request
-    )
-        external
-        returns (Response memory response);
+    function settle(Request calldata request) external returns (Response memory response);
 
     /*//////////////////////////////////////////////////////////////
                                SIMULATION
@@ -177,12 +168,7 @@ interface IClearinghouse {
     /// @dev Does not modify the state of the contract
     /// @param request the orders to simulate
     /// @return response of the simulated settlement procedure
-    function canSettle(
-        Request calldata request
-    )
-        external
-        view
-        returns (Response memory response);
+    function canSettle(Request calldata request) external view returns (Response memory response);
 
     /*//////////////////////////////////////////////////////////////
                                UTILITIES
@@ -191,11 +177,5 @@ interface IClearinghouse {
     /// @notice Hashes a given order
     /// @param order to hash
     /// @return hash of the order
-    function hash(
-        Order calldata order
-    ) 
-        external
-        pure 
-        returns (bytes32 hash);
-
+    function hash(Order calldata order) external pure returns (bytes32 hash);
 }

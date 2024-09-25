@@ -5,7 +5,6 @@ import {AccessError} from "@synthetixio/core-contracts/contracts/errors/AccessEr
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 library Clearinghouse {
-
     bytes32 private constant _SLOT_CLEARING_HOUSE =
         keccak256(abi.encode("io.synthetix.perps-market.Clearinghouse"));
 
@@ -20,8 +19,7 @@ library Clearinghouse {
     /// @notice thrown when attempting to re-use a nonce
     error InvalidNonce();
 
-
-        function load() internal pure returns (Data storage clearingHouseData) {
+    function load() internal pure returns (Data storage clearingHouseData) {
         bytes32 s = _SLOT_CLEARING_HOUSE;
         assembly {
             clearingHouseData.slot := s
@@ -33,29 +31,20 @@ library Clearinghouse {
     //////////////////////////////////////////////////////////////*/
 
     /// TODO add docs
-    function isAccountOwner(uint128 _accountId, address _caller)
-        public
-        view
-        returns (bool)
-    {
+    function isAccountOwner(uint128 _accountId, address _caller) public view returns (bool) {
         // TODO
     }
 
     /// TODO add docs
-    function isAccountDelegate(uint128 _accountId, address _caller)
-        external
-        view
-        returns (bool)
-    {
+    function isAccountDelegate(uint128 _accountId, address _caller) external view returns (bool) {
         // TODO
     }
 
     /// TODO add docs
-    function _isAccountOwnerOrDelegate(uint128 _accountId, address _caller)
-        internal
-        view
-        returns (bool)
-    {
+    function _isAccountOwnerOrDelegate(
+        uint128 _accountId,
+        address _caller
+    ) internal view returns (bool) {
         // TODO
     }
 
@@ -86,11 +75,11 @@ library Clearinghouse {
     }
 
     /// TODO add docs
-    function hasUnorderedNonceBeenUsed(Data storage self, uint128 _accountId, uint256 _nonce)
-        public
-        view
-        returns (bool)
-    {
+    function hasUnorderedNonceBeenUsed(
+        Data storage self,
+        uint128 _accountId,
+        uint256 _nonce
+    ) public view returns (bool) {
         (uint256 wordPos, uint256 bitPos) = _bitmapPositions(_nonce);
 
         /// @dev given bitPos == 2
@@ -127,11 +116,9 @@ library Clearinghouse {
     /// the index of the desired bitmap
     /// @dev The last 8 bits of the nonce value is the
     /// position of the bit in the bitmap
-    function _bitmapPositions(uint256 _nonce)
-        internal
-        pure
-        returns (uint256 wordPos, uint256 bitPos)
-    {
+    function _bitmapPositions(
+        uint256 _nonce
+    ) internal pure returns (uint256 wordPos, uint256 bitPos) {
         // shift _nonce to the right by 8 bits and
         /// cast to uint248
         /// @dev wordPos == 0 if 0 <= _nonce <= 255,

@@ -9,12 +9,12 @@ import {Clearinghouse} from "../storage/Clearinghouse.sol";
 
 contract ClearinghouseModule is IClearinghouse {
     /// @inheritdoc IClearinghouse
-    function cancelOrders(
-        uint128 accountId,
-        uint256[] calldata nonces
-    ) external {
-        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION);
-        
+    function cancelOrders(uint128 accountId, uint256[] calldata nonces) external {
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
+        );
+
         Clearinghouse.Data storage data = Clearinghouse.load();
 
         // Arrays to hold the unique word positions and corresponding bitmasks
@@ -61,38 +61,23 @@ contract ClearinghouseModule is IClearinghouse {
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IClearinghouse
-    function settle(
-        Request calldata request
-    )
-        external
-        override
-        returns (Response memory response) {
-            // TODO
-        }
+    function settle(Request calldata request) external override returns (Response memory response) {
+        // TODO
+    }
 
     /// @inheritdoc IClearinghouse
     function canSettle(
         Request calldata request
-    )
-        external
-        view
-        override
-        returns (Response memory response) {
-            // TODO
-        }
+    ) external view override returns (Response memory response) {
+        // TODO
+    }
 
     /*//////////////////////////////////////////////////////////////
                                UTILITIES
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IClearinghouse
-    function hash(
-        Order calldata order
-    ) 
-        external
-        pure 
-        override
-        returns (bytes32 _hash) {
-            // TODO
-        }
+    function hash(Order calldata order) external pure override returns (bytes32 _hash) {
+        // TODO
+    }
 }
