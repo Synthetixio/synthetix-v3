@@ -1,0 +1,39 @@
+name: cannon-update
+
+on:
+  workflow_dispatch:
+    inputs:
+      cannon_tag:
+        description: "Cannon Tag"
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - hotfix
+          - alpha
+
+jobs:
+  cannon-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: yarn
+
+      - run: yarn install --immutable
+      - run: yarn cannon:${{ inputs.cannon_tag }}
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          title: "Cannon Update: ${{ inputs.cannon_tag }}"
+          commit-message: "Cannon Update: ${{ inputs.cannon_tag }}"
+          body: ""
+          branch: cannon-${{ inputs.cannon_tag }}
+          reviewers: noisekit, dbeal-eth
+          labels: dependabot, cannon
+          draft: true
+          add-paths: .
