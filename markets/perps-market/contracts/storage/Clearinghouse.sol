@@ -59,7 +59,7 @@ library Clearinghouse {
         uint256 _wordPos,
         uint256 _mask
     ) internal {
-        if (_isAccountOwnerOrDelegate(_accountId, ERC2771Context._msgSender())) {
+        // if (_isAccountOwnerOrDelegate(_accountId, ERC2771Context._msgSender())) {
             /// @dev using bitwise OR to set the bit at the bit position
             /// bitmap          = .......10001
             /// mask            = .......00110
@@ -69,9 +69,9 @@ library Clearinghouse {
 
             // TODO emit this event from the cancel fn
             // emit UnorderedNonceInvalidation(_accountId, _wordPos, _mask);
-        } else {
-            revert AccessError.Unauthorized(ERC2771Context._msgSender());
-        }
+        // } else {
+        //     revert AccessError.Unauthorized(ERC2771Context._msgSender());
+        // }
     }
 
     /// TODO add docs
