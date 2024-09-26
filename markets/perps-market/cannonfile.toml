@@ -61,13 +61,13 @@ artifact = "CollateralConfigurationModule"
 artifact = "MarketConfigurationModule"
 
 [contract.FeatureFlagModule]
-artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+artifact = "PerpsFeatureFlagModule"
 
 [contract.CoreModule]
-artifact = "contracts/modules/CoreModule.sol:CoreModule"
+artifact = "CoreModule"
 
 [contract.InitialProxy]
-artifact = "contracts/Proxy.sol:Proxy"
+artifact = "Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"

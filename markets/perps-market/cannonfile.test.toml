@@ -52,13 +52,13 @@ artifact = "CollateralConfigurationModule"
 artifact = "MarketConfigurationModule"
 
 [contract.FeatureFlagModule]
-artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+artifact = "PerpsFeatureFlagModule"
 
 [contract.CoreModule]
-artifact = "contracts/modules/CoreModule.sol:CoreModule"
+artifact = "PerpsCoreModule"
 
 [contract.InitialProxy]
-artifact = "contracts/Proxy.sol:Proxy"
+artifact = "Proxy"
 args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 abiOf = ["CoreModule"]
 salt = "<%= settings.salt %>"
@@ -133,7 +133,7 @@ from = "<%= settings.owner %>"
 args = ["<%= formatBytes32String('perpsSystem') %>", true]
 
 [contract.MockPythERC7412Wrapper]
-artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"
+artifact = "MockPythERC7412Wrapper"
 
 [contract.FeeCollectorMock]
-artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+artifact = "FeeCollectorMock"
