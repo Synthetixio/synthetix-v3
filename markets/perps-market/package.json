@@ -19,7 +19,8 @@
     "publish-contracts": "cannon publish synthetix-perps-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
     "deploy": "yarn build && yarn publish-contracts",
     "size-contracts": "hardhat compile && hardhat size-contracts",
-    "docgen": "hardhat docgen"
+    "docgen": "hardhat docgen",
+    "init-foundry": "forge install --no-git foundry-rs/forge-std"
   },
   "keywords": [],
   "author": "Synthetix",
@@ -36,8 +37,12 @@
     "@synthetixio/wei": "^2.74.4",
     "@usecannon/cli": "2.17.1",
     "ethers": "^5.7.2",
+    "forge-std": "github:foundry-rs/forge-std#master",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.2"
   }
 }

@@ -2083,6 +2083,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nomicfoundation/hardhat-foundry@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@nomicfoundation/hardhat-foundry@npm:1.1.2"
+  dependencies:
+    chalk: "npm:^2.4.2"
+  peerDependencies:
+    hardhat: ^2.17.2
+  checksum: 10/e722f71167ab62bbe1999ff7398820e1094a802f5240276b7c62450bf24e4e5cee7f45d424746f1cfe66e6637ec1785f640d3049d97544f3baa395380b6ce150
+  languageName: node
+  linkType: hard
+
 "@nomicfoundation/solidity-analyzer-darwin-arm64@npm:0.1.1":
   version: 0.1.1
   resolution: "@nomicfoundation/solidity-analyzer-darwin-arm64@npm:0.1.1"
@@ -3429,6 +3440,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@synthetixio/perps-market@workspace:markets/perps-market"
   dependencies:
+    "@nomicfoundation/hardhat-foundry": "npm:^1.1.2"
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/core-contracts": "workspace:*"
     "@synthetixio/core-modules": "workspace:*"
@@ -3440,6 +3452,7 @@ __metadata:
     "@synthetixio/wei": "npm:^2.74.4"
     "@usecannon/cli": "npm:2.17.1"
     ethers: "npm:^5.7.2"
+    forge-std: "github:foundry-rs/forge-std#master"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
     typescript: "npm:^5.5.4"

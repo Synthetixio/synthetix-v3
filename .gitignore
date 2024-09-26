@@ -20,6 +20,10 @@ docs/
 junit
 storage.new.dump.json
 
+lib/
+out/
+cache_forge/
+
 # Yarn v3
 .pnp.*
 .yarn/*
@@ -28,3 +32,4 @@ storage.new.dump.json
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+

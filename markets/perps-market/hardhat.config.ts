@@ -1,6 +1,7 @@
 import commonConfig from '@synthetixio/common-config/hardhat.config';
 
 import 'solidity-docgen';
+import '@nomicfoundation/hardhat-foundry'
 import { templates } from '@synthetixio/docgen';
 
 const config = {
