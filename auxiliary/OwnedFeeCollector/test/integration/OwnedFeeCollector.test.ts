@@ -57,18 +57,14 @@ describe('OwnedFeeCollector', function () {
     const feeShareRecipientAddress = await feeShareRecipient().getAddress();
     const feeShareRecipientUsdBalanceBefore = await UsdToken.balanceOf(feeShareRecipientAddress);
     assertBn.equal(feeShareRecipientUsdBalanceBefore, 0);
-    console.log('feeShareRecipientUsdBalanceBefore', feeShareRecipientUsdBalanceBefore.toString());
 
     const contractUsdBalanceBefore = await UsdToken.balanceOf(OwnedFeeCollector.address);
     assertBn.equal(contractUsdBalanceBefore, usdAmount);
-    console.log('contractUsdBalanceBefore', contractUsdBalanceBefore.toString());
     const tx = await OwnedFeeCollector.connect(owner()).claimFees();
     await tx.wait();
 
     const contractUsdBalanceAfter = await UsdToken.balanceOf(OwnedFeeCollector.address);
-    console.log('contractUsdBalanceAfter', contractUsdBalanceAfter.toString());
     const feeShareRecipientUsdBalanceAfter = await UsdToken.balanceOf(feeShareRecipientAddress);
-    console.log('feeShareRecipientUsdBalanceAfter', feeShareRecipientUsdBalanceAfter.toString());
 
     // verify balances are correct
     assertBn.equal(feeShareRecipientUsdBalanceAfter, usdAmount);
