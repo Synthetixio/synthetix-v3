@@ -87,10 +87,12 @@ async function _getCompiler(version: string) {
   const isDownloaded = await downloader.isCompilerDownloaded(version);
 
   if (!isDownloaded) {
-    await downloader.downloadCompiler(
-      version
-      //async () => {},
-      //async () => {}
+    // NOTE: any is used here because on some people's computers, the `downloadCompiler` function comes out with different types (who knows why but its better to just not)
+    // eslint-disable-next-line
+    await (downloader as any).downloadCompiler(
+      version,
+      async () => {},
+      async () => {}
     );
   }
 

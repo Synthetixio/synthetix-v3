@@ -1,6 +1,6 @@
 import { BigInt, ethereum, Bytes } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { MarketPriceDataUpdated as MarketPriceDataUpdatedEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { MarketPriceDataUpdated as MarketPriceDataUpdatedEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createMarketPriceDataUpdatedEvent(
   marketId: i32,

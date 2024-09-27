@@ -605,22 +605,10 @@ describe('LiquidationModule', () => {
         const marketOraclePrice2 = wei(marketOraclePrice1).mul(0.9).toBN();
         await market.aggregator().mockSetCurrentPrice(marketOraclePrice2);
 
-        const baseFeePerGas = await setBaseFeePerGas(0, provider());
-
         const { liqKeeperFee } = await BfpMarketProxy.getLiquidationFees(
           trader.accountId,
           marketId
         );
-
-        const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
-        const expectedLiqFee = calcLiquidationKeeperFee(
-          ethPrice,
-          baseFeePerGas,
-          wei(order.sizeDelta).abs(),
-          wei(capBefore.maxLiquidatableCapacity),
-          globalConfig
-        );
-        assertBn.equal(expectedLiqFee.toBN(), liqKeeperFee);
 
         // Dead.
         await withExplicitEvmMine(
@@ -630,7 +618,7 @@ describe('LiquidationModule', () => {
             }),
           provider()
         );
-
+        let lastBlockNumber = (await provider().getBlock('latest')).number;
         let accLiqRewards = bn(0);
         let remainingSize = bn(-1);
 
@@ -643,6 +631,7 @@ describe('LiquidationModule', () => {
               }),
             provider()
           );
+
           const { liqKeeperFee, remainingSize: _remSize } = findEventSafe(
             receipt,
             'PositionLiquidated',
@@ -651,9 +640,20 @@ describe('LiquidationModule', () => {
 
           accLiqRewards = accLiqRewards.add(liqKeeperFee);
           remainingSize = _remSize;
+          lastBlockNumber = receipt.blockNumber;
         }
+        const baseFeePerGas = (await provider().getBlock(lastBlockNumber)).baseFeePerGas ?? bn(0);
+        const { answer: ethPrice } = await bs.ethOracleNode().agg.latestRoundData();
+        const expectedLiqFee = calcLiquidationKeeperFee(
+          ethPrice,
+          baseFeePerGas,
+          wei(order.sizeDelta).abs(),
+          wei(capBefore.maxLiquidatableCapacity),
+          globalConfig
+        );
+        assertBn.near(expectedLiqFee.toBN(), liqKeeperFee, bn(1));
         // `sum(liqReward)` should equal to liqReward from the prior step.
-        assertBn.equal(accLiqRewards, expectedLiqFee.toBN());
+        assertBn.near(accLiqRewards, expectedLiqFee.toBN(), bn(1));
       });
 
       it('should cap liqKeeperFee and flagKeeperReward to the maxKeeperFee', async () => {

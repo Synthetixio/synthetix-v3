@@ -17,7 +17,7 @@ export function handlePreviousOrderExpired(event: PreviousOrderExpiredEvent): vo
   orderExpired.accountId = event.params.accountId;
   orderExpired.sizeDelta = event.params.sizeDelta;
   orderExpired.acceptablePrice = event.params.acceptablePrice;
-  orderExpired.settlementTime = event.params.settlementTime;
+  orderExpired.commitmentTime = event.params.commitmentTime;
   orderExpired.trackingCode = event.params.trackingCode;
 
   orderExpired.save();

@@ -2,7 +2,7 @@ export * from '../optimism-mainnet/handleOrderCancelled';
 export * from '../optimism-mainnet/handleOrderCommitted';
 export * from '../optimism-mainnet/handleOrderSettled';
 export * from '../optimism-mainnet/handleSettlementStrategyAdded';
-export * from '../optimism-mainnet/handleSettlementStrategyUpdated';
+export * from '../optimism-mainnet/handleSettlementStrategySet';
 export * from '../optimism-mainnet/handleSynthPriceDataUpdated';
 export * from '../optimism-mainnet/handleSynthUnwrapped';
 export * from '../optimism-mainnet/handleSynthWrapped';

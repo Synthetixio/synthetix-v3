@@ -1,13 +1,13 @@
 import { BigInt, ethereum } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { LiquidationParametersSet as LiquidationParametersSetEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { LiquidationParametersSet as LiquidationParametersSetEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createLiquidationParametersSetEvent(
   id: i32,
   initialMarginRatioD18: i64,
   maintenanceMarginRatioD18: i64,
   minimumInitialMarginRatioD18: i64,
-  liquidationRewardRatioD18: i64,
+  flagRewardRatioD18: i64,
   minimumPositionMargin: i64,
   timestamp: i64,
   blockNumber: i64,
@@ -37,8 +37,8 @@ export function createLiquidationParametersSetEvent(
   );
   event.parameters.push(
     new ethereum.EventParam(
-      'liquidationRewardRatioD18',
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(liquidationRewardRatioD18))
+      'flagRewardRatioD18',
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(flagRewardRatioD18))
     )
   );
   event.parameters.push(
