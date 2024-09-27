@@ -21,8 +21,10 @@
     "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
     "check:storage": "diff -uw storage.dump.json storage.new.dump.json",
     "start": "yarn build && yarn cannon-build",
-    "cannon-build": "hardhat cannon:build",
-    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "cannon-build": "yarn test:foundry && yarn test:hardhat",
+    "test": "yarn test:foundry && yarn test:hardhat",
+    "test:hardhat": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "test:foundry": "CANNON_REGISTRY_PRIORITY=local cannon test cannonfile.toml --forge-cmd coverage",
     "coverage": "hardhat test",
     "coverage1": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
@@ -30,7 +32,7 @@
     "deploy": "yarn build && yarn publish-contracts",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "docgen": "hardhat docgen",
-    "init-foundry": "forge install --no-git foundry-rs/forge-std"
+    "init-foundry": "forge install --no-git usecannon/cannon-std"
   },
   "keywords": [],
   "author": "Synthetix",

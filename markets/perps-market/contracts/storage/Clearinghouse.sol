@@ -60,15 +60,15 @@ library Clearinghouse {
         uint256 _mask
     ) internal {
         // if (_isAccountOwnerOrDelegate(_accountId, ERC2771Context._msgSender())) {
-            /// @dev using bitwise OR to set the bit at the bit position
-            /// bitmap          = .......10001
-            /// mask            = .......00110
-            /// bitmap | mask   = .......10111
-            /// notice all set bits in the mask are now set in the bitmap
-            self.nonceBitmap[_accountId][_wordPos] |= _mask;
+        /// @dev using bitwise OR to set the bit at the bit position
+        /// bitmap          = .......10001
+        /// mask            = .......00110
+        /// bitmap | mask   = .......10111
+        /// notice all set bits in the mask are now set in the bitmap
+        self.nonceBitmap[_accountId][_wordPos] |= _mask;
 
-            // TODO emit this event from the cancel fn
-            // emit UnorderedNonceInvalidation(_accountId, _wordPos, _mask);
+        // TODO emit this event from the cancel fn
+        // emit UnorderedNonceInvalidation(_accountId, _wordPos, _mask);
         // } else {
         //     revert AccessError.Unauthorized(ERC2771Context._msgSender());
         // }
@@ -127,6 +127,7 @@ library Clearinghouse {
 
         // cast the last 8 bits of _nonce to uint8
         /// @dev 0 <= bitPos <= 255
+        // solhint-disable-next-line numcast/safe-cast
         bitPos = uint8(_nonce);
     }
 

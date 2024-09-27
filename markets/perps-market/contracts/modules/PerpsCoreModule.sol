@@ -8,6 +8,4 @@ import {CoreModule} from "@synthetixio/core-modules/contracts/modules/CoreModule
  * See core-modules/../CoreModule
  */
 // solhint-disable-next-line no-empty-blocks
-contract PerpsCoreModule is CoreModule {
-
-}
+contract PerpsCoreModule is CoreModule {}

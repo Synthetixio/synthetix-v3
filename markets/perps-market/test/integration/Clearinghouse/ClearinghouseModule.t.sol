@@ -5,8 +5,8 @@ import {ClearinghouseModule} from "../../../contracts/modules/ClearinghouseModul
 import {IClearinghouse} from "../../../contracts/interfaces/IClearinghouse.sol";
 
 contract ClearinghouseModuleTest is Test {
-ClearinghouseModule clearingHouse;
-uint256[] nonces;
+    ClearinghouseModule clearingHouse;
+    uint256[] nonces;
 }
 
 contract CancelOrders is ClearinghouseModuleTest {
