@@ -13,7 +13,8 @@
   "command": {
     "version": {
       "allowBranch": [
-        "main"
+        "main",
+				"nonce-management"
       ]
     },
     "command": {
