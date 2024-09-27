@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json",
   "useWorkspaces": true,
-  "version": "3.7.1",
+  "version": "3.7.2",
   "exact": true,
   "changelog": false,
   "ignoreChanges": [
@@ -14,7 +14,7 @@
     "version": {
       "allowBranch": [
         "main",
-				"nonce-management"
+        "nonce-management"
       ]
     },
     "command": {
