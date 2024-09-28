@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/RevertUtil.sol";
 
 import "./Distribution.sol";
 import "./CollateralConfiguration.sol";
@@ -168,7 +169,7 @@ library Market {
     }
 
     /**
-     * @dev Queries the external market contract for the amount of debt it has issued.
+     * @dev Queries the external market contract for the amount of debt it has issued. If the call returns in error, `possibleError` is instead returned.
      *
      * The reported debt of a market represents the amount of USD that the market would ask the system to mint, if all of its positions were to be immediately closed.
      *
@@ -176,8 +177,14 @@ library Market {
      *
      * See the `IMarket` interface.
      */
-    function getReportedDebt(Data storage self) internal view returns (uint256) {
-        return IMarket(self.marketAddress).reportedDebt(self.id);
+    function getReportedDebt(
+        Data storage self
+    ) internal view returns (uint256 debt, bytes memory possibleError) {
+        try IMarket(self.marketAddress).reportedDebt(self.id) returns (uint256 rawDebt) {
+            debt = rawDebt;
+        } catch (bytes memory err) {
+            possibleError = err;
+        }
     }
 
     /**
@@ -202,11 +209,23 @@ library Market {
      * Additionally, the market's totalDebt might be affected by price fluctuations via reportedDebt, or fees.
      *
      */
-    function totalDebt(Data storage self) internal view returns (int256) {
-        return
-            getReportedDebt(self).toInt() +
-            self.netIssuanceD18 -
-            getDepositedCollateralValue(self).toInt();
+    function totalDebt(
+        Data storage self
+    ) internal view returns (int256 debt, bytes memory possibleError) {
+        (uint256 reportedDebt, bytes memory possibleError1) = getReportedDebt(self);
+        (
+            uint256 depositedCollateralValue,
+            bytes memory possibleError2
+        ) = getDepositedCollateralValue(self);
+
+        if (possibleError1.length > 0 || possibleError2.length > 0) {
+            possibleError = abi.encodeWithSelector(
+                RevertUtil.Errors.selector,
+                [possibleError1, possibleError2]
+            );
+        } else {
+            debt = reportedDebt.toInt() + self.netIssuanceD18 - depositedCollateralValue.toInt();
+        }
     }
 
     /**
@@ -214,7 +233,9 @@ library Market {
      *
      * Note: This is not credit capacity provided by depositors through pools.
      */
-    function getDepositedCollateralValue(Data storage self) internal view returns (uint256) {
+    function getDepositedCollateralValue(
+        Data storage self
+    ) internal view returns (uint256 collateralValue, bytes memory possibleError) {
         uint256 totalDepositedCollateralValueD18 = 0;
 
         // Sweep all DepositedCollateral entries and aggregate their USD value.
@@ -227,15 +248,17 @@ library Market {
                 continue;
             }
 
-            uint256 priceD18 = CollateralConfiguration.getCollateralPrice(
-                collateralConfiguration,
-                entry.amountD18
-            );
+            (uint256 priceD18, bytes memory collateralPriceError) = CollateralConfiguration
+                .getCollateralPrice(collateralConfiguration, entry.amountD18);
+
+            if (collateralPriceError.length > 0) {
+                return (0, collateralPriceError);
+            }
 
             totalDepositedCollateralValueD18 += priceD18.mulDecimal(entry.amountD18);
         }
 
-        return totalDepositedCollateralValueD18;
+        collateralValue = totalDepositedCollateralValueD18;
     }
 
     /**
@@ -430,10 +453,14 @@ library Market {
     function distributeDebtToPools(
         Data storage self,
         uint256 maxIter
-    ) internal returns (bool fullyDistributed) {
+    ) internal returns (bool fullyDistributed, bytes memory possibleError) {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
-        int256 targetBalanceD18 = totalDebt(self);
+        (int256 targetBalanceD18, bytes memory debtError) = totalDebt(self);
+        if (debtError.length > 0) {
+            return (false, possibleError);
+        }
+
         int256 outstandingBalanceD18 = targetBalanceD18 - self.lastDistributedMarketBalanceD18;
 
         (, bool exhausted) = bumpPools(self, outstandingBalanceD18, maxIter);
@@ -447,7 +474,7 @@ library Market {
             self.lastDistributedMarketBalanceD18 = targetBalanceD18.to128();
         }
 
-        return !exhausted;
+        return (!exhausted, "");
     }
 
     /**

@@ -49,80 +49,30 @@ library PerpsPrice {
         // map all the market ids to feed ids
         INodeModule oracleManager = INodeModule(PerpsMarketFactory.load().oracle);
         bytes32[] memory feedIds = new bytes32[](marketIds.length);
-        bytes32[] memory toleranceByteValues = new bytes32[](marketIds.length);
         for (uint256 i = 0; i < marketIds.length; i++) {
             feedIds[i] = load(marketIds[i].to128()).feedId;
-            toleranceByteValues[i] = toleranceBytes(load(marketIds[i].to128()), priceTolerance);
         }
-
-        bytes32[] memory runtimeKeys = new bytes32[](0);
-        bytes32[] memory runtimeValues = new bytes32[](0);
 
         NodeOutput.Data[] memory outputs;
         if (priceTolerance != Tolerance.DEFAULT) {
-            // non-default tolerances mean we have to call oracle manager separately for each tolerance
-            // ordinarily we expect almost all the tolerances to be the same for all markets
-            outputs = new NodeOutput.Data[](feedIds.length);
+            bytes32[] memory sharedRuntimeKeys = new bytes32[](1);
+            sharedRuntimeKeys[0] = bytes32("stalenessTolerance");
 
-            // by sorting, we effectively group all of the same tolerances together
-            (, uint256[] memory toleranceMappings) = QuickSort.sort(toleranceByteValues);
+            bytes32[][] memory runtimeKeys = new bytes32[][](marketIds.length);
+            bytes32[][] memory runtimeValues = new bytes32[][](marketIds.length);
 
-            uint256 lastPartStart = 0;
-            //bytes32[] memory partFeedIds = new bytes32[](0);
-            for (uint256 i = 1; i < toleranceByteValues.length; i++) {
-                // a change in the tolerance indicates we need to do a new call. all of the values up to now were the same tolerance and should be grouped
-                if (toleranceByteValues[i] != toleranceByteValues[i - 1]) {
-                    runtimeKeys = new bytes32[](1);
-                    runtimeValues = new bytes32[](1);
-                    runtimeKeys[0] = bytes32("stalenessTolerance");
-                    runtimeValues[0] = toleranceByteValues[i - 1];
-
-                    bytes32[] memory partFeedIds = new bytes32[](i - lastPartStart);
-                    for (uint256 j = lastPartStart; j < i; j++) {
-                        partFeedIds[j - lastPartStart] = feedIds[toleranceMappings[j]];
-                    }
-
-                    NodeOutput.Data[] memory partOutputs = oracleManager.processManyWithRuntime(
-                        feedIds,
-                        runtimeKeys,
-                        runtimeValues
-                    );
-
-                    for (uint256 k = lastPartStart; k < i; k++) {
-                        outputs[toleranceMappings[k]] = partOutputs[k - lastPartStart];
-                    }
-
-                    lastPartStart = i;
-                }
+            for (uint256 i = 0; i < marketIds.length; i++) {
+                bytes32[] memory newRuntimeValues = new bytes32[](1);
+                newRuntimeValues[0] = toleranceBytes(load(marketIds[i].to128()), priceTolerance);
+                runtimeKeys[i] = sharedRuntimeKeys;
+                runtimeValues[i] = newRuntimeValues;
             }
 
-            // this is basically a repeat of everything above in the loop, except  for the end of the array (kind of annoying to repeat it like this but whatever)
-            runtimeKeys = new bytes32[](1);
-            runtimeValues = new bytes32[](1);
-            runtimeKeys[0] = bytes32("stalenessTolerance");
-            runtimeValues[0] = toleranceByteValues[toleranceByteValues.length];
-
-            bytes32[] memory partFeedIds = new bytes32[](
-                toleranceByteValues.length - lastPartStart
-            );
-            for (uint256 j = lastPartStart; j < toleranceByteValues.length; j++) {
-                partFeedIds[j - lastPartStart] = feedIds[toleranceMappings[j]];
-            }
-
-            NodeOutput.Data[] memory partOutputs = oracleManager.processManyWithRuntime(
-                feedIds,
-                runtimeKeys,
-                runtimeValues
-            );
-
-            for (uint256 k = lastPartStart; k < toleranceByteValues.length; k++) {
-                outputs[toleranceMappings[k]] = partOutputs[k - lastPartStart];
-            }
-
-            // end repeat
+            outputs = oracleManager.processManyWithManyRuntime(feedIds, runtimeKeys, runtimeValues);
         } else {
+            bytes32[] memory runtimeKeys = new bytes32[](0);
             // do the process call
-            outputs = oracleManager.processManyWithRuntime(feedIds, runtimeKeys, runtimeValues);
+            outputs = oracleManager.processManyWithRuntime(feedIds, runtimeKeys, runtimeKeys);
         }
 
         // extract the prices
