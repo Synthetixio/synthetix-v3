@@ -229,6 +229,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         LiquidateAccountRuntime memory runtime;
         runtime.accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
+        uint256[] memory prices = PerpsPrice.getCurrentPrices(
+            openPositionMarketIds,
+            PerpsPrice.Tolerance.STRICT
+        );
 
         for (
             runtime.loopIterator = 0;
@@ -236,10 +240,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             runtime.loopIterator++
         ) {
             runtime.positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
-            runtime.price = PerpsPrice.getCurrentPrice(
-                runtime.positionMarketId,
-                PerpsPrice.Tolerance.STRICT
-            );
+            runtime.price = prices[runtime.loopIterator];
 
             (
                 uint256 amountLiquidated,

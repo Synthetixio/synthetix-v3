@@ -381,16 +381,28 @@ library PerpsAccount {
         return totalCollateralValue;
     }
 
+    function getCurrentPricesForOpenPositions(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal view returns (uint256[] memory prices) {
+        uint256 len = self.openPositionMarketIds.length();
+        uint256[] memory marketIds = new uint256[](len);
+        for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
+            marketIds[i] = self.openPositionMarketIds.valueAt(i).to128();
+        }
+
+        return PerpsPrice.getCurrentPrices(marketIds, stalenessTolerance);
+    }
+
     function getAccountPnl(
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (int256 totalPnl) {
+        uint256[] memory prices = getCurrentPricesForOpenPositions(self, stalenessTolerance);
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            (int256 pnl, , , , , ) = position.getPnl(
-                PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
-            );
+            (int256 pnl, , , , , ) = position.getPnl(prices[i - 1]);
             totalPnl += pnl;
         }
     }
@@ -414,13 +426,15 @@ library PerpsAccount {
     function getTotalNotionalOpenInterest(
         Data storage self
     ) internal view returns (uint256 totalAccountOpenInterest) {
+        uint256[] memory prices = getCurrentPricesForOpenPositions(
+            self,
+            PerpsPrice.Tolerance.DEFAULT
+        );
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
 
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
-            uint256 openInterest = position.getNotionalValue(
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-            );
+            uint256 openInterest = position.getNotionalValue(prices[i - 1]);
             totalAccountOpenInterest += openInterest;
         }
     }
@@ -448,6 +462,7 @@ library PerpsAccount {
         }
 
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
+        uint256[] memory prices = getCurrentPricesForOpenPositions(self, stalenessTolerance);
         for (uint256 i = 1; i <= openPositionMarketIdsLength; i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             Position.Data storage position = PerpsMarket.load(marketId).positions[self.id];
@@ -455,10 +470,7 @@ library PerpsAccount {
                 marketId
             );
             (, , uint256 positionInitialMargin, uint256 positionMaintenanceMargin) = marketConfig
-                .calculateRequiredMargins(
-                    position.size,
-                    PerpsPrice.getCurrentPrice(marketId, stalenessTolerance)
-                );
+                .calculateRequiredMargins(position.size, prices[i - 1]);
 
             maintenanceMargin += positionMaintenanceMargin;
             initialMargin += positionInitialMargin;
@@ -482,6 +494,10 @@ library PerpsAccount {
         uint128 skipMarketId
     ) internal view returns (uint256 accumulatedLiquidationRewards, uint256 maxNumberOfWindows) {
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
+        uint256[] memory prices = getCurrentPricesForOpenPositions(
+            self,
+            PerpsPrice.Tolerance.DEFAULT
+        );
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
             uint128 marketId = self.openPositionMarketIds.valueAt(i).to128();
             if (marketId == skipMarketId) continue;
@@ -495,9 +511,7 @@ library PerpsAccount {
             );
 
             uint256 flagReward = marketConfig.calculateFlagReward(
-                MathUtil.abs(position.size).mulDecimal(
-                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-                )
+                MathUtil.abs(position.size).mulDecimal(prices[i - 1])
             );
             accumulatedLiquidationRewards += flagReward;
 
