@@ -4,7 +4,6 @@ pragma solidity >=0.8.11 <0.9.0;
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {QuickSort} from "@synthetixio/core-contracts/contracts/utils/QuickSort.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 
