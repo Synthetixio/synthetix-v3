@@ -388,7 +388,7 @@ library PerpsAccount {
         uint256 len = self.openPositionMarketIds.length();
         uint256[] memory marketIds = new uint256[](len);
         for (uint256 i = 1; i <= self.openPositionMarketIds.length(); i++) {
-            marketIds[i] = self.openPositionMarketIds.valueAt(i).to128();
+            marketIds[i - 1] = self.openPositionMarketIds.valueAt(i).to128();
         }
 
         return PerpsPrice.getCurrentPrices(marketIds, stalenessTolerance);
