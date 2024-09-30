@@ -458,7 +458,7 @@ library Market {
         // Note: The last distributed balance will be cached within this function's execution.
         (int256 targetBalanceD18, bytes memory debtError) = totalDebt(self);
         if (debtError.length > 0) {
-            return (false, possibleError);
+            return (false, debtError);
         }
 
         int256 outstandingBalanceD18 = targetBalanceD18 - self.lastDistributedMarketBalanceD18;
