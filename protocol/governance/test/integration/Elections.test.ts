@@ -107,19 +107,19 @@ describe('SynthetixElectionModule - Elections', () => {
     await mothership.GovernanceProxy.setSnapshotContract(
       mothership.SnapshotRecordMock.address,
       0,
-      ethers.utils.parseEther('1'),
+      ethers.utils.parseEther('0'),
       true
     );
     await satellite1.GovernanceProxy.setSnapshotContract(
       satellite1.SnapshotRecordMock.address,
       0,
-      ethers.utils.parseEther('1'),
+      ethers.utils.parseEther('0'),
       true
     );
     await satellite2.GovernanceProxy.setSnapshotContract(
       satellite2.SnapshotRecordMock.address,
       0,
-      ethers.utils.parseEther('1'),
+      ethers.utils.parseEther('0'),
       true
     );
   });
@@ -247,7 +247,7 @@ describe('SynthetixElectionModule - Elections', () => {
               mothership.GovernanceProxy.setSnapshotContract(
                 mothership.SnapshotRecordMock.address,
                 0,
-                ethers.utils.parseEther('1'),
+                ethers.utils.parseEther('0'),
                 true
               ),
               'NotCallableInCurrentPeriod'
@@ -256,7 +256,7 @@ describe('SynthetixElectionModule - Elections', () => {
               satellite1.GovernanceProxy.setSnapshotContract(
                 satellite1.SnapshotRecordMock.address,
                 0,
-                ethers.utils.parseEther('1'),
+                ethers.utils.parseEther('0'),
                 true
               ),
               'NotCallableInCurrentPeriod'
@@ -265,7 +265,7 @@ describe('SynthetixElectionModule - Elections', () => {
               satellite2.GovernanceProxy.setSnapshotContract(
                 satellite2.SnapshotRecordMock.address,
                 0,
-                ethers.utils.parseEther('1'),
+                ethers.utils.parseEther('0'),
                 true
               ),
               'NotCallableInCurrentPeriod'

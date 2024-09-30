@@ -9,6 +9,7 @@ interface ISnapshotVotePowerModule {
     error SnapshotNotTaken(address snapshotContract, uint128 electionId);
     error NoPower(uint256, address);
     error InvalidSnapshotContract();
+    error InvalidScale();
 
     function setSnapshotContract(
         address snapshotContract,

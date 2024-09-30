@@ -14,8 +14,6 @@ import {SnapshotVotePowerEpoch} from "../../storage/SnapshotVotePowerEpoch.sol";
 contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     using SafeCastU256 for uint256;
 
-    event ScaleSet(address indexed snapshotContract, uint256 scale);
-
     event SnapshotContractSet(
         address indexed snapshotContract,
         bool indexed enabled,
@@ -36,6 +34,14 @@ contract SnapshotVotePowerModule is ISnapshotVotePowerModule {
     ) external override {
         OwnableStorage.onlyOwner();
         Council.onlyInPeriod(Epoch.ElectionPeriod.Administration);
+
+        // if weight is not one of the scaled types scale must be zero and scaled weight types must have non-zero scale
+        if (
+            (weight == SnapshotVotePower.WeightType.Linear ||
+                weight == SnapshotVotePower.WeightType.Sqrt)
+                ? scale != 0
+                : scale == 0
+        ) revert InvalidScale();
 
         SnapshotVotePower.Data storage snapshotVotePower = SnapshotVotePower.load(snapshotContract);
         snapshotVotePower.weight = weight;

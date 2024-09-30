@@ -331,7 +331,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         uint256 chainId
     ) external override {
         WormholeCrossChain.onlyCrossChain();
-        Council.onlyInPeriod(Epoch.ElectionPeriod.Vote);
+        // we allow withdraws during the evaluation period incase crosschain messages did not propogate before the end of the voting period
+        Council.onlyInPeriods(Epoch.ElectionPeriod.Vote, Epoch.ElectionPeriod.Evaluation);
 
         Council.Data storage council = Council.load();
         Election.Data storage election = council.getCurrentElection();
@@ -388,6 +389,8 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             );
         } else {
             if (election.evaluated) revert ElectionAlreadyEvaluated();
+            // since we are in there is no broadcast call in the else block, no ether should be sent
+            if (msg.value > 0) revert NoMsgValue();
 
             _evaluateNextBallotBatch(numBallots);
 
@@ -403,17 +406,6 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
             } else {
                 election.evaluated = true;
                 emit ElectionEvaluated(currentEpochIndex, totalBallots);
-            }
-
-            // issue refund if eth sent with call that does not broadcast
-            (bool success, bytes memory result) = ERC2771Context._msgSender().call{
-                value: msg.value
-            }("");
-            if (!success) {
-                uint256 len = result.length;
-                assembly {
-                    revert(add(result, 0x20), len)
-                }
             }
         }
     }

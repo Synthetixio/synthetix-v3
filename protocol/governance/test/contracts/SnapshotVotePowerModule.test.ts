@@ -45,7 +45,7 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         c.SnapshotRecordMock.address,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
       assert.equal(
@@ -58,7 +58,7 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         c.SnapshotRecordMock.address,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         false
       );
       assert.equal(
@@ -77,7 +77,7 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         c.SnapshotRecordMock.address,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
 
@@ -85,13 +85,13 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         disabledSnapshotContract,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
       await c.GovernanceProxy.setSnapshotContract(
         disabledSnapshotContract,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         false
       );
     });
@@ -164,13 +164,13 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         disabledSnapshotContract,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
       await c.GovernanceProxy.setSnapshotContract(
         disabledSnapshotContract,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         false
       );
     });
@@ -179,7 +179,7 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         c.SnapshotRecordMock.address,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
       const settings = await c.GovernanceProxy.getEpochSchedule();
@@ -253,7 +253,7 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         c.SnapshotRecordMock.address,
         0,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
       const settings = await c.GovernanceProxy.getEpochSchedule();
@@ -283,7 +283,7 @@ describe('SnapshotVotePowerModule', function () {
       await c.GovernanceProxy.setSnapshotContract(
         c.SnapshotRecordMock.address,
         1,
-        ethers.utils.parseEther('1'),
+        ethers.utils.parseEther('0'),
         true
       );
       const settings = await c.GovernanceProxy.getEpochSchedule();

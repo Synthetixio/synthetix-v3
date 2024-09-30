@@ -156,7 +156,8 @@ contract ElectionModuleSatellite is
 
     function rescueEther(address recipient) external {
         OwnableStorage.onlyOwner();
-        payable(recipient).transfer(address(this).balance);
+        (bool success, ) = payable(recipient).call{value: address(this).balance}("");
+        require(success, "Failed to send Ether");
     }
 
     /// @inheritdoc	IElectionModuleSatellite
