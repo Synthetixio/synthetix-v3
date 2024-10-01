@@ -390,7 +390,7 @@ contract ElectionModule is IElectionModule, ElectionModuleSatellite, ElectionTal
         } else {
             if (election.evaluated) revert ElectionAlreadyEvaluated();
             // since we are in there is no broadcast call in the else block, no ether should be sent
-            if (msg.value > 0) revert NoMsgValue();
+            if (msg.value > 0) revert UnexpectedMsgValue();
 
             _evaluateNextBallotBatch(numBallots);
 
