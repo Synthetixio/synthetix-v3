@@ -367,36 +367,6 @@
       ]
     }
   },
-  "contracts/storage/Clearinghouse.sol:Clearinghouse": {
-    "name": "Clearinghouse",
-    "kind": "library",
-    "structs": {
-      "Data": [
-        {
-          "type": "mapping",
-          "name": "nonceBitmap",
-          "key": {
-            "type": "uint128",
-            "name": "accountId"
-          },
-          "value": {
-            "type": "mapping",
-            "key": {
-              "type": "uint256",
-              "name": "index"
-            },
-            "value": {
-              "type": "uint256",
-              "name": "bitmap"
-            }
-          },
-          "size": 32,
-          "slot": "0",
-          "offset": 0
-        }
-      ]
-    }
-  },
   "contracts/storage/GlobalPerpsMarket.sol:GlobalPerpsMarket": {
     "name": "GlobalPerpsMarket",
     "kind": "library",
