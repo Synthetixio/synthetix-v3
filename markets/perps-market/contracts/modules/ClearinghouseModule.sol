@@ -80,4 +80,12 @@ contract ClearinghouseModule is IClearinghouse {
     function hash(Order calldata order) external pure override returns (bytes32 _hash) {
         // TODO
     }
+
+    function hasUnorderedNonceBeenUsed(
+        uint128 accountId,
+        uint256 nonce
+    ) public view returns (bool) {
+        Clearinghouse.Data storage data = Clearinghouse.load();
+        return Clearinghouse.hasUnorderedNonceBeenUsed(data, accountId, nonce);
+    }
 }

@@ -13,11 +13,22 @@ contract CancelOrders is ClearinghouseModuleTest {
     function setUp() public {
         clearingHouse = new ClearinghouseModule();
     }
-    function test_CancelsSingleOrders(uint256 _nonce) public {
-        nonces.push(_nonce);
+
+    //TODO add account logic here and uncomment the account verification in ClearinghousModule
+    function test_CancelsSingleOrders(uint256 _nonce1, uint256 _nonce2, uint256 _nonce3) public {
+        nonces.push(_nonce1);
+        nonces.push(_nonce2);
+        nonces.push(_nonce3);
 
         vm.expectEmit();
         emit IClearinghouse.OrdersCanceled(1, nonces);
         clearingHouse.cancelOrders(1, nonces);
+
+        bool result1 = clearingHouse.hasUnorderedNonceBeenUsed(1, _nonce1);
+        assertTrue(result1);
+        bool result2 = clearingHouse.hasUnorderedNonceBeenUsed(1, _nonce2);
+        assertTrue(result2);
+        bool result3 = clearingHouse.hasUnorderedNonceBeenUsed(1, _nonce3);
+        assertTrue(result3);
     }
 }
