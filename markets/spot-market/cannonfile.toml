@@ -74,6 +74,7 @@ target = ["InitialSpotMarketProxy"]
 fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
+factory.SpotMarketProxy.artifact = "contracts/Proxy.sol:Proxy"
 factory.SpotMarketProxy.abiOf = ["SpotMarketRouter"]
 factory.SpotMarketProxy.event = "Upgraded"
 factory.SpotMarketProxy.arg = 0
