@@ -316,11 +316,18 @@ contract RewardsManagerModule is IRewardsManagerModule {
             );
         }
 
+        Distribution.Data distData = collateralType == address(0)
+            ? pool.vaultsDebtDistribution
+            : pool.vaults[collateralType].currentEpoch().accountsDebtDistribution;
+
+        // If the amount to distribute is 0 or the total shares are 0, we can skip the distribution
+        if (amount == 0 || distData.totalSharesD18 == 0) {
+            return 0;
+        }
+
         (int256 diffReward, int256 cancelledAmount) = rd.distribute(
             // if the rewards to be distributed are at the pool level, we want to use the pool distribution (trickle down happens later)
-            collateralType == address(0)
-                ? pool.vaultsDebtDistribution
-                : pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+            distData,
             amount.toInt(),
             start,
             duration
