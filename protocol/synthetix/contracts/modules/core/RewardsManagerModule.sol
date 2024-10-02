@@ -316,7 +316,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             );
         }
 
-        Distribution.Data distData = collateralType == address(0)
+        Distribution.Data storage distData = collateralType == address(0)
             ? pool.vaultsDebtDistribution
             : pool.vaults[collateralType].currentEpoch().accountsDebtDistribution;
 
