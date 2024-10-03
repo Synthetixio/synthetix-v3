@@ -310,7 +310,8 @@ library Position {
                 params.oraclePrice,
                 marketConfig,
                 addresses,
-                newPosition.size
+                (MathUtil.abs(newPosition.size).toInt() -
+                    MathUtil.abs(currentPosition.size).toInt()).to128()
             );
 
             // Check new position margin validations.
