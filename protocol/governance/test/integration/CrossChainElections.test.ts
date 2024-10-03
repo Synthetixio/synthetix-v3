@@ -110,6 +110,7 @@ describe('cross chain election testing', function () {
         const tx = await chain.GovernanceProxy.connect(chain.signer).setSnapshotContract(
           chain.SnapshotRecordMock.address,
           0,
+          ethers.utils.parseEther('0'),
           true
         );
         await tx.wait();
