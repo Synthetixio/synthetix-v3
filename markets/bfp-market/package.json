@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/bfp-market",
-  "version": "3.8.1",
+  "version": "3.8.0",
   "description": "L1 perp market implementation",
   "publishConfig": {
     "access": "public"

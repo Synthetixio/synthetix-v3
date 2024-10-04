@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/op-gas-price-oracle",
-  "version": "3.8.1",
+  "version": "3.8.0",
   "description": "Optimism Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"
