@@ -414,7 +414,11 @@ library Margin {
         uint256 liqFeeWithRewardInUsd = liqFeeInUsd +
             collateralValue.mulDecimal(marketConfig.liquidationRewardPercent);
 
-        return MathUtil.min(liqFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, liqFeeWithRewardInUsd),
+            globalConfig.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
     }
 
     /// @dev Returns whether an account in a specific market's margin can be liquidated.
