@@ -508,14 +508,10 @@ library Position {
             globalConfig
         );
 
-        uint256 liqKeeperFee = getLiquidationKeeperFee(
-            absSize,
-            ethPrice,
-            marketConfig,
-            globalConfig
-        );
+        uint256 marginAdjustment = marketConfig.minMarginUsd +
+            liqFlagReward +
+            globalConfig.maxKeeperFeeUsd;
 
-        uint256 marginAdjustment = marketConfig.minMarginUsd + liqFlagReward + liqKeeperFee;
         im = notional.mulDecimal(imr) + marginAdjustment;
         mm = notional.mulDecimal(mmr) + marginAdjustment;
     }
