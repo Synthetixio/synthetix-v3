@@ -18,7 +18,7 @@ describe('OwnedFeeCollector', function () {
 
   const usdAmount = bn(5000);
   const feeShareRatio = bn(0.5);
-  const zeroAddress = '0x0000000000000000000000000000000000000000';
+  const zeroAddress = ethers.constants.AddressZero;
 
   before('prepare environment', async () => {
     OwnedFeeCollector = getContract('owned_fee_collector');

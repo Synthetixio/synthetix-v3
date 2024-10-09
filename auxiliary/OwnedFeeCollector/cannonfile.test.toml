@@ -2,7 +2,7 @@ name = "owned-fee-collector"
 version = "<%= package.version %>-testable"
 
 [setting.owner]
-defaultValue = "0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8"
+defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
 
 [setting.fee_share_recipient]
 defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
