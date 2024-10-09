@@ -366,7 +366,7 @@ library Pool {
             .getCollateralPrice(DecimalMath.UNIT);
 
         if (possibleError.length > 0) {
-            // if we got a error for the collateral type then there is a good change rebalanceMarkets
+            // if we got a error for the collateral type then there is a good chance rebalanceMarkets
             // will have an error too, so call it here and let it go first :)
             rebalanceMarketsInPool(self);
             RevertUtil.revertWithReason(possibleError);
