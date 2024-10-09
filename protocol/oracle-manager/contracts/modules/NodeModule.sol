@@ -87,9 +87,7 @@ contract NodeModule is INodeModule {
         bytes memory err;
         (node, err) = NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
 
-        if (err.length > 0) {
-            RevertUtil.revertWithReason(err);
-        }
+        RevertUtil.revertIfError(err);
     }
 
     function processManyWithRuntime(
@@ -138,29 +136,17 @@ contract NodeModule is INodeModule {
         }
 
         nodes = new NodeOutput.Data[](nodeIds.length);
-        bytes[] memory errors = new bytes[](nodeIds.length);
-        uint256 errIdx = 0;
+        bytes[] memory possibleErrors = new bytes[](nodeIds.length);
 
         for (uint256 i = 0; i < nodeIds.length; i++) {
-            (nodes[i], errors[errIdx]) = NodeDefinition.process(
+            (nodes[i], possibleErrors[i]) = NodeDefinition.process(
                 nodeIds[i],
                 runtimeKeys[i],
                 runtimeValues[i]
             );
-
-            if (errors[errIdx].length > 0) {
-                errIdx++;
-            }
         }
 
-        if (errIdx > 0) {
-            // have to shorten the length of the memory array (can only do so by creating a new one with the new length and copying over)
-            bytes[] memory copiedErrors = new bytes[](errIdx);
-            for (uint256 i = 0; i < errIdx; i++) {
-                copiedErrors[i] = errors[i];
-            }
-            revert Errors(copiedErrors);
-        }
+        RevertUtil.revertManyIfError(possibleErrors);
     }
 
     /**

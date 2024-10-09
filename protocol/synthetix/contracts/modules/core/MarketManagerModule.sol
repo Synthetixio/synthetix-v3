@@ -135,7 +135,9 @@ contract MarketManagerModule is IMarketManagerModule {
     function getMarketDebtPerShare(uint128 marketId) external override returns (int256) {
         Market.Data storage market = Market.load(marketId);
 
-        market.distributeDebtToPools(999999999);
+        (, bytes memory possibleError) = market.distributeDebtToPools(999999999);
+
+        RevertUtil.revertIfError(possibleError);
 
         return market.getDebtPerShare();
     }
@@ -151,7 +153,9 @@ contract MarketManagerModule is IMarketManagerModule {
         returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds)
     {
         Market.Data storage market = Market.load(marketId);
-        market.distributeDebtToPools(999999999);
+
+        (, bytes memory possibleError) = market.distributeDebtToPools(999999999);
+        RevertUtil.revertIfError(possibleError);
 
         HeapUtil.Data storage inRangePools = market.inRangePools;
         inRangePoolIds = new uint128[](inRangePools.size());
@@ -180,7 +184,10 @@ contract MarketManagerModule is IMarketManagerModule {
         returns (uint256 sharesD18, uint128 totalSharesD18, int128 valuePerShareD27)
     {
         Market.Data storage market = Market.load(marketId);
-        market.distributeDebtToPools(999999999);
+
+        (, bytes memory possibleError) = market.distributeDebtToPools(999999999);
+
+        RevertUtil.revertIfError(possibleError);
 
         Distribution.Data storage poolDistribution = market.poolsDebtDistribution;
         sharesD18 = poolDistribution.getActorShares(poolId.toBytes32());

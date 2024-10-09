@@ -13,6 +13,28 @@ library RevertUtil {
             revertWithReason(reason);
         }
     }
+
+    function revertManyIfError(bytes[] memory reasons) internal pure {
+        uint256 actualErrors = 0;
+
+        for (uint256 i = 0; i < reasons.length; i++) {
+            if (reasons[i].length > 0) {
+                actualErrors++;
+            }
+        }
+
+        if (actualErrors > 0) {
+            bytes[] memory compressed = new bytes[](actualErrors);
+            uint256 cur = 0;
+            for (uint256 i = 0; i < reasons.length; i++) {
+                if (reasons[i].length > 0) {
+                    compressed[cur++] = reasons[i];
+                }
+            }
+            revert Errors(compressed);
+        }
+    }
+
     function revertWithReason(bytes memory reason) internal pure {
         uint256 len = reason.length;
         assembly {

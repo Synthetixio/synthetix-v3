@@ -308,22 +308,15 @@ library Pool {
     ) internal returns (int256 cumulativeDebtChange) {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         uint128 myPoolId = self.id;
-        bytes[] memory errors = new bytes[](self.marketConfigurations.length);
-        bool hadError = false;
+        bytes[] memory possibleErrors = new bytes[](self.marketConfigurations.length);
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
-            (, bytes memory possibleError) = market.distributeDebtToPools(9999999999);
-            if (possibleError.length > 0) {
-                errors[i] = possibleError;
-                hadError = true;
-            }
+            (, possibleErrors[i]) = market.distributeDebtToPools(9999999999);
             cumulativeDebtChange += market.accumulateDebtChange(myPoolId);
         }
 
-        if (hadError) {
-            revert RevertUtil.Errors(errors);
-        }
+        RevertUtil.revertManyIfError(possibleErrors);
 
         assignDebt(self, cumulativeDebtChange);
 
