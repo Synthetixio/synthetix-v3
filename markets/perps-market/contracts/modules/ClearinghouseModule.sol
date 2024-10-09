@@ -77,8 +77,31 @@ contract ClearinghouseModule is IClearinghouse {
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IClearinghouse
-    function hash(Order calldata order) external pure override returns (bytes32 _hash) {
-        // TODO
+function hash(Order calldata order) external pure returns (bytes32) {
+        bytes32 conditionsHash = _hashConditions(order.conditions);
+
+        return keccak256(
+            abi.encode(
+                keccak256(abi.encode(
+                    order.metadata.genesis,
+                    order.metadata.expiration,
+                    order.metadata.trackingCode,
+                    order.metadata.referrer
+                )),
+                keccak256(abi.encode(
+                    order.trader.nonce,
+                    order.trader.accountId,
+                    order.trader.signer
+                )),
+                keccak256(abi.encode(
+                    order.trade.t,
+                    order.trade.marketId,
+                    order.trade.size,
+                    order.trade.price
+                )),
+                conditionsHash
+            )
+        );
     }
 
     function hasUnorderedNonceBeenUsed(
@@ -87,5 +110,27 @@ contract ClearinghouseModule is IClearinghouse {
     ) public view returns (bool) {
         Clearinghouse.Data storage data = Clearinghouse.load();
         return Clearinghouse.hasUnorderedNonceBeenUsed(data, accountId, nonce);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                               INTERNAL
+    //////////////////////////////////////////////////////////////*/
+
+        /// @notice Hash the conditions array by hashing each condition individually
+    function _hashConditions(Condition[] calldata conditions) internal pure returns (bytes32) {
+        bytes32[] memory conditionHashes = new bytes32[](conditions.length);
+
+        for (uint256 i = 0; i < conditions.length; i++) {
+            conditionHashes[i] = keccak256(
+                abi.encode(
+                    conditions[i].target,
+                    conditions[i].selector,
+                    keccak256(conditions[i].data),  // Hash the data separately
+                    conditions[i].expected
+                )
+            );
+        }
+
+        return keccak256(abi.encodePacked(conditionHashes));
     }
 }

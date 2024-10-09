@@ -31,4 +31,9 @@ contract CancelOrders is ClearinghouseModuleTest {
         bool result3 = clearingHouse.hasUnorderedNonceBeenUsed(1, _nonce3);
         assertTrue(result3);
     }
-}
+
+    function test_HashesOrders(uint256 randUint, int256 randInt, address randAdress, bytes32 randBytes) public {
+        //TODO
+        // IClearinghouse.Order memory order = Order()
+    }
+}  
