@@ -1,11 +1,26 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { getContractAst } from '@synthetixio/core-utils/utils/hardhat/contracts';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { SourceUnit } from 'solidity-ast';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { subtask } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { renderTestableStorage } from '../internal/render-testable-storage';
 import { SUBTASK_GENERATE_TESTABLE_STORAGE } from '../task-names';
+
+export async function getContractAst(
+  hre: HardhatRuntimeEnvironment,
+  contractFullyQualifiedName: string
+) {
+  const { sourceName } = parseFullyQualifiedName(contractFullyQualifiedName);
+  const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
+
+  if (!buildInfo) {
+    throw new Error(`Build info for "${contractFullyQualifiedName}" not found`);
+  }
+
+  return buildInfo.output.sources[sourceName].ast as SourceUnit;
+}
 
 subtask(
   SUBTASK_GENERATE_TESTABLE_STORAGE,
