@@ -1,18 +1,18 @@
 name = "owned-fee-collector"
 version = "<%= package.version %>"
-description = "Colelcts fees on behalf of an owner"
+description = "Collects fees on behalf of an owner"
 
 [setting.owner]
-defaultValue = "0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8"
+defaultValue = "0xD3DFa13CDc7c133b1700c243f03A8C6Df513A93b"
 
 [setting.fee_share_recipient]
-defaultValue = "0x0000000000000000000000000000000000000000"
+defaultValue = "0x14E4f1DE5cA748Fb130711f41473f1d2bc80523a"
 
 [setting.fee_share]
 defaultValue = "500000000000000000"
 
 [setting.fee_token]
-defaultValue = "0x0000000000000000000000000000000000000000"
+defaultValue = "0xb2F30A7C980f052f02563fb518dcc39e6bf38175"
 
 [contract.owned_fee_collector]
 artifact = "contracts/OwnedFeeCollector.sol:OwnedFeeCollector"
