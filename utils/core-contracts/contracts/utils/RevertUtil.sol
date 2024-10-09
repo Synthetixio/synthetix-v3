@@ -7,6 +7,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 library RevertUtil {
     error Errors(bytes[] errors);
+    error EmptyRevertReason();
 
     function revertIfError(bytes memory reason) internal pure {
         if (reason.length > 0) {
@@ -37,6 +38,10 @@ library RevertUtil {
 
     function revertWithReason(bytes memory reason) internal pure {
         uint256 len = reason.length;
+        if (len == 0) {
+            // for some reason assembly revert wont actually revert if the length is 0
+            revert EmptyRevertReason();
+        }
         assembly {
             revert(add(reason, 0x20), len)
         }
