@@ -1,4 +1,5 @@
 \*.dump.sol
+\*.dump.json
 artifacts/
 node_modules/
 **/contracts/generated
@@ -16,8 +17,6 @@ utils/core-contracts/contracts/utils/SafeCast
 utils/core-modules/contracts/modules/UpgradeModule.sol
 utils/core-contracts/contracts/ownership/Ownable.sol
 utils/core-contracts/contracts/ownership/OwnableStorage.sol
-
-storage.dump.sol
 
 # Immutable InitialProxy
 markets/legacy-market/contracts/InitialModuleBundle.sol

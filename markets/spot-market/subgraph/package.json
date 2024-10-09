@@ -7,7 +7,8 @@
     "cannon": "cannon",
     "prettier": "prettier",
     "graph": "graph",
-    "subgraphgen": "./codegen.sh",
+    "subgraph:codegen": "./codegen.sh",
+    "subgraph:build": "./build.sh",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
     "alchemy:optimism-mainnet": "graph deploy spot-market-optimism-mainnet subgraph.optimism-mainnet.yaml --output-dir ./build/optimism-mainnet --version-label v2 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "alchemy:base-sepolia-andromeda": "graph deploy spot-market-base-sepolia-andromeda subgraph.base-sepolia-andromeda.yaml --output-dir ./build/base-sepolia-andromeda --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
@@ -21,7 +22,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.81.0",
     "@graphprotocol/graph-ts": "^0.35.1",
-    "@usecannon/cli": "2.17.0",
+    "@usecannon/cli": "2.17.4",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.6.0",
     "prettier": "^3.2.5"

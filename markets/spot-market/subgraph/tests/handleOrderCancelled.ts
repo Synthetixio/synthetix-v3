@@ -35,7 +35,7 @@ export default function test(): void {
   let claimId = 10002;
   let amountEscrowed = 2000;
   let settlementStrategyId = 69;
-  let settlementTime = 1_000_000;
+  let commitmentTime = 1_000_000;
   let minimumSettlementAmount = 100;
   let settledAt = 1_000_000;
 
@@ -49,7 +49,7 @@ export default function test(): void {
       orderType,
       amountEscrowed,
       settlementStrategyId,
-      settlementTime,
+      commitmentTime,
       minimumSettlementAmount,
       settledAt,
       referrer,
@@ -71,7 +71,7 @@ export default function test(): void {
       orderType,
       amountEscrowed,
       settlementStrategyId,
-      settlementTime,
+      commitmentTime,
       minimumSettlementAmount,
       settledAt,
       referrer,
@@ -85,7 +85,7 @@ export default function test(): void {
   let id = asyncOrderId.toString();
   assert.fieldEquals('Order', id, 'amountEscrowed', amountEscrowed.toString());
   assert.fieldEquals('Order', id, 'settlementStrategyId', settlementStrategyId.toString());
-  assert.fieldEquals('Order', id, 'settlementTime', settlementTime.toString());
+  assert.fieldEquals('Order', id, 'commitmentTime', commitmentTime.toString());
   assert.fieldEquals('Order', id, 'minimumSettlementAmount', minimumSettlementAmount.toString());
   assert.fieldEquals('Order', id, 'settledAt', settledAt.toString());
   assert.fieldEquals('Order', id, 'block', (blockNumber + 2).toString());

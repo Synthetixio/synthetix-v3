@@ -18,6 +18,7 @@ interface IElectionModule is IElectionModuleSatellite {
     error DuplicateCandidates(address duplicatedCandidate);
     error TooManyMembers();
     error NotImplemented();
+    error UnexpectedMsgValue();
 
     event ElectionModuleInitialized();
     event EpochStarted(uint256 indexed epochId);
@@ -127,6 +128,7 @@ interface IElectionModule is IElectionModuleSatellite {
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
     /// @dev ElectionTally needs to be extended to specify how votes are counted
+    /// @dev Should be called after all crosschain votes propogate; if called immediately when the evaluation period starts some votes have the chance of being lost
     function evaluate(uint256 numBallots) external payable;
 
     /// @notice Shuffles NFTs and resolves an election after it has been evaluated

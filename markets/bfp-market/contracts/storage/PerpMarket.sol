@@ -194,7 +194,7 @@ library PerpMarket {
         int128 positionSize,
         AddressRegistry.Data memory addresses
     ) internal view returns (uint256) {
-        uint128 size = self.size + MathUtil.abs(positionSize).to128();
+        uint128 size = MathUtil.abs(self.size.toInt() + positionSize).to128();
 
         return
             size.mulDecimal(price).mulDecimal(marketConfig.minCreditPercent) +

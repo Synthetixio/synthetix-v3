@@ -2,8 +2,8 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { ethers } from 'ethers';
 import { glob, runTypeChain } from 'typechain';
 import { ChainBuilderContext, ContractMap } from './cannon-types';
 import { getHardhatSigners } from './get-hardhat-signers';

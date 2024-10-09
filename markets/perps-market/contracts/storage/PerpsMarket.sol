@@ -415,7 +415,7 @@ library PerpsMarket {
 
     /**
      * @dev Returns the market debt incurred by all positions
-     * @notice  Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
+     * @notice Market debt is the sum of all position sizes multiplied by the price, and old positions pnl that is included in the debt correction accumulator.
      */
     function marketDebt(Data storage self, uint256 price) internal view returns (int256) {
         // all positions sizes multiplied by the price is equivalent to skew times price
@@ -426,15 +426,23 @@ library PerpsMarket {
         return positionPnl + fundingPnl - self.debtCorrectionAccumulator;
     }
 
+    /**
+     * @notice calculates the credit a market requires for a given position size
+     * @dev credit required is a function of current market price, size, and locked OI ratio
+     * @param self reference to the market
+     * @param positionSize to calculate how much credit is required
+     * @param tolerance used when querying the current price
+     * @return required credit for the given position size
+     */
     function requiredCreditForSize(
         Data storage self,
         int256 positionSize,
         PerpsPrice.Tolerance tolerance
-    ) internal view returns (int256) {
-        return
-            positionSize
-                .mulDecimal(PerpsPrice.getCurrentPrice(self.id, tolerance).toInt())
-                .mulDecimal(PerpsMarketConfiguration.load(self.id).lockedOiRatioD18.toInt());
+    ) internal view returns (int256 required) {
+        /// @dev credit_required = position_size * current_price * locked_oi_ratio
+        required = positionSize
+            .mulDecimal(PerpsPrice.getCurrentPrice(self.id, tolerance).toInt())
+            .mulDecimal(PerpsMarketConfiguration.load(self.id).lockedOiRatioD18.toInt());
     }
 
     function requiredCredit(

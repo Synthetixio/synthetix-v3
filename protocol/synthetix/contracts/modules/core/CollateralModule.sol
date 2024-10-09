@@ -56,6 +56,8 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
+        account.cleanAccountLocks(collateralType, 0, 999999999999999);
+
         account.collaterals[collateralType].increaseAvailableCollateral(
             CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
         );
@@ -134,42 +136,8 @@ contract CollateralModule is ICollateralModule {
         address collateralType,
         uint256 offset,
         uint256 count
-    ) external override returns (uint256 cleared) {
-        CollateralLock.Data[] storage locks = Account
-            .load(accountId)
-            .collaterals[collateralType]
-            .locks;
-
-        uint64 currentTime = block.timestamp.to64();
-
-        uint256 len = locks.length;
-
-        if (offset >= len) {
-            return 0;
-        }
-
-        if (count == 0 || offset + count >= len) {
-            count = len - offset;
-        }
-
-        uint256 index = offset;
-        for (uint256 i = 0; i < count; i++) {
-            if (locks[index].lockExpirationTime <= currentTime) {
-                emit CollateralLockExpired(
-                    accountId,
-                    collateralType,
-                    locks[index].amountD18,
-                    locks[index].lockExpirationTime
-                );
-
-                locks[index] = locks[locks.length - 1];
-                locks.pop();
-            } else {
-                index++;
-            }
-        }
-
-        return count + offset - index;
+    ) external override returns (uint256 cleared, uint256 remainingLockAmountD18) {
+        return Account.load(accountId).collaterals[collateralType].cleanExpiredLocks(offset, count);
     }
 
     /**

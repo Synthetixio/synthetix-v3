@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-storage",
-  "version": "3.4.0",
+  "version": "3.8.0",
   "publishConfig": {
     "access": "public"
   },
@@ -14,6 +14,7 @@
     "solidity"
   ],
   "files": [
+    "src",
     "dist/**/*.js",
     "dist/**/*.js.map",
     "dist/**/*.d.ts",
@@ -31,12 +32,17 @@
     "prepublishOnly": "yarn build"
   },
   "dependencies": {
+    "@solidity-parser/parser": "^0.18.0",
     "@synthetixio/core-utils": "workspace:*",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "lodash.memoize": "^4.1.2",
     "mustache": "^4.2.0",
     "solidity-ast": "^0.4.55"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
+    "@types/lodash.memoize": "^4.1.9",
     "@types/mustache": "^4.2.5",
     "hardhat": "^2.19.5",
     "jest": "^29.7.0",

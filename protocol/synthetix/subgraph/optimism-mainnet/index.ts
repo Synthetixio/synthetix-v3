@@ -1,5 +1,4 @@
-// optimism-mainnet has exactly same deployments as mainnet (in theory lol), so we reuse all the handlers
-// If some handlers need to be different - we copy-paste them into optimism-mainnet folder and make adjustments. Later when aligned with mainnet -- revert import
+// If some handlers need to be different - we copy-paste them into folder and make adjustments. Later when aligned with mainnet -- revert import
 export * from '../mainnet/getISOWeekNumber';
 export * from '../mainnet/handleAccountCreated';
 export * from '../mainnet/handleCollateralConfigured';
@@ -22,6 +21,7 @@ export * from '../mainnet/handlePoolOwnershipAccepted';
 export * from '../mainnet/handleRewardsClaimed';
 export * from '../mainnet/handleRewardsDistributed';
 export * from '../mainnet/handleRewardsDistributorRegistered';
+export * from '../mainnet/handleRewardsDistributorRemoved';
 export * from '../mainnet/handleUSDBurned';
 export * from '../mainnet/handleUSDMinted';
 export * from '../mainnet/handleVaultLiquidation';

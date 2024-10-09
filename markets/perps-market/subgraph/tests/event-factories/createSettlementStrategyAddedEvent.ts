@@ -3,7 +3,7 @@ import { newTypedMockEvent } from 'matchstick-as';
 import {
   SettlementStrategyAdded as SettlementStrategyAddedEvent,
   SettlementStrategyAddedStrategyStruct,
-} from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+} from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createSettlementStrategyAddedEvent(
   marketId: i32,
@@ -11,12 +11,11 @@ export function createSettlementStrategyAddedEvent(
   strategyType: i32,
   settlementDelay: i64,
   settlementWindowDuration: i64,
-  priceWindowDuration: i64,
   priceVerificationContract: string,
   feedId: string,
-  url: string,
   settlementReward: i64,
   disabled: boolean,
+  commitmentPriceDelay: i64,
   // end of strategy struct
   strategyId: i32,
   timestamp: i64,
@@ -32,12 +31,11 @@ export function createSettlementStrategyAddedEvent(
     ethereum.Value.fromI32(strategyType),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementDelay)),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementWindowDuration)),
-    ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(priceWindowDuration)),
     ethereum.Value.fromAddress(Address.fromString(priceVerificationContract)),
     ethereum.Value.fromBytes(Bytes.fromHexString(feedId) as Bytes),
-    ethereum.Value.fromString(url),
     ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementReward)),
     ethereum.Value.fromBoolean(disabled),
+    ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(commitmentPriceDelay)),
   ]);
   event.parameters.push(new ethereum.EventParam('strategy', ethereum.Value.fromTuple(strategy)));
 

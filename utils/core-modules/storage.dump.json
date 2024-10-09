@@ -1,0 +1,468 @@
+{
+  "contracts/storage/AssociatedSystem.sol:AssociatedSystem": {
+    "name": "AssociatedSystem",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "proxy",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "impl",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "bytes32",
+          "name": "kind",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/CrossChain.sol:CrossChain": {
+    "name": "CrossChain",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "ccipRouter",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "supportedNetworks",
+          "members": [
+            {
+              "type": "struct",
+              "name": "raw",
+              "members": [
+                {
+                  "type": "array",
+                  "name": "_values",
+                  "value": {
+                    "type": "bytes32"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "name": "_positions",
+                  "key": {
+                    "type": "bytes32"
+                  },
+                  "value": {
+                    "type": "uint256"
+                  }
+                }
+              ]
+            }
+          ],
+          "size": 96,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "ccipChainIdToSelector",
+          "key": {
+            "type": "uint64"
+          },
+          "value": {
+            "type": "uint64"
+          },
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "ccipSelectorToChainId",
+          "key": {
+            "type": "uint64"
+          },
+          "value": {
+            "type": "uint64"
+          },
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/DecayToken.sol:DecayToken": {
+    "name": "DecayToken",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint256",
+          "name": "decayRate",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "epochStart",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "totalSupplyAtEpochStart",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/FeatureFlag.sol:FeatureFlag": {
+    "name": "FeatureFlag",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bytes32",
+          "name": "name",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "allowAll",
+          "size": 1,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "denyAll",
+          "size": 1,
+          "slot": "1",
+          "offset": 1
+        },
+        {
+          "type": "struct",
+          "name": "permissionedAddresses",
+          "members": [
+            {
+              "type": "struct",
+              "name": "raw",
+              "members": [
+                {
+                  "type": "array",
+                  "name": "_values",
+                  "value": {
+                    "type": "bytes32"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "name": "_positions",
+                  "key": {
+                    "type": "bytes32"
+                  },
+                  "value": {
+                    "type": "uint256"
+                  }
+                }
+              ]
+            }
+          ],
+          "size": 96,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "deniers",
+          "value": {
+            "type": "address"
+          },
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/Initialized.sol:Initialized": {
+    "name": "Initialized",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "bool",
+          "name": "initialized",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/SampleStorage.sol:SampleStorage": {
+    "name": "SampleStorage",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "uint256",
+          "name": "someValue",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "protectedValue",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/storage/WormholeCrossChain.sol:WormholeCrossChain": {
+    "name": "WormholeCrossChain",
+    "kind": "library",
+    "structs": {
+      "Data": [
+        {
+          "type": "address",
+          "name": "wormholeCore",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "wormholeRelayer",
+          "size": 20,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "gasLimit",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "supportedNetworks",
+          "members": [
+            {
+              "type": "struct",
+              "name": "raw",
+              "members": [
+                {
+                  "type": "array",
+                  "name": "_values",
+                  "value": {
+                    "type": "bytes32"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "name": "_positions",
+                  "key": {
+                    "type": "bytes32"
+                  },
+                  "value": {
+                    "type": "uint256"
+                  }
+                }
+              ]
+            }
+          ],
+          "size": 96,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "registeredEmitters",
+          "key": {
+            "type": "uint16"
+          },
+          "value": {
+            "type": "bytes32"
+          },
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "mapping",
+          "name": "hasProcessedMessage",
+          "key": {
+            "type": "bytes32"
+          },
+          "value": {
+            "type": "bool"
+          },
+          "size": 32,
+          "slot": "7",
+          "offset": 0
+        }
+      ]
+    }
+  },
+  "contracts/utils/CcipClient.sol:CcipClient": {
+    "name": "CcipClient",
+    "kind": "library",
+    "structs": {
+      "EVMTokenAmount": [
+        {
+          "type": "address",
+          "name": "token",
+          "size": 20,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "amount",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        }
+      ],
+      "Any2EVMMessage": [
+        {
+          "type": "bytes32",
+          "name": "messageId",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint64",
+          "name": "sourceChainSelector",
+          "size": 8,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "bytes",
+          "name": "sender",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "bytes",
+          "name": "data",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "tokenAmounts",
+          "value": {
+            "type": "struct",
+            "name": "EVMTokenAmount",
+            "members": [
+              {
+                "type": "address",
+                "name": "token"
+              },
+              {
+                "type": "uint256",
+                "name": "amount"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        }
+      ],
+      "EVM2AnyMessage": [
+        {
+          "type": "bytes",
+          "name": "receiver",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bytes",
+          "name": "data",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "array",
+          "name": "tokenAmounts",
+          "value": {
+            "type": "struct",
+            "name": "EVMTokenAmount",
+            "members": [
+              {
+                "type": "address",
+                "name": "token"
+              },
+              {
+                "type": "uint256",
+                "name": "amount"
+              }
+            ]
+          },
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "address",
+          "name": "feeToken",
+          "size": 20,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "bytes",
+          "name": "extraArgs",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        }
+      ],
+      "EVMExtraArgsV1": [
+        {
+          "type": "uint256",
+          "name": "gasLimit",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "strict",
+          "size": 1,
+          "slot": "1",
+          "offset": 0
+        }
+      ]
+    }
+  }
+}

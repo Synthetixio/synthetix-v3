@@ -530,36 +530,6 @@ export class TransferCrossChainInitiated__Params {
   }
 }
 
-export class IssuanceFeePaid extends ethereum.Event {
-  get params(): IssuanceFeePaid__Params {
-    return new IssuanceFeePaid__Params(this);
-  }
-}
-
-export class IssuanceFeePaid__Params {
-  _event: IssuanceFeePaid;
-
-  constructor(event: IssuanceFeePaid) {
-    this._event = event;
-  }
-
-  get accountId(): BigInt {
-    return this._event.parameters[0].value.toBigInt();
-  }
-
-  get poolId(): BigInt {
-    return this._event.parameters[1].value.toBigInt();
-  }
-
-  get collateralType(): Address {
-    return this._event.parameters[2].value.toAddress();
-  }
-
-  get feeAmount(): BigInt {
-    return this._event.parameters[3].value.toBigInt();
-  }
-}
-
 export class UsdBurned extends ethereum.Event {
   get params(): UsdBurned__Params {
     return new UsdBurned__Params(this);
@@ -758,6 +728,22 @@ export class MarketCollateralDeposited__Params {
   get sender(): Address {
     return this._event.parameters[3].value.toAddress();
   }
+
+  get creditCapacity(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get netIssuance(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+
+  get depositedCollateralValue(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
+  }
+
+  get reportedDebt(): BigInt {
+    return this._event.parameters[7].value.toBigInt();
+  }
 }
 
 export class MarketCollateralWithdrawn extends ethereum.Event {
@@ -787,6 +773,22 @@ export class MarketCollateralWithdrawn__Params {
 
   get sender(): Address {
     return this._event.parameters[3].value.toAddress();
+  }
+
+  get creditCapacity(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get netIssuance(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+
+  get depositedCollateralValue(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
+  }
+
+  get reportedDebt(): BigInt {
+    return this._event.parameters[7].value.toBigInt();
   }
 }
 
@@ -846,28 +848,6 @@ export class MarketRegistered__Params {
   }
 }
 
-export class MarketSystemFeePaid extends ethereum.Event {
-  get params(): MarketSystemFeePaid__Params {
-    return new MarketSystemFeePaid__Params(this);
-  }
-}
-
-export class MarketSystemFeePaid__Params {
-  _event: MarketSystemFeePaid;
-
-  constructor(event: MarketSystemFeePaid) {
-    this._event = event;
-  }
-
-  get marketId(): BigInt {
-    return this._event.parameters[0].value.toBigInt();
-  }
-
-  get feeAmount(): BigInt {
-    return this._event.parameters[1].value.toBigInt();
-  }
-}
-
 export class MarketUsdDeposited extends ethereum.Event {
   get params(): MarketUsdDeposited__Params {
     return new MarketUsdDeposited__Params(this);
@@ -895,6 +875,18 @@ export class MarketUsdDeposited__Params {
 
   get market(): Address {
     return this._event.parameters[3].value.toAddress();
+  }
+
+  get creditCapacity(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get netIssuance(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+
+  get depositedCollateralValue(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
   }
 }
 
@@ -925,6 +917,18 @@ export class MarketUsdWithdrawn__Params {
 
   get market(): Address {
     return this._event.parameters[3].value.toAddress();
+  }
+
+  get creditCapacity(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get netIssuance(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+
+  get depositedCollateralValue(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
   }
 }
 
@@ -1258,6 +1262,28 @@ export class PoolOwnershipAccepted__Params {
   _event: PoolOwnershipAccepted;
 
   constructor(event: PoolOwnershipAccepted) {
+    this._event = event;
+  }
+
+  get poolId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get owner(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+}
+
+export class PoolOwnershipRenounced extends ethereum.Event {
+  get params(): PoolOwnershipRenounced__Params {
+    return new PoolOwnershipRenounced__Params(this);
+  }
+}
+
+export class PoolOwnershipRenounced__Params {
+  _event: PoolOwnershipRenounced;
+
+  constructor(event: PoolOwnershipRenounced) {
     this._event = event;
   }
 
@@ -1715,6 +1741,16 @@ export class CoreProxy__getMarketPoolsResult {
   }
 }
 
+export class CoreProxy__getPoolCollateralConfigurationResultConfigStruct extends ethereum.Tuple {
+  get collateralLimitD18(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get issuanceRatioD18(): BigInt {
+    return this[1].toBigInt();
+  }
+}
+
 export class CoreProxy__getPoolConfigurationResultValue0Struct extends ethereum.Tuple {
   get marketId(): BigInt {
     return this[0].toBigInt();
@@ -1732,16 +1768,19 @@ export class CoreProxy__getPoolConfigurationResultValue0Struct extends ethereum.
 export class CoreProxy__updateRewardsResult {
   value0: Array<BigInt>;
   value1: Array<Address>;
+  value2: BigInt;
 
-  constructor(value0: Array<BigInt>, value1: Array<Address>) {
+  constructor(value0: Array<BigInt>, value1: Array<Address>, value2: BigInt) {
     this.value0 = value0;
     this.value1 = value1;
+    this.value2 = value2;
   }
 
   toMap(): TypedMap<string, ethereum.Value> {
     let map = new TypedMap<string, ethereum.Value>();
     map.set('value0', ethereum.Value.fromUnsignedBigIntArray(this.value0));
     map.set('value1', ethereum.Value.fromAddressArray(this.value1));
+    map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
     return map;
   }
 
@@ -1751,6 +1790,10 @@ export class CoreProxy__updateRewardsResult {
 
   getValue1(): Array<Address> {
     return this.value1;
+  }
+
+  getValue2(): BigInt {
+    return this.value2;
   }
 }
 
@@ -1790,31 +1833,6 @@ export class CoreProxy__getPositionResult {
 
   getCollateralizationRatio(): BigInt {
     return this.value3;
-  }
-}
-
-export class CoreProxy__getPositionCollateralResult {
-  value0: BigInt;
-  value1: BigInt;
-
-  constructor(value0: BigInt, value1: BigInt) {
-    this.value0 = value0;
-    this.value1 = value1;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
-    return map;
-  }
-
-  getAmount(): BigInt {
-    return this.value0;
-  }
-
-  getValue(): BigInt {
-    return this.value1;
   }
 }
 
@@ -3105,40 +3123,6 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getMessageSender(): Address {
-    let result = super.call('getMessageSender', 'getMessageSender():(address)', []);
-
-    return result[0].toAddress();
-  }
-
-  try_getMessageSender(): ethereum.CallResult<Address> {
-    let result = super.tryCall('getMessageSender', 'getMessageSender():(address)', []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toAddress());
-  }
-
-  multicall(data: Array<Bytes>): Array<Bytes> {
-    let result = super.call('multicall', 'multicall(bytes[]):(bytes[])', [
-      ethereum.Value.fromBytesArray(data),
-    ]);
-
-    return result[0].toBytesArray();
-  }
-
-  try_multicall(data: Array<Bytes>): ethereum.CallResult<Array<Bytes>> {
-    let result = super.tryCall('multicall', 'multicall(bytes[]):(bytes[])', [
-      ethereum.Value.fromBytesArray(data),
-    ]);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBytesArray());
-  }
-
   getApprovedPools(): Array<BigInt> {
     let result = super.call('getApprovedPools', 'getApprovedPools():(uint256[])', []);
 
@@ -3203,6 +3187,39 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  getPoolCollateralConfiguration(
+    poolId: BigInt,
+    collateralType: Address
+  ): CoreProxy__getPoolCollateralConfigurationResultConfigStruct {
+    let result = super.call(
+      'getPoolCollateralConfiguration',
+      'getPoolCollateralConfiguration(uint128,address):((uint256,uint256))',
+      [ethereum.Value.fromUnsignedBigInt(poolId), ethereum.Value.fromAddress(collateralType)]
+    );
+
+    return changetype<CoreProxy__getPoolCollateralConfigurationResultConfigStruct>(
+      result[0].toTuple()
+    );
+  }
+
+  try_getPoolCollateralConfiguration(
+    poolId: BigInt,
+    collateralType: Address
+  ): ethereum.CallResult<CoreProxy__getPoolCollateralConfigurationResultConfigStruct> {
+    let result = super.tryCall(
+      'getPoolCollateralConfiguration',
+      'getPoolCollateralConfiguration(uint128,address):((uint256,uint256))',
+      [ethereum.Value.fromUnsignedBigInt(poolId), ethereum.Value.fromAddress(collateralType)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      changetype<CoreProxy__getPoolCollateralConfigurationResultConfigStruct>(value[0].toTuple())
+    );
   }
 
   getPoolCollateralIssuanceRatio(poolId: BigInt, collateral: Address): BigInt {
@@ -3296,6 +3313,49 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  claimPoolRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): BigInt {
+    let result = super.call(
+      'claimPoolRewards',
+      'claimPoolRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_claimPoolRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'claimPoolRewards',
+      'claimPoolRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   claimRewards(
     accountId: BigInt,
     poolId: BigInt,
@@ -3325,6 +3385,190 @@ export class CoreProxy extends ethereum.SmartContract {
     let result = super.tryCall(
       'claimRewards',
       'claimRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  distributeRewards(
+    poolId: BigInt,
+    collateralType: Address,
+    amount: BigInt,
+    start: BigInt,
+    duration: BigInt
+  ): BigInt {
+    let result = super.call(
+      'distributeRewards',
+      'distributeRewards(uint128,address,uint256,uint64,uint32):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(amount),
+        ethereum.Value.fromUnsignedBigInt(start),
+        ethereum.Value.fromUnsignedBigInt(duration),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_distributeRewards(
+    poolId: BigInt,
+    collateralType: Address,
+    amount: BigInt,
+    start: BigInt,
+    duration: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'distributeRewards',
+      'distributeRewards(uint128,address,uint256,uint64,uint32):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromUnsignedBigInt(amount),
+        ethereum.Value.fromUnsignedBigInt(start),
+        ethereum.Value.fromUnsignedBigInt(duration),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  distributeRewardsByOwner(
+    poolId: BigInt,
+    collateralType: Address,
+    rewardsDistributor: Address,
+    amount: BigInt,
+    start: BigInt,
+    duration: BigInt
+  ): BigInt {
+    let result = super.call(
+      'distributeRewardsByOwner',
+      'distributeRewardsByOwner(uint128,address,address,uint256,uint64,uint32):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(rewardsDistributor),
+        ethereum.Value.fromUnsignedBigInt(amount),
+        ethereum.Value.fromUnsignedBigInt(start),
+        ethereum.Value.fromUnsignedBigInt(duration),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_distributeRewardsByOwner(
+    poolId: BigInt,
+    collateralType: Address,
+    rewardsDistributor: Address,
+    amount: BigInt,
+    start: BigInt,
+    duration: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'distributeRewardsByOwner',
+      'distributeRewardsByOwner(uint128,address,address,uint256,uint64,uint32):(int256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(rewardsDistributor),
+        ethereum.Value.fromUnsignedBigInt(amount),
+        ethereum.Value.fromUnsignedBigInt(start),
+        ethereum.Value.fromUnsignedBigInt(duration),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getAvailablePoolRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): BigInt {
+    let result = super.call(
+      'getAvailablePoolRewards',
+      'getAvailablePoolRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getAvailablePoolRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getAvailablePoolRewards',
+      'getAvailablePoolRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getAvailableRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): BigInt {
+    let result = super.call(
+      'getAvailableRewards',
+      'getAvailableRewards(uint128,uint128,address,address):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(poolId),
+        ethereum.Value.fromAddress(collateralType),
+        ethereum.Value.fromAddress(distributor),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getAvailableRewards(
+    accountId: BigInt,
+    poolId: BigInt,
+    collateralType: Address,
+    distributor: Address
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getAvailableRewards',
+      'getAvailableRewards(uint128,uint128,address,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3377,7 +3621,7 @@ export class CoreProxy extends ethereum.SmartContract {
   ): CoreProxy__updateRewardsResult {
     let result = super.call(
       'updateRewards',
-      'updateRewards(uint128,address,uint128):(uint256[],address[])',
+      'updateRewards(uint128,address,uint128):(uint256[],address[],uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(poolId),
         ethereum.Value.fromAddress(collateralType),
@@ -3387,7 +3631,8 @@ export class CoreProxy extends ethereum.SmartContract {
 
     return new CoreProxy__updateRewardsResult(
       result[0].toBigIntArray(),
-      result[1].toAddressArray()
+      result[1].toAddressArray(),
+      result[2].toBigInt()
     );
   }
 
@@ -3398,7 +3643,7 @@ export class CoreProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<CoreProxy__updateRewardsResult> {
     let result = super.tryCall(
       'updateRewards',
-      'updateRewards(uint128,address,uint128):(uint256[],address[])',
+      'updateRewards(uint128,address,uint128):(uint256[],address[],uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(poolId),
         ethereum.Value.fromAddress(collateralType),
@@ -3410,7 +3655,11 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      new CoreProxy__updateRewardsResult(value[0].toBigIntArray(), value[1].toAddressArray())
+      new CoreProxy__updateRewardsResult(
+        value[0].toBigIntArray(),
+        value[1].toAddressArray(),
+        value[2].toBigInt()
+      )
     );
   }
 
@@ -3469,6 +3718,40 @@ export class CoreProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getTrustedForwarder(): Address {
+    let result = super.call('getTrustedForwarder', 'getTrustedForwarder():(address)', []);
+
+    return result[0].toAddress();
+  }
+
+  try_getTrustedForwarder(): ethereum.CallResult<Address> {
+    let result = super.tryCall('getTrustedForwarder', 'getTrustedForwarder():(address)', []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  isTrustedForwarder(forwarder: Address): boolean {
+    let result = super.call('isTrustedForwarder', 'isTrustedForwarder(address):(bool)', [
+      ethereum.Value.fromAddress(forwarder),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_isTrustedForwarder(forwarder: Address): ethereum.CallResult<boolean> {
+    let result = super.tryCall('isTrustedForwarder', 'isTrustedForwarder(address):(bool)', [
+      ethereum.Value.fromAddress(forwarder),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
   setSupportedCrossChainNetworks(
@@ -3576,14 +3859,10 @@ export class CoreProxy extends ethereum.SmartContract {
     );
   }
 
-  getPositionCollateral(
-    accountId: BigInt,
-    poolId: BigInt,
-    collateralType: Address
-  ): CoreProxy__getPositionCollateralResult {
+  getPositionCollateral(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
     let result = super.call(
       'getPositionCollateral',
-      'getPositionCollateral(uint128,uint128,address):(uint256,uint256)',
+      'getPositionCollateral(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3591,17 +3870,17 @@ export class CoreProxy extends ethereum.SmartContract {
       ]
     );
 
-    return new CoreProxy__getPositionCollateralResult(result[0].toBigInt(), result[1].toBigInt());
+    return result[0].toBigInt();
   }
 
   try_getPositionCollateral(
     accountId: BigInt,
     poolId: BigInt,
     collateralType: Address
-  ): ethereum.CallResult<CoreProxy__getPositionCollateralResult> {
+  ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
       'getPositionCollateral',
-      'getPositionCollateral(uint128,uint128,address):(uint256,uint256)',
+      'getPositionCollateral(uint128,uint128,address):(uint256)',
       [
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
@@ -3612,9 +3891,7 @@ export class CoreProxy extends ethereum.SmartContract {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new CoreProxy__getPositionCollateralResult(value[0].toBigInt(), value[1].toBigInt())
-    );
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getPositionCollateralRatio(accountId: BigInt, poolId: BigInt, collateralType: Address): BigInt {
@@ -5525,116 +5802,6 @@ export class WithdrawMarketUsdCall__Outputs {
   }
 }
 
-export class MulticallCall extends ethereum.Call {
-  get inputs(): MulticallCall__Inputs {
-    return new MulticallCall__Inputs(this);
-  }
-
-  get outputs(): MulticallCall__Outputs {
-    return new MulticallCall__Outputs(this);
-  }
-}
-
-export class MulticallCall__Inputs {
-  _call: MulticallCall;
-
-  constructor(call: MulticallCall) {
-    this._call = call;
-  }
-
-  get data(): Array<Bytes> {
-    return this._call.inputValues[0].value.toBytesArray();
-  }
-}
-
-export class MulticallCall__Outputs {
-  _call: MulticallCall;
-
-  constructor(call: MulticallCall) {
-    this._call = call;
-  }
-
-  get results(): Array<Bytes> {
-    return this._call.outputValues[0].value.toBytesArray();
-  }
-}
-
-export class MulticallThroughCall extends ethereum.Call {
-  get inputs(): MulticallThroughCall__Inputs {
-    return new MulticallThroughCall__Inputs(this);
-  }
-
-  get outputs(): MulticallThroughCall__Outputs {
-    return new MulticallThroughCall__Outputs(this);
-  }
-}
-
-export class MulticallThroughCall__Inputs {
-  _call: MulticallThroughCall;
-
-  constructor(call: MulticallThroughCall) {
-    this._call = call;
-  }
-
-  get to(): Array<Address> {
-    return this._call.inputValues[0].value.toAddressArray();
-  }
-
-  get data(): Array<Bytes> {
-    return this._call.inputValues[1].value.toBytesArray();
-  }
-
-  get values(): Array<BigInt> {
-    return this._call.inputValues[2].value.toBigIntArray();
-  }
-}
-
-export class MulticallThroughCall__Outputs {
-  _call: MulticallThroughCall;
-
-  constructor(call: MulticallThroughCall) {
-    this._call = call;
-  }
-
-  get results(): Array<Bytes> {
-    return this._call.outputValues[0].value.toBytesArray();
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall extends ethereum.Call {
-  get inputs(): SetAllowlistedMulticallTargetCall__Inputs {
-    return new SetAllowlistedMulticallTargetCall__Inputs(this);
-  }
-
-  get outputs(): SetAllowlistedMulticallTargetCall__Outputs {
-    return new SetAllowlistedMulticallTargetCall__Outputs(this);
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall__Inputs {
-  _call: SetAllowlistedMulticallTargetCall;
-
-  constructor(call: SetAllowlistedMulticallTargetCall) {
-    this._call = call;
-  }
-
-  get target(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get allowlisted(): boolean {
-    return this._call.inputValues[1].value.toBoolean();
-  }
-}
-
-export class SetAllowlistedMulticallTargetCall__Outputs {
-  _call: SetAllowlistedMulticallTargetCall;
-
-  constructor(call: SetAllowlistedMulticallTargetCall) {
-    this._call = call;
-  }
-}
-
 export class AddApprovedPoolCall extends ethereum.Call {
   get inputs(): AddApprovedPoolCall__Inputs {
     return new AddApprovedPoolCall__Inputs(this);
@@ -5887,6 +6054,36 @@ export class RenouncePoolNominationCall__Outputs {
   }
 }
 
+export class RenouncePoolOwnershipCall extends ethereum.Call {
+  get inputs(): RenouncePoolOwnershipCall__Inputs {
+    return new RenouncePoolOwnershipCall__Inputs(this);
+  }
+
+  get outputs(): RenouncePoolOwnershipCall__Outputs {
+    return new RenouncePoolOwnershipCall__Outputs(this);
+  }
+}
+
+export class RenouncePoolOwnershipCall__Inputs {
+  _call: RenouncePoolOwnershipCall;
+
+  constructor(call: RenouncePoolOwnershipCall) {
+    this._call = call;
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class RenouncePoolOwnershipCall__Outputs {
+  _call: RenouncePoolOwnershipCall;
+
+  constructor(call: RenouncePoolOwnershipCall) {
+    this._call = call;
+  }
+}
+
 export class RevokePoolNominationCall extends ethereum.Call {
   get inputs(): RevokePoolNominationCall__Inputs {
     return new RevokePoolNominationCall__Inputs(this);
@@ -6113,6 +6310,52 @@ export class SetPoolNameCall__Outputs {
   }
 }
 
+export class ClaimPoolRewardsCall extends ethereum.Call {
+  get inputs(): ClaimPoolRewardsCall__Inputs {
+    return new ClaimPoolRewardsCall__Inputs(this);
+  }
+
+  get outputs(): ClaimPoolRewardsCall__Outputs {
+    return new ClaimPoolRewardsCall__Outputs(this);
+  }
+}
+
+export class ClaimPoolRewardsCall__Inputs {
+  _call: ClaimPoolRewardsCall;
+
+  constructor(call: ClaimPoolRewardsCall) {
+    this._call = call;
+  }
+
+  get accountId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
+
+  get distributor(): Address {
+    return this._call.inputValues[3].value.toAddress();
+  }
+}
+
+export class ClaimPoolRewardsCall__Outputs {
+  _call: ClaimPoolRewardsCall;
+
+  constructor(call: ClaimPoolRewardsCall) {
+    this._call = call;
+  }
+
+  get value0(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
 export class ClaimRewardsCall extends ethereum.Call {
   get inputs(): ClaimRewardsCall__Inputs {
     return new ClaimRewardsCall__Inputs(this);
@@ -6202,6 +6445,156 @@ export class DistributeRewardsCall__Outputs {
 
   constructor(call: DistributeRewardsCall) {
     this._call = call;
+  }
+
+  get value0(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class DistributeRewardsByOwnerCall extends ethereum.Call {
+  get inputs(): DistributeRewardsByOwnerCall__Inputs {
+    return new DistributeRewardsByOwnerCall__Inputs(this);
+  }
+
+  get outputs(): DistributeRewardsByOwnerCall__Outputs {
+    return new DistributeRewardsByOwnerCall__Outputs(this);
+  }
+}
+
+export class DistributeRewardsByOwnerCall__Inputs {
+  _call: DistributeRewardsByOwnerCall;
+
+  constructor(call: DistributeRewardsByOwnerCall) {
+    this._call = call;
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+
+  get rewardsDistributor(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
+
+  get amount(): BigInt {
+    return this._call.inputValues[3].value.toBigInt();
+  }
+
+  get start(): BigInt {
+    return this._call.inputValues[4].value.toBigInt();
+  }
+
+  get duration(): BigInt {
+    return this._call.inputValues[5].value.toBigInt();
+  }
+}
+
+export class DistributeRewardsByOwnerCall__Outputs {
+  _call: DistributeRewardsByOwnerCall;
+
+  constructor(call: DistributeRewardsByOwnerCall) {
+    this._call = call;
+  }
+
+  get value0(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class GetAvailablePoolRewardsCall extends ethereum.Call {
+  get inputs(): GetAvailablePoolRewardsCall__Inputs {
+    return new GetAvailablePoolRewardsCall__Inputs(this);
+  }
+
+  get outputs(): GetAvailablePoolRewardsCall__Outputs {
+    return new GetAvailablePoolRewardsCall__Outputs(this);
+  }
+}
+
+export class GetAvailablePoolRewardsCall__Inputs {
+  _call: GetAvailablePoolRewardsCall;
+
+  constructor(call: GetAvailablePoolRewardsCall) {
+    this._call = call;
+  }
+
+  get accountId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
+
+  get distributor(): Address {
+    return this._call.inputValues[3].value.toAddress();
+  }
+}
+
+export class GetAvailablePoolRewardsCall__Outputs {
+  _call: GetAvailablePoolRewardsCall;
+
+  constructor(call: GetAvailablePoolRewardsCall) {
+    this._call = call;
+  }
+
+  get value0(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
+  }
+}
+
+export class GetAvailableRewardsCall extends ethereum.Call {
+  get inputs(): GetAvailableRewardsCall__Inputs {
+    return new GetAvailableRewardsCall__Inputs(this);
+  }
+
+  get outputs(): GetAvailableRewardsCall__Outputs {
+    return new GetAvailableRewardsCall__Outputs(this);
+  }
+}
+
+export class GetAvailableRewardsCall__Inputs {
+  _call: GetAvailableRewardsCall;
+
+  constructor(call: GetAvailableRewardsCall) {
+    this._call = call;
+  }
+
+  get accountId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
+
+  get distributor(): Address {
+    return this._call.inputValues[3].value.toAddress();
+  }
+}
+
+export class GetAvailableRewardsCall__Outputs {
+  _call: GetAvailableRewardsCall;
+
+  constructor(call: GetAvailableRewardsCall) {
+    this._call = call;
+  }
+
+  get value0(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 
@@ -6324,6 +6717,10 @@ export class UpdateRewardsCall__Outputs {
 
   get value1(): Array<Address> {
     return this._call.outputValues[1].value.toAddressArray();
+  }
+
+  get value2(): BigInt {
+    return this._call.outputValues[2].value.toBigInt();
   }
 }
 

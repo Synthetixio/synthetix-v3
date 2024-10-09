@@ -39,7 +39,7 @@ type Order @entity {
   owner: String
   amountEscrowed: BigInt
   settlementStrategyId: BigInt
-  settlementTime: BigInt
+  commitmentTime: BigInt
   minimumSettlementAmount: BigInt
   settledAt: BigInt
   price: BigInt

@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 
 const _SECONDS_IN_DAY = 24 * 60 * 60;
 
@@ -122,6 +123,8 @@ describe('Insolvent test', () => {
   });
 
   describe('open position', () => {
+    const restore = snapshotCheckpoint(provider);
+
     before(async () => {
       await openPosition({
         systems,
@@ -171,6 +174,47 @@ describe('Insolvent test', () => {
         systems().PerpsMarket
       );
     });
+
+    it('does not revert when reducing position size, even in an insolvent market', async () => {
+      // risk is decreased when position magnitude is reduced;
+      // thus attempt to do so should not revert
+      await systems()
+        .PerpsMarket.connect(trader1())
+        .commitOrder({
+          marketId: ethMarket.marketId(),
+          accountId: 2,
+          sizeDelta: bn(-10),
+          settlementStrategyId: ethMarket.strategyId(),
+          acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+          referrer: ethers.constants.AddressZero,
+          trackingCode: ethers.constants.HashZero,
+        });
+    });
+
+    // restore state for next test;
+    // i.e., no pending order should exist
+    after(restore);
+
+    it('reverts when reducing position size, even in an insolvent market, if position direction changes', async () => {
+      // risk is decreased when position magnitude is reduced, however
+      // if the position direction changes, this is considered a new position and
+      // thus simply should not be allowed
+      await assertRevert(
+        systems()
+          .PerpsMarket.connect(trader1())
+          .commitOrder({
+            marketId: ethMarket.marketId(),
+            accountId: 2,
+            sizeDelta: bn(-51), // resulting position size is 1 ETH Short (i.e., 50 + (-51) = -1)
+            settlementStrategyId: ethMarket.strategyId(),
+            acceptablePrice: _ETH_PRICE.mul(2).toBN(),
+            referrer: ethers.constants.AddressZero,
+            trackingCode: ethers.constants.HashZero,
+          }),
+        `ExceedsMarketCreditCapacity("${delegatedCollateralValue.toString(18, true)}", "${wei(-51).add(wei(50)).mul(_ETH_PRICE).toString(18, true)}")`,
+        systems().PerpsMarket
+      );
+    });
   });
 
   describe('open position with profit', () => {
@@ -190,12 +234,12 @@ describe('Insolvent test', () => {
 
     checkMarketInterestRate();
 
-    describe('close for large profit making market insolvent', () => {
+    describe('partially close - TODO update this test', () => {
       before('make price higher', async () => {
         await ethMarket.aggregator().mockSetCurrentPrice(bn(10_000));
       });
 
-      before('close position', async () => {
+      before('partially close position', async () => {
         await openPosition({
           systems,
           provider,
@@ -203,7 +247,7 @@ describe('Insolvent test', () => {
           accountId: 2,
           keeper: keeper(),
           marketId: ethMarket.marketId(),
-          sizeDelta: bn(-100),
+          sizeDelta: bn(-1),
           settlementStrategyId: ethMarket.strategyId(),
           price: bn(10_000),
         });

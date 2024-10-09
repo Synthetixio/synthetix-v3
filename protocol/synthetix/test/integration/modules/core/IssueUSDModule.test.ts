@@ -118,6 +118,50 @@ describe('IssueUSDModule', function () {
       );
     });
 
+    describe('when the vault has more debt', () => {
+      const user2AccountId = 47223;
+      before(async () => {
+        await collateralContract()
+          .connect(user1)
+          .transfer(await user2.getAddress(), depositAmount.mul(2));
+
+        await systems().Core.connect(user2)['createAccount(uint128)'](user2AccountId);
+
+        await collateralContract()
+          .connect(user2)
+          .approve(systems().Core.address, depositAmount.mul(2));
+
+        await systems()
+          .Core.connect(user2)
+          .deposit(user2AccountId, collateralAddress(), depositAmount.mul(2));
+
+        await systems().Core.connect(user2).delegateCollateral(
+          user2AccountId,
+          poolId,
+          collateralAddress(),
+          depositAmount.div(3), // user1 75%, user2 25%
+          ethers.utils.parseEther('1')
+        );
+
+        await systems().Core.Pool_assignDebt(poolId, depositAmount);
+      });
+
+      after(restore);
+
+      it('verifies vault also has sufficient c-ratio', async () => {
+        // we have tons of collateral, but the vault is in so much debt that it can't take it anymore
+        await assertRevert(
+          (
+            await systems()
+              .Core.connect(user2)
+              .mintUsd(user2AccountId, poolId, collateralAddress(), 1, { gasLimit: 10000000 })
+          ).wait(),
+          `InsufficientCollateralRatio(`,
+          systems().Core
+        );
+      });
+    });
+
     it('verifies pool exists', async () => {
       await assertRevert(
         systems().Core.connect(user1).mintUsd(
