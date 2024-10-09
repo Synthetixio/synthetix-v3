@@ -11,7 +11,7 @@ interface Contracts {
 }
 
 const feeShareRecipientAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
-const ownerAddress = '0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8';
+const ownerAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
 
 const params = { cannonfile: 'cannonfile.test.toml' };
 
@@ -40,7 +40,7 @@ export function bootstrapOwnedFeeCollector() {
   let owner: ethers.Signer;
   let feeShareRecipient: ethers.Signer;
 
-  before('get owner and fee share controller', async function () {
+  before('get owner and fee share controller', async () => {
     [user] = r.getSigners();
     await user.sendTransaction({
       to: feeShareRecipientAddress,

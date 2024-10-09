@@ -10,7 +10,7 @@ import { bn, bootstrapOwnedFeeCollector } from './bootstrap';
 // uint256 _feeShare, // percent of fees for the protocol after integrator fees
 // address _feeToken
 
-describe('OwnedFeeCollector', function () {
+describe('OwnedFeeCollector', () => {
   const { getContract, owner, user, feeShareRecipient } = bootstrapOwnedFeeCollector();
 
   let OwnedFeeCollector: ethers.Contract;
