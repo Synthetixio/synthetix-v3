@@ -74,6 +74,13 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 421614,
     },
+    ['arbitrum-mainnet']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://arbitrum-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 42161,
+    },
     ['optimistic-mainnet']: {
       url:
         process.env.NETWORK_ENDPOINT ||
@@ -138,6 +145,7 @@ const config = {
       optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
       optimisticSepolia: process.env.OVM_ETHERSCAN_API_KEY,
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,
+      arbitrumMainnet: process.env.ARBITRUM_ETHERSCAN_API_KEY,
     },
   },
   tenderly: {
