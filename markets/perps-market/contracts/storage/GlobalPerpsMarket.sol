@@ -91,7 +91,7 @@ library GlobalPerpsMarket {
         int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
 
         // establish amount of credit needed to collateralize outstanding perp markets
-        int256 credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
+        int256 credit = minimumCredit(self, PerpsPrice.Tolerance.ONE_MONTH).toInt();
 
         // calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
