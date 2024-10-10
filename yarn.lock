@@ -3331,7 +3331,6 @@ __metadata:
     hardhat: "npm:^2.19.5"
     jest: "npm:^29.7.0"
     lodash.memoize: "npm:^4.1.2"
-    micromatch: "npm:4.0.8"
     mustache: "npm:^4.2.0"
     solidity-ast: "npm:^0.4.55"
     ts-jest: "npm:^29.1.2"
@@ -12043,7 +12042,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"micromatch@npm:4.0.8, micromatch@npm:^4.0.4, micromatch@npm:^4.0.8, micromatch@npm:~4.0.8":
+"micromatch@npm:^4.0.4, micromatch@npm:^4.0.8, micromatch@npm:~4.0.8":
   version: 4.0.8
   resolution: "micromatch@npm:4.0.8"
   dependencies:
