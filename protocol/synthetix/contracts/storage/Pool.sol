@@ -365,12 +365,7 @@ library Pool {
             .load(collateralType)
             .getCollateralPrice(DecimalMath.UNIT);
 
-        if (possibleError.length > 0) {
-            // if we got a error for the collateral type then there is a good chance rebalanceMarkets
-            // will have an error too, so call it here and let it go first :)
-            rebalanceMarketsInPool(self);
-            RevertUtil.revertWithReason(possibleError);
-        }
+        RevertUtil.revertIfError(possibleError);
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
         (uint256 usdWeightD18, ) = self.vaults[collateralType].updateCreditCapacity(
