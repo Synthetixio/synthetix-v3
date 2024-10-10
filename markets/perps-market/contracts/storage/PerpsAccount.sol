@@ -505,7 +505,7 @@ library PerpsAccount {
             );
 
             uint256 flagReward = marketConfig.calculateFlagReward(
-                MathUtil.abs(position.size).mulDecimal(prices[i - 1])
+                MathUtil.abs(position.size).mulDecimal(prices[i])
             );
             accumulatedLiquidationRewards += flagReward;
 
