@@ -4,7 +4,10 @@ version = "<%= package.version %>-testable"
 [setting.owner]
 defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
 
-[setting.owner_fee_share]
+[setting.fee_share_recipient]
+defaultValue = "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+
+[setting.fee_share]
 defaultValue = "500000000000000000"
 
 [provision.usd]
@@ -17,7 +20,8 @@ options.salt = "usd"
 artifact = "contracts/OwnedFeeCollector.sol:OwnedFeeCollector"
 args = [
     "<%= settings.owner %>",
-    "<%= settings.owner_fee_share %>",
+    "<%= settings.fee_share_recipient %>",
+    "<%= settings.fee_share %>",
     "<%= imports.usd.contracts.MintableToken.address %>",
 ]
 create2 = true
