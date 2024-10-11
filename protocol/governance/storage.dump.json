@@ -367,7 +367,8 @@
           "members": [
             "Sqrt",
             "Linear",
-            "Scaled"
+            "ScaledSqrt",
+            "ScaledLinear"
           ],
           "size": 1,
           "slot": "0",
