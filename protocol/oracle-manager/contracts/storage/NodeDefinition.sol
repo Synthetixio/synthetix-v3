@@ -20,6 +20,11 @@ library NodeDefinition {
      */
     error UnprocessableNode(bytes32 nodeId);
 
+    /**
+     * @notice An array of revert reasons when an array of nodes is processed, but some of the nodes failed
+     */
+    error Errors(bytes[] revertReasons);
+
     enum NodeType {
         NONE,
         REDUCER,
@@ -94,56 +99,79 @@ library NodeDefinition {
         bytes32 nodeId,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) internal view returns (NodeOutput.Data memory price) {
+    ) internal view returns (NodeOutput.Data memory price, bytes memory possibleError) {
         if (runtimeKeys.length != runtimeValues.length) {
-            revert ParameterError.InvalidParameter(
+            possibleError = abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
                 "runtimeValues",
                 "must be same length as runtimeKeys"
             );
+            return (price, possibleError);
         }
 
         Data storage nodeDefinition = load(nodeId);
         NodeType nodeType = nodeDefinition.nodeType;
 
-        if (nodeType == NodeType.REDUCER) {
-            return
-                ReducerNode.process(
-                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
-                    nodeDefinition.parameters
-                );
-        } else if (nodeType == NodeType.EXTERNAL) {
-            return
-                ExternalNode.process(
-                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
-                    nodeDefinition.parameters,
-                    runtimeKeys,
-                    runtimeValues
-                );
-        } else if (nodeType == NodeType.CHAINLINK) {
-            return ChainlinkNode.process(nodeDefinition.parameters);
-        } else if (nodeType == NodeType.UNISWAP) {
-            return UniswapNode.process(nodeDefinition.parameters);
-        } else if (nodeType == NodeType.PYTH) {
-            return PythNode.process(nodeDefinition.parameters);
-        } else if (nodeType == NodeType.PYTH_OFFCHAIN_LOOKUP) {
-            return
-                PythOffchainLookupNode.process(
-                    nodeDefinition.parameters,
-                    runtimeKeys,
-                    runtimeValues
-                );
-        } else if (nodeType == NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER) {
-            return
-                PriceDeviationCircuitBreakerNode.process(
-                    _processParentNodeOutputs(nodeDefinition, runtimeKeys, runtimeValues),
-                    nodeDefinition.parameters
-                );
-        } else if (nodeType == NodeType.STALENESS_CIRCUIT_BREAKER) {
-            return StalenessCircuitBreakerNode.process(nodeDefinition, runtimeKeys, runtimeValues);
-        } else if (nodeType == NodeType.CONSTANT) {
-            return ConstantNode.process(nodeDefinition.parameters);
+        bytes[] memory errors = new bytes[](0);
+        NodeOutput.Data[] memory parentNodeOutputs = new NodeOutput.Data[](0);
+        if (
+            nodeType == NodeType.REDUCER ||
+            nodeType == NodeType.EXTERNAL ||
+            nodeType == NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER
+        ) {
+            (parentNodeOutputs, errors) = _processParentNodeOutputs(
+                nodeDefinition,
+                runtimeKeys,
+                runtimeValues
+            );
         }
-        revert UnprocessableNode(nodeId);
+
+        for (uint256 i = 0; i < errors.length; i++) {
+            if (errors[i].length > 0) {
+                return (price, abi.encodeWithSelector(Errors.selector, errors));
+            }
+        }
+
+        if (nodeType == NodeType.REDUCER) {
+            (price, possibleError) = ReducerNode.process(
+                parentNodeOutputs,
+                nodeDefinition.parameters
+            );
+        } else if (nodeType == NodeType.EXTERNAL) {
+            (price, possibleError) = ExternalNode.process(
+                parentNodeOutputs,
+                nodeDefinition.parameters,
+                runtimeKeys,
+                runtimeValues
+            );
+        } else if (nodeType == NodeType.CHAINLINK) {
+            (price, possibleError) = ChainlinkNode.process(nodeDefinition.parameters);
+        } else if (nodeType == NodeType.UNISWAP) {
+            (price, possibleError) = UniswapNode.process(nodeDefinition.parameters);
+        } else if (nodeType == NodeType.PYTH) {
+            (price, possibleError) = PythNode.process(nodeDefinition.parameters);
+        } else if (nodeType == NodeType.PYTH_OFFCHAIN_LOOKUP) {
+            (price, possibleError) = PythOffchainLookupNode.process(
+                nodeDefinition.parameters,
+                runtimeKeys,
+                runtimeValues
+            );
+        } else if (nodeType == NodeType.PRICE_DEVIATION_CIRCUIT_BREAKER) {
+            (price, possibleError) = PriceDeviationCircuitBreakerNode.process(
+                parentNodeOutputs,
+                nodeDefinition.parameters
+            );
+        } else if (nodeType == NodeType.STALENESS_CIRCUIT_BREAKER) {
+            (price, possibleError) = StalenessCircuitBreakerNode.process(
+                nodeDefinition,
+                runtimeKeys,
+                runtimeValues
+            );
+        } else if (nodeType == NodeType.CONSTANT) {
+            (price, possibleError) = ConstantNode.process(nodeDefinition.parameters);
+        } else {
+            possibleError = abi.encodeWithSelector(UnprocessableNode.selector, nodeId);
+        }
     }
 
     /**
@@ -153,10 +181,19 @@ library NodeDefinition {
         Data storage nodeDefinition,
         bytes32[] memory runtimeKeys,
         bytes32[] memory runtimeValues
-    ) private view returns (NodeOutput.Data[] memory parentNodeOutputs) {
+    )
+        private
+        view
+        returns (NodeOutput.Data[] memory parentNodeOutputs, bytes[] memory possibleErrors)
+    {
+        possibleErrors = new bytes[](nodeDefinition.parents.length);
         parentNodeOutputs = new NodeOutput.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            parentNodeOutputs[i] = process(nodeDefinition.parents[i], runtimeKeys, runtimeValues);
+            (parentNodeOutputs[i], possibleErrors[i]) = process(
+                nodeDefinition.parents[i],
+                runtimeKeys,
+                runtimeValues
+            );
         }
     }
 }

@@ -116,13 +116,13 @@ library ErrorUtil {
     /// @notice Thrown when collateral is found when none was expected to exist.
     error CollateralFound();
 
-    /// @notice Thrown when user trying to split an account with too large porportion.
+    /// @notice Thrown when user trying to split an account with too large proportion.
     error AccountSplitProportionTooLarge();
 
-    /// @notice Thrown when user trying to split an account with too small porportion, this can cause weird rounding exploits.
+    /// @notice Thrown when user trying to split an account with too small proportion, this can cause weird rounding exploits.
     error AccountSplitProportionTooSmall();
 
-    /// @notice Thrown when user trying to split an account with 0 porportion.
+    /// @notice Thrown when user trying to split an account with 0 proportion.
     error ZeroProportion();
 
     /// @notice Thrown when duplicate entries in an array or otherwise was found and not expected.

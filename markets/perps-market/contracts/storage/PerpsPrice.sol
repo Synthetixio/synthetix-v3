@@ -3,7 +3,8 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {INodeModule} from "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import {NodeOutput} from "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
-import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SafeCastI256, SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
 
 /**
@@ -11,6 +12,7 @@ import {PerpsMarketFactory} from "./PerpsMarketFactory.sol";
  */
 library PerpsPrice {
     using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
 
     enum Tolerance {
         DEFAULT,
@@ -36,6 +38,38 @@ library PerpsPrice {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Price", marketId));
         assembly {
             price.slot := s
+        }
+    }
+
+    function getCurrentPrices(
+        uint256[] memory marketIds,
+        Tolerance priceTolerance
+    ) internal view returns (uint256[] memory prices) {
+        if (priceTolerance != Tolerance.DEFAULT) {
+            // currently this is not generally necessary and also way harder to deal with
+            revert ParameterError.InvalidParameter("priceTolerance", "currently unsupported");
+        }
+
+        // map all the market ids to feed ids
+        bytes32[] memory feedIds = new bytes32[](marketIds.length);
+        for (uint256 i = 0; i < marketIds.length; i++) {
+            feedIds[i] = load(marketIds[i].to128()).feedId;
+        }
+
+        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
+        bytes32[] memory runtimeKeys = new bytes32[](0);
+
+        // do the process call
+        NodeOutput.Data[] memory outputs = INodeModule(factory.oracle).processManyWithRuntime(
+            feedIds,
+            runtimeKeys,
+            runtimeKeys
+        );
+
+        // extract the prices
+        prices = new uint256[](marketIds.length);
+        for (uint256 i = 0; i < marketIds.length; i++) {
+            prices[i] = outputs[i].price.toUint();
         }
     }
 

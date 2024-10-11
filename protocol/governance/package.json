@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/governance",
-  "version": "3.6.4",
+  "version": "3.8.0",
   "description": "On-Chain elections for all Synthetix councils",
   "publishConfig": {
     "access": "public"
@@ -38,7 +38,7 @@
     "@synthetixio/core-modules": "workspace:*",
     "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@usecannon/cli": "2.17.1",
+    "@usecannon/cli": "2.17.4",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",

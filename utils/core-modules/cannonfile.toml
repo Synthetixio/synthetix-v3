@@ -1,0 +1,100 @@
+name = "core-modules"
+version = "<%= package.version %>"
+description = "Test Deployment for Synthetix's Core Modules project"
+
+# `salt` here only affects proxy contract
+[setting.salt]
+description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
+defaultValue = "core-modules"
+
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+# Core Modules
+[contract.OwnerModule]
+artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+
+[contract.UpgradeModule]
+artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+
+[contract.TokenModule]
+artifact = "contracts/modules/TokenModule.sol:TokenModule"
+
+[contract.DecayTokenModule]
+artifact = "contracts/modules/DecayTokenModule.sol:DecayTokenModule"
+
+[contract.NftModule]
+artifact = "contracts/modules/NftModule.sol:NftModule"
+
+# Mocks
+[contract.SampleFeatureFlagModule]
+artifact = "contracts/modules/mocks/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
+
+[contract.SampleOwnedModule]
+artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
+
+[contract.GenericModule]
+artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
+
+[contract.CcipRouterMock]
+artifact = "contracts/mocks/CcipRouterMock.sol:CcipRouterMock"
+
+# Setup Initial Proxy
+[contract.Proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreRouter.address %>", "<%= settings.owner %>"]
+abiOf = ["CoreRouter"]
+salt = "<%= settings.salt %>"
+
+# Core Router
+[router.CoreRouter]
+contracts = ["CoreModule"]
+
+# AssociatedSystemsModule Router
+[router.AssociatedSystemsModuleRouter]
+contracts = ["CoreModule", "AssociatedSystemsModule"]
+
+# TokenModule Router
+[router.TokenModuleRouter]
+contracts = ["CoreModule", "TokenModule"]
+
+[router.TokenModuleRouter2]
+contracts = ["CoreModule", "TokenModule"]
+salt = "second"
+
+[router.TokenModuleRouter3]
+contracts = ["CoreModule", "TokenModule"]
+salt = "third"
+
+# DecayTokenModule Router
+[router.DecayTokenModuleRouter]
+contracts = ["CoreModule", "DecayTokenModule"]
+
+# Sample Router
+[router.SampleRouter]
+contracts = ["CoreModule", "SampleOwnedModule"]
+
+# NftModule Router ( we need multiple for tests)
+[router.NftModuleRouter]
+contracts = ["CoreModule", "NftModule"]
+
+[router.NftModuleRouter2]
+contracts = ["CoreModule", "NftModule"]
+salt = "second"
+
+[router.NftModuleRouter3]
+contracts = ["CoreModule", "NftModule"]
+salt = "third"
+
+[router.FeatureFlagModuleRouter]
+contracts = ["CoreModule", "FeatureFlagModule", "SampleFeatureFlagModule"]

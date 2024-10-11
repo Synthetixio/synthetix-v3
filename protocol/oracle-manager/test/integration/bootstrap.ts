@@ -27,12 +27,14 @@ export function bootstrapWithNodes() {
   let aggregator3: ethers.Contract;
   let aggregator4: ethers.Contract;
   let aggregator5: ethers.Contract;
+  let failingAggregator: ethers.Contract;
 
   let nodeId1: string;
   let nodeId2: string;
   let nodeId3: string;
   let nodeId4: string;
   let nodeId5: string;
+  let failingNodeId: string;
 
   let owner: ethers.Signer;
 
@@ -54,6 +56,12 @@ export function bootstrapWithNodes() {
 
     aggregator5 = await factory.connect(owner).deploy();
     await aggregator5.mockSetCurrentPrice(ethers.utils.parseUnits('0', 6), 6);
+
+    aggregator5 = await factory.connect(owner).deploy();
+    await aggregator5.mockSetCurrentPrice(ethers.utils.parseUnits('0', 6), 6);
+
+    failingAggregator = await factory.connect(owner).deploy();
+    await failingAggregator.mockSetCurrentPrice(ethers.utils.parseUnits('0', 6), 6);
   });
 
   before('register leaf nodes', async function () {
@@ -64,10 +72,16 @@ export function bootstrapWithNodes() {
     const params3 = abi.encode(['address', 'uint256', 'uint8'], [aggregator3.address, 0, 6]);
     const params4 = abi.encode(['address', 'uint256', 'uint8'], [aggregator4.address, 0, 6]);
     const params5 = abi.encode(['address', 'uint256', 'uint8'], [aggregator5.address, 0, 6]);
+    const paramsFailing = abi.encode(
+      ['address', 'uint256', 'uint8'],
+      [failingAggregator.address, 0, 6]
+    );
 
     const registerNode = async (params: string) => {
       const tx = await NodeModule.registerNode(NodeTypes.CHAINLINK, params, []);
       await tx.wait();
+      // this may help with some ci flakes
+      await r.getProvider().send('evm_snapshot', []);
       return await NodeModule.getNodeId(NodeTypes.CHAINLINK, params, []);
     };
 
@@ -76,6 +90,9 @@ export function bootstrapWithNodes() {
     nodeId3 = await registerNode(params3);
     nodeId4 = await registerNode(params4);
     nodeId5 = await registerNode(params5);
+    failingNodeId = await registerNode(paramsFailing);
+    // have to setup the failure after the node is registered for best results
+    await failingAggregator.mockSetFails(1234);
   });
 
   return {
@@ -86,6 +103,12 @@ export function bootstrapWithNodes() {
     nodeId3: () => nodeId3,
     nodeId4: () => nodeId4,
     nodeId5: () => nodeId5,
+    aggregator: () => aggregator,
+    aggregator2: () => aggregator2,
+    aggregator3: () => aggregator3,
+    aggregator4: () => aggregator4,
+    aggregator5: () => aggregator5,
+    failingNodeId: () => failingNodeId,
   };
 }
 

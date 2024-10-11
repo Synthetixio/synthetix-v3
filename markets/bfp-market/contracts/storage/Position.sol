@@ -310,7 +310,8 @@ library Position {
                 params.oraclePrice,
                 marketConfig,
                 addresses,
-                newPosition.size
+                (MathUtil.abs(newPosition.size).toInt() -
+                    MathUtil.abs(currentPosition.size).toInt()).to128()
             );
 
             // Check new position margin validations.
@@ -454,7 +455,11 @@ library Position {
                 marketConfig.liquidationRewardPercent
             );
 
-        return MathUtil.min(flagFeeWithRewardInUsd, globalConfig.maxKeeperFeeUsd);
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, flagFeeWithRewardInUsd),
+            globalConfig.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
     }
 
     /**
@@ -558,7 +563,11 @@ library Position {
         );
         uint256 iterations = getLiquidationIterations(size, maxLiqCapacity);
 
-        return MathUtil.min(liquidationFeeInUsd * iterations, globalConfig.maxKeeperFeeUsd);
+        uint256 boundedKeeperFeeUsd = MathUtil.min(
+            MathUtil.max(globalConfig.minKeeperFeeUsd, liquidationFeeInUsd * iterations),
+            globalConfig.maxKeeperFeeUsd
+        );
+        return boundedKeeperFeeUsd;
     }
 
     /// @dev Returns the health data given the `marketId`, `config`, and position{...} details.

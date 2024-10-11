@@ -18,6 +18,7 @@ artifact = "contracts/modules/NodeModule.sol:NodeModule"
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 salt = "<%= settings.salt %>"
 create2 = true
+ifExists = "continue"
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
@@ -25,6 +26,9 @@ args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
 salt = "<%= settings.salt %>"
 abiOf = ["CoreModule"]
 create2 = true
+# oracle manager is *mostly* stateless and there are reasons why it may be redeployed so
+# accept it here
+ifExists = "continue"
 
 [router.OracleRouter]
 contracts = ["CoreModule", "NodeModule"]
@@ -35,6 +39,7 @@ fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.OracleRouter.address %>"]
 factory.Proxy.abiOf = ["OracleRouter"]
+factory.Proxy.artifact = "Proxy"
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true

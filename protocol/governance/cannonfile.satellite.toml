@@ -57,6 +57,7 @@ fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 factory.GovernanceProxy.abiOf = ["CoreRouter"]
+factory.GovernanceProxy.artifact = "contracts/Proxy.sol:Proxy"
 factory.GovernanceProxy.event = "Upgraded"
 factory.GovernanceProxy.arg = 0
 factory.GovernanceProxy.highlight = true

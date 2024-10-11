@@ -7,21 +7,18 @@
     "cannon": "cannon",
     "prettier": "prettier",
     "graph": "graph",
-    "subgraphgen": "./codegen.sh",
+    "subgraph:codegen": "./codegen.sh",
+    "subgraph:build": "./build.sh",
     "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
-    "alchemy:optimism-goerli": "graph deploy perps-market-optimism-goerli subgraph.optimism-goerli.yaml --output-dir ./build/optimism-goerli --version-label v2 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "alchemy:base-sepolia-andromeda": "graph deploy perps-market-base-sepolia-andromeda subgraph.base-sepolia-andromeda.yaml --output-dir ./build/base-sepolia-andromeda --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "alchemy:base-mainnet-andromeda": "graph deploy perps-market-base-mainnet-andromeda subgraph.base-mainnet-andromeda.yaml --output-dir ./build/base-mainnet-andromeda --version-label v1 --node https://subgraphs.alchemy.com/api/subgraphs/deploy --deploy-key $SATSUMA_KEY --ipfs https://ipfs.satsuma.xyz",
     "test": "graph test",
-    "coverage": "yarn deployments:optimism-goerli && yarn codegen:optimism-goerli && git diff --exit-code && yarn test --coverage",
-    "create-local": "graph create --node http://localhost:8020/ snx-v3/v3-perps-opt-goerli",
-    "remove-local": "graph remove --node http://localhost:8020/ snx-v3/v3-perps-opt-goerli",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/v3-perps-opt-goerli"
+    "coverage": "graph test --coverage"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.81.0",
     "@graphprotocol/graph-ts": "^0.35.1",
-    "@usecannon/cli": "2.17.1",
+    "@usecannon/cli": "2.17.4",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.6.0",
     "prettier": "^3.2.5"

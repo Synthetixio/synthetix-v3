@@ -45,11 +45,15 @@
     "version:dev": "lerna version 0.0.0-dev.$(git rev-parse --short HEAD) --no-changelog --no-push --no-git-tag-version --force-publish --allow-branch $(git branch --show-current)",
     "publish-contracts": "yarn workspaces foreach --all --verbose run publish-contracts",
     "docgen:contracts": "yarn clean && yarn workspaces foreach --all --verbose run docgen && yarn workspace @synthetixio/docgen run docgen:contracts",
-    "subgraphgen": "yarn workspaces foreach --all --verbose run subgraphgen",
+    "subgraph:codegen": "yarn workspaces foreach --all --verbose run subgraph:codegen",
+    "subgraph:build": "yarn workspaces foreach --all --verbose run subgraph:build",
     "check-staged": "lint-staged",
     "copy-storage": "bash -c 'for f in $(find . -name 'storage.new.dump.json'); do cp $f $(dirname $f)/storage.dump.json; git add $(dirname $f)/storage.dump.json; done'",
     "changed": "lerna changed --long",
-    "audit": "yarn npm audit --all --recursive --severity high"
+    "audit": "yarn npm audit --all --recursive --severity high",
+    "cannon:hotfix": "yarn up @usecannon/builder@hotfix @usecannon/cli@hotfix hardhat-cannon@hotfix --exact && yarn dedupe",
+    "cannon:latest": "yarn up @usecannon/builder@latest @usecannon/cli@latest hardhat-cannon@latest --exact && yarn dedupe",
+    "cannon:alpha": "yarn up @usecannon/builder@alpha @usecannon/cli@alpha hardhat-cannon@alpha --exact && yarn dedupe"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
@@ -66,7 +70,7 @@
     "@types/node": "^20.11.17",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
     "@typescript-eslint/parser": "^8.4.0",
-    "@usecannon/cli": "2.17.1",
+    "@usecannon/cli": "2.17.4",
     "eslint": "^9.9.1",
     "eslint-plugin-no-only-tests": "^3.1.0",
     "globals": "^15.9.0",

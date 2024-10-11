@@ -28,6 +28,7 @@ contract LiquidationModule is ILiquidationModule {
     using AssociatedSystem for AssociatedSystem.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Collateral for Collateral.Data;
+    using Account for Account.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
@@ -52,17 +53,15 @@ contract LiquidationModule is ILiquidationModule {
         // Ensure the account receiving rewards exists
         Account.exists(liquidateAsAccountId);
 
-        Pool.Data storage pool = Pool.load(poolId);
         CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(
             collateralType
         );
-        VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
+        VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        int256 rawDebt = pool.updateAccountDebt(collateralType, accountId);
-        (uint256 collateralAmount, uint256 collateralValue) = pool.currentAccountCollateral(
-            collateralType,
-            accountId
-        );
+        int256 rawDebt = Pool.load(poolId).updateAccountDebt(collateralType, accountId);
+        (uint256 collateralAmount, uint256 collateralValue) = Pool
+            .load(poolId)
+            .currentAccountCollateral(collateralType, accountId);
         liquidationData.collateralLiquidated = collateralAmount;
 
         // Verify whether the position is eligible for liquidation
@@ -92,8 +91,19 @@ contract LiquidationModule is ILiquidationModule {
             revert MustBeVaultLiquidated();
         }
 
+        // distribute any outstanding rewards distributor value to the user who is about to be liquidated, since technically they are eligible.
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
         // This will clear the user's account the same way as if they had withdrawn normally
         epoch.updateAccountPosition(accountId, 0, 0);
+
+        // in case the liquidation caused the user to have less collateral than is actually locked in their account,
+        // this will ensure their locks are good.
+        // NOTE: limit is set to 50 here to prevent the user from DoSsing their account liquidation by creating locks on their own account
+        // if the limit is surpassed, their locks wont be scaled upon liquidation and that is their problem
+        Account.load(accountId).cleanAccountLocks(collateralType, 0, 50);
 
         // Distribute the liquidated collateral among other positions in the vault, minus the reward amount
         epoch.collateralAmounts.scale(
@@ -107,7 +117,7 @@ contract LiquidationModule is ILiquidationModule {
         epoch.distributeDebtToAccounts(liquidationData.debtLiquidated.toInt());
 
         // The collateral is reduced by `amountRewarded`, so we need to reduce the stablecoins capacity available to the markets
-        pool.recalculateVaultCollateral(collateralType);
+        Pool.load(poolId).recalculateVaultCollateral(collateralType);
 
         // Send amountRewarded to the specified account
         Account.load(liquidateAsAccountId).collaterals[collateralType].increaseAvailableCollateral(
@@ -201,6 +211,9 @@ contract LiquidationModule is ILiquidationModule {
 
             // Reduce the collateral of the remaining positions in the vault
             epoch.collateralAmounts.scale(-liquidationData.collateralLiquidated.toInt());
+
+            // ensure markets get accurate accounting of available collateral
+            pool.recalculateVaultCollateral(collateralType);
         }
 
         // Send liquidationData.collateralLiquidated to the specified account
