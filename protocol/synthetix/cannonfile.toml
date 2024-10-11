@@ -160,7 +160,7 @@ args = [
 ]
 depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
 factory.AccountProxy.abiOf = ["AccountRouter"]
-factory.AccountProxy.artifact = "Proxy"
+factory.AccountProxy.artifact = "UUPSProxyWithOwner"
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
 factory.AccountProxy.highlight = true
@@ -178,7 +178,7 @@ args = [
 ]
 depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
 factory.USDProxy.abiOf = ["USDRouter"]
-factory.USDProxy.artifact = "Proxy"
+factory.USDProxy.artifact = "UUPSProxyWithOwner"
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
 factory.USDProxy.highlight = true
