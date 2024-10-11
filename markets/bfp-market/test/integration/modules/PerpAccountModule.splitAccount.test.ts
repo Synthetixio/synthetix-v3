@@ -168,17 +168,17 @@ describe('PerpAccountModule splitAccount', () => {
     const trader1 = traders()[1];
 
     await setMarketConfiguration(bs, {
-      minKeeperFeeUsd: bn(100),
+      minKeeperFeeUsd: bn(10),
       maxKeeperFeeUsd: bn(100),
     });
 
-    // We want to split such that the from account is left with:
+    // We want to split such that from account is left with:
     // - 0 size
     // - nonzero collateral
-    // - nonzer0 debt
-    // Where the debt is nearly as much as the the collateral
+    // - nonzero debt
+    // Where the debt is nearly as much as the collateral
 
-    // If we allow this, the account would left in a margin liquidatable state
+    // If we allow this, the account would be left in a margin liquidatable state
     // and the user can profit from the liquidation reward.
 
     // Even if this action were not profitable for the user, it
@@ -198,13 +198,13 @@ describe('PerpAccountModule splitAccount', () => {
         desiredMarginUsdDepositAmount: depositUsdAmount,
       })
     );
-    const iniitialOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
+    const initialOrder = await genOrder(bs, market, collateral, collateralDepositAmount, {
       desiredSize: wei(0.99).toBN(),
       desiredKeeperFeeBufferUsd: 10,
       desiredPriceImpactPercentage: 0.5,
     });
 
-    await commitAndSettle(bs, marketId, trader0, iniitialOrder);
+    await commitAndSettle(bs, marketId, trader0, initialOrder);
     // Pay debt from the order fee so we can withdraw a bit
     await payDebt(bs, marketId, trader0);
 
