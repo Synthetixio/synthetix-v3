@@ -740,6 +740,7 @@ describe('LiquidationModule', () => {
             keeperProfitMarginUsd: bn(0), // ensure keeperProfitMarginPercent would be used instead
             keeperLiquidationGasUnits: 500_000,
             keeperFlagGasUnits: 500_000,
+            minKeeperFeeUsd: bn(0),
           });
 
         // Set baseFeePerGas to 1gwei
