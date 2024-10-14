@@ -27,6 +27,7 @@ import {
   isSusdCollateral,
   setBaseFeePerGas,
   setMarketConfiguration,
+  setMarketConfigurationById,
   withExplicitEvmMine,
 } from '../../helpers';
 import { calcKeeperCancellationFee } from '../../calculations';
@@ -563,9 +564,10 @@ describe('OrderModule Cancellations', () => {
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
 
-      // First set the locked OI ratio to something super high
-      // const highLockedOiPercentRatioD18 = bn(100 * 1e18);
-      // await BfpMarketProxy.setLockedOiRatio(marketId, highLockedOiPercentRatioD18);
+      // Force the market to be insolvent
+      await setMarketConfigurationById(bs, marketId, {
+        maxMarketSize: bn(1),
+      });
 
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
       await BfpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData);
