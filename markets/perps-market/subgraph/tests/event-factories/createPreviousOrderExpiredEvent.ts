@@ -1,13 +1,13 @@
 import { BigInt, ethereum, Bytes } from '@graphprotocol/graph-ts';
 import { newTypedMockEvent } from 'matchstick-as';
-import { PreviousOrderExpired as PreviousOrderExpiredEvent } from '../../optimism-goerli/generated/PerpsMarketProxy/PerpsMarketProxy';
+import { PreviousOrderExpired as PreviousOrderExpiredEvent } from '../../base-mainnet-andromeda/generated/PerpsMarketProxy/PerpsMarketProxy';
 
 export function createPreviousOrderExpiredEvent(
   marketId: i32,
   accountId: i32,
   sizeDelta: i64,
   acceptablePrice: i64,
-  settlementTime: i64,
+  commitmentTime: i64,
   trackingCode: string,
   timestamp: i64,
   blockNumber: i64,
@@ -32,8 +32,8 @@ export function createPreviousOrderExpiredEvent(
   );
   event.parameters.push(
     new ethereum.EventParam(
-      'settlementTime',
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(settlementTime))
+      'commitmentTime',
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI64(commitmentTime))
     )
   );
   event.parameters.push(

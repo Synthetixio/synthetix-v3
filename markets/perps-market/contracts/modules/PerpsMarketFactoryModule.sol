@@ -51,11 +51,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
             perpsMarketId = factory.initialize(synthetix, spotMarket);
+
+            emit FactoryInitialized(perpsMarketId);
         } else {
             perpsMarketId = factory.perpsMarketId;
         }
-
-        emit FactoryInitialized(perpsMarketId);
 
         return perpsMarketId;
     }
@@ -121,13 +121,14 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
             uint256 collateralValue = globalMarket.totalCollateralValue();
             int256 totalMarketDebt;
 
-            SetUtil.UintSet storage activeMarkets = globalMarket.activeMarkets;
-            uint256 activeMarketsLength = activeMarkets.length();
-            for (uint256 i = 1; i <= activeMarketsLength; i++) {
-                uint128 marketId = activeMarkets.valueAt(i).to128();
-                totalMarketDebt += PerpsMarket.load(marketId).marketDebt(
-                    PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-                );
+            uint256[] memory activeMarkets = globalMarket.activeMarkets.values();
+
+            uint256[] memory prices = PerpsPrice.getCurrentPrices(
+                activeMarkets,
+                PerpsPrice.Tolerance.DEFAULT
+            );
+            for (uint256 i = 0; i < activeMarkets.length; i++) {
+                totalMarketDebt += PerpsMarket.load(activeMarkets[i].to128()).marketDebt(prices[i]);
             }
 
             int256 totalDebt = collateralValue.toInt() +

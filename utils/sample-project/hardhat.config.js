@@ -14,4 +14,12 @@ module.exports = {
     },
   },
   defaultNetwork: 'cannon',
+  storage: {
+    artifacts: [
+      'contracts/**',
+      '!contracts/routers/**',
+      '!contracts/generated/**',
+      '!contracts/mocks/**',
+    ],
+  },
 };

@@ -86,6 +86,10 @@ library PerpsMarketFactory {
         self.perpsMarketId = perpsMarketId;
     }
 
+    /**
+     * @notice calculates the total amount of USD that can be withdrawn from a given perps market
+     * @dev this amount is the sum of the market's credit capacity and all deposited collateral
+     */
     function totalWithdrawableUsd() internal view returns (uint256) {
         Data storage self = load();
         return self.synthetix.getWithdrawableMarketUsd(self.perpsMarketId);
@@ -98,11 +102,6 @@ library PerpsMarketFactory {
     ) internal {
         collateral.approve(address(self.synthetix), amount);
         self.synthetix.depositMarketCollateral(self.perpsMarketId, address(collateral), amount);
-    }
-
-    function depositMarketUsd(Data storage self, uint256 amount) internal {
-        self.usdToken.approve(address(this), amount);
-        self.synthetix.depositMarketUsd(self.perpsMarketId, address(this), amount);
     }
 
     function withdrawMarketUsd(Data storage self, address to, uint256 amount) internal {

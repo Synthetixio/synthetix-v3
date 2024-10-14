@@ -78,7 +78,7 @@ describe('LiquidationModule', () => {
       const order = await genOrder(bs, market, collateral, collateralDepositAmount);
       await commitAndSettle(bs, marketId, trader, order);
 
-      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const baseFeePerGas = (await provider().getBlock('latest')).baseFeePerGas ?? bn(0);
 
       const { mm, im } = await BfpMarketProxy.getLiquidationMarginUsd(
         trader.accountId,
@@ -136,7 +136,7 @@ describe('LiquidationModule', () => {
       const { answer: marketPrice } = await market.aggregator().latestRoundData();
       const desiredLeverage = genNumber(-5, 5);
       const desiredSize = wei(collateralDepositAmount).div(marketPrice).mul(desiredLeverage).toBN();
-      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const baseFeePerGas = (await provider().getBlock('latest')).baseFeePerGas ?? bn(0);
       const { mm, im } = await BfpMarketProxy.getLiquidationMarginUsd(
         trader.accountId,
         marketId,
@@ -199,7 +199,7 @@ describe('LiquidationModule', () => {
       await commitAndSettle(bs, marketId, trader, order);
 
       const desiredSizeDelta = bn(genNumber(-1, 1));
-      const baseFeePerGas = await setBaseFeePerGas(0, provider());
+      const baseFeePerGas = (await provider().getBlock('latest')).baseFeePerGas ?? bn(0);
       const { mm, im } = await BfpMarketProxy.getLiquidationMarginUsd(
         trader.accountId,
         marketId,

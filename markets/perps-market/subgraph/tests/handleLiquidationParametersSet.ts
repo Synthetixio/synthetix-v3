@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleMarketCreated, handleLiquidationParametersSet } from '../optimism-goerli';
+import { handleMarketCreated, handleLiquidationParametersSet } from '../base-mainnet-andromeda';
 import { createMarketCreatedEvent } from './event-factories/createMarketCreatedEvent';
 import { createLiquidationParametersSetEvent } from './event-factories/createLiquidationParametersSetEvent';
 
@@ -24,8 +24,8 @@ export default function test(): void {
   const initialMarginRatioD18 = 10_000;
   const maintenanceMarginRatioD18 = 5_000;
   const minimumInitialMarginRatioD18 = 4_000;
+  const flagRewardRatioD18 = 3_000;
   const minimumPositionMargin = 1_000;
-  const liquidationRewardRatioD18 = 3_000;
 
   handleLiquidationParametersSet(
     createLiquidationParametersSetEvent(
@@ -33,7 +33,7 @@ export default function test(): void {
       initialMarginRatioD18,
       maintenanceMarginRatioD18,
       minimumInitialMarginRatioD18,
-      liquidationRewardRatioD18,
+      flagRewardRatioD18,
       minimumPositionMargin,
       timestamp,
       blockNumber,
@@ -58,8 +58,8 @@ export default function test(): void {
   assert.fieldEquals(
     'Market',
     marketId.toString(),
-    'liquidationRewardRatioD18',
-    liquidationRewardRatioD18.toString()
+    'flagRewardRatioD18',
+    flagRewardRatioD18.toString()
   );
   assert.fieldEquals(
     'Market',

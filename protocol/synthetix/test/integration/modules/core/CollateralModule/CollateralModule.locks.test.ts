@@ -151,9 +151,7 @@ describe('CollateralModule', function () {
       it('emits event', async () => {
         await assertEvent(
           txn,
-          `CollateralLockExpired(${accountId}, "${collateralAddress()}", ${depositAmount
-            .div(10)
-            .toString()}, ${ts + 200})`,
+          `CollateralLockExpired(${depositAmount.div(10).toString()}, ${ts + 200})`,
           systems().Core
         );
       });

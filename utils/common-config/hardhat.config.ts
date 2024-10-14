@@ -8,8 +8,8 @@ import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
-import 'hardhat-ignore-warnings';
 import '@synthetixio/hardhat-storage';
+import 'hardhat-ignore-warnings';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
@@ -73,6 +73,13 @@ const config = {
         `https://arbitrum-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 421614,
+    },
+    ['arbitrum-mainnet']: {
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://arbitrum-mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 42161,
     },
     ['optimistic-mainnet']: {
       url:
@@ -138,6 +145,7 @@ const config = {
       optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
       optimisticSepolia: process.env.OVM_ETHERSCAN_API_KEY,
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,
+      arbitrumMainnet: process.env.ARBITRUM_ETHERSCAN_API_KEY,
     },
   },
   tenderly: {
@@ -156,10 +164,6 @@ const config = {
       '!contracts/routers/**',
       '!contracts/generated/**',
       '!contracts/mocks/**',
-    ],
-    skip: [
-      '@openzeppelin/contracts/**',
-      '@synthetixio/rewards-distributor/src/RewardsDistributor.sol:RewardsDistributor',
     ],
   },
 };

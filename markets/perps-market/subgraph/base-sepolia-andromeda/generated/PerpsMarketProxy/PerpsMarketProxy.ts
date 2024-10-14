@@ -3842,6 +3842,27 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigIntArray());
   }
 
+  globalCollateralValue(collateralId: BigInt): BigInt {
+    let result = super.call('globalCollateralValue', 'globalCollateralValue(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(collateralId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_globalCollateralValue(collateralId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'globalCollateralValue',
+      'globalCollateralValue(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(collateralId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   totalGlobalCollateralValue(): BigInt {
     let result = super.call(
       'totalGlobalCollateralValue',

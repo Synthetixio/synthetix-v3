@@ -10,6 +10,7 @@ interface Contracts {
   'usd.MintableToken': ethers.Contract;
 }
 
+const feeShareRecipientAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
 const ownerAddress = '0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9';
 
 const params = { cannonfile: 'cannonfile.test.toml' };
@@ -37,13 +38,19 @@ export function bootstrapOwnedFeeCollector() {
 
   let user: ethers.Signer;
   let owner: ethers.Signer;
+  let feeShareRecipient: ethers.Signer;
 
-  before('get owner', async function () {
+  before('get owner and fee share controller', async () => {
     [user] = r.getSigners();
+    await user.sendTransaction({
+      to: feeShareRecipientAddress,
+      value: bn(1),
+    });
     await user.sendTransaction({
       to: ownerAddress,
       value: bn(1),
     });
+    feeShareRecipient = await getImpersonatedSigner(r.getProvider(), feeShareRecipientAddress);
     owner = await getImpersonatedSigner(r.getProvider(), ownerAddress);
   });
 
@@ -51,6 +58,7 @@ export function bootstrapOwnedFeeCollector() {
     ...r,
     owner: () => owner,
     user: () => user,
+    feeShareRecipient: () => feeShareRecipient,
   };
 }
 

@@ -18,6 +18,7 @@ typechain-types
 lerna-debug.log
 docs/
 junit
+storage.new.dump.json
 
 # Yarn v3
 .pnp.*

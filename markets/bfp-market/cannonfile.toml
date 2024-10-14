@@ -109,8 +109,10 @@ fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.BfpMarketRouter.address %>"]
 factory.BfpMarketProxy.abiOf = ["BfpMarketRouter"]
+factory.BfpMarketProxy.artifact = "contracts/Proxy.sol:Proxy"
 factory.BfpMarketProxy.event = "Upgraded"
 factory.BfpMarketProxy.arg = 0
+factory.BfpMarketProxy.highlight = true
 
 # @see: https://github.com/Synthetixio/synthetix-v3/blob/main/utils/core-modules/contracts/interfaces/IAssociatedSystemsModule.sol#L63
 [invoke.init_or_upgrade_nft]

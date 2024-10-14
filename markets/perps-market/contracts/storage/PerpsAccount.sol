@@ -221,6 +221,8 @@ library PerpsAccount {
             flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
             seizedMarginValue = seizeCollateral(self);
+
+            // clean pending orders
             AsyncOrder.load(self.id).reset();
 
             updateAccountDebt(self, -self.debt.toInt());
