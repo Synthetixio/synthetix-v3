@@ -31,7 +31,7 @@ import {
 } from '../../helpers';
 import { calcKeeperCancellationFee } from '../../calculations';
 
-describe('OrderModule Cancelations', () => {
+describe('OrderModule Cancellations', () => {
   const bs = bootstrap(genBootstrap());
   const { systems, restore, provider, keeper, traders, collateralsWithoutSusd } = bs;
 
@@ -522,6 +522,53 @@ describe('OrderModule Cancelations', () => {
         [`OrderCanceled(${trader.accountId}, ${marketId}, 0, ${orderDigestBefore.commitmentTime})`],
         BfpMarketProxy
       );
+    });
+  });
+
+  describe('cancel order due to market insolvency', () => {
+    it('reverts if trying to cancel an order when market is solvent', async () => {
+      const { BfpMarketProxy } = systems();
+
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
+
+      // fast forward to settlement
+      const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      await fastForwardTo(settlementTime, provider());
+
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+
+      await assertRevert(
+        BfpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData),
+        `PriceToleranceNotExceeded("${order.sizeDelta}", "${order.fillPrice}", "${order.limitPrice}")`
+      );
+    });
+
+    it('allows to cancel an order if the market is insolvent', async () => {
+      const { BfpMarketProxy } = systems();
+      const { trader, marketId, market, collateral, collateralDepositAmount } = await depositMargin(
+        bs,
+        genTrader(bs)
+      );
+
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      await commitOrder(bs, marketId, trader, order);
+
+      // fast forward to settlement
+      const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
+      await fastForwardTo(settlementTime, provider());
+
+      // First set the locked OI ratio to something super high
+      // const highLockedOiPercentRatioD18 = bn(100 * 1e18);
+      // await BfpMarketProxy.setLockedOiRatio(marketId, highLockedOiPercentRatioD18);
+
+      const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
+      await BfpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData);
     });
   });
 });
