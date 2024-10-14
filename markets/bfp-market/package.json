@@ -45,7 +45,7 @@
     "@synthetixio/wei": "^2.74.4",
     "@types/lodash": "^4.14.199",
     "@types/mocha-each": "^2.0.1",
-    "@usecannon/cli": "2.17.4",
+    "@usecannon/cli": "2.18.2",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "lodash": "^4.17.21",
