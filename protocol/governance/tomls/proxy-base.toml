@@ -1,6 +1,9 @@
 [setting.salt]
 defaultValue = "governance"
 
+[setting.bundleSalt]
+defaultValue = ""
+
 [setting.owner]
 
 [contract.InitialModuleBundle]

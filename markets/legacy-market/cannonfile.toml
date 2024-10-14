@@ -42,6 +42,7 @@ from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.Market.address %>"]
 factory.Proxy.abiOf = ["Market"]
+factory.Proxy.artifact = "Proxy"
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
