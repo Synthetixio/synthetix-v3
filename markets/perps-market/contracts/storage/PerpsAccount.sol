@@ -508,7 +508,6 @@ library PerpsAccount {
                 MathUtil.abs(position.size)
             );
 
-
             uint256 notionalValue = MathUtil.abs(position.size).mulDecimal(prices[i]);
             uint256 flagReward = marketConfig.calculateFlagReward(notionalValue);
             totalFlagReward += flagReward;
