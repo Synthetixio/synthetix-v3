@@ -293,6 +293,7 @@ describe('Orders - capped margin validation', () => {
         wei(10_000)
       );
 
+      const newBtcSize = wei(10);
       const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), BTC_MARKET_PRICE);
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
@@ -301,7 +302,7 @@ describe('Orders - capped margin validation', () => {
           maintenanceMarginScalar: liqParams.btc.mmScalar,
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
-        wei(10),
+        newBtcSize,
         BTC_MARKET_PRICE,
         wei(1000)
       );

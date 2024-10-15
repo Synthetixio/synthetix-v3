@@ -99,7 +99,7 @@ describe('Orders - margin validation', () => {
     });
 
     it('reverts if not enough margin', async () => {
-      const fillPrice = calculateFillPrice(wei(0), wei(10_000), wei(3), wei(2000));
+      const fillPrice = calculateFillPrice(wei(0), wei(10_000), wei(3), ETH_MARKET_PRICE);
       const { initialMargin, liquidationMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.eth.imRatio,
@@ -213,7 +213,7 @@ describe('Orders - margin validation', () => {
         liqGuards,
         {
           costOfTx: wei(0),
-          margin: wei(100),
+          margin: wei(200),
         }
       );
 
@@ -295,7 +295,7 @@ describe('Orders - margin validation', () => {
       );
 
       const newBtcSize = wei(10);
-      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), wei(10_000));
+      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), BTC);
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.btc.imRatio,
@@ -313,7 +313,7 @@ describe('Orders - margin validation', () => {
         liqGuards,
         {
           costOfTx: wei(0),
-          margin: wei(100),
+          margin: wei(200 + 900),
         }
       );
 
