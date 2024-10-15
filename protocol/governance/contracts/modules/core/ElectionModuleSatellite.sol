@@ -154,6 +154,12 @@ contract ElectionModuleSatellite is
         emit VoteWithdrawnSent(sender);
     }
 
+    function rescueEther(address recipient) external {
+        OwnableStorage.onlyOwner();
+        (bool success, ) = payable(recipient).call{value: address(this).balance}("");
+        require(success, "Failed to send Ether");
+    }
+
     /// @inheritdoc	IElectionModuleSatellite
     function getCurrentPeriod() external view override returns (uint256) {
         // solhint-disable-next-line numcast/safe-cast

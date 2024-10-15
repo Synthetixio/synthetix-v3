@@ -229,52 +229,45 @@
           "offset": 0
         },
         {
-          "type": "uint256",
-          "name": "currentLiquidationReward",
-          "size": 32,
-          "slot": "7",
-          "offset": 0
-        },
-        {
           "type": "int128",
           "name": "newPositionSize",
           "size": 16,
-          "slot": "8",
+          "slot": "7",
           "offset": 0
         },
         {
           "type": "uint256",
           "name": "newNotionalValue",
           "size": 32,
-          "slot": "9",
+          "slot": "8",
           "offset": 0
         },
         {
           "type": "int256",
           "name": "currentAvailableMargin",
           "size": 32,
-          "slot": "10",
+          "slot": "9",
           "offset": 0
         },
         {
           "type": "uint256",
           "name": "requiredInitialMargin",
           "size": 32,
-          "slot": "11",
+          "slot": "10",
           "offset": 0
         },
         {
           "type": "uint256",
           "name": "initialRequiredMargin",
           "size": 32,
-          "slot": "12",
+          "slot": "11",
           "offset": 0
         },
         {
           "type": "uint256",
           "name": "totalRequiredMargin",
           "size": 32,
-          "slot": "13",
+          "slot": "12",
           "offset": 0
         },
         {
@@ -303,14 +296,14 @@
             }
           ],
           "size": 96,
-          "slot": "14",
+          "slot": "13",
           "offset": 0
         },
         {
           "type": "bytes32",
           "name": "trackingCode",
           "size": 32,
-          "slot": "17",
+          "slot": "16",
           "offset": 0
         }
       ],
