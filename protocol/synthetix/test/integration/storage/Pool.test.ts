@@ -2,6 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import { bootstrapWithMockMarketAndPool } from '../bootstrap';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('Pool', function () {
   const {
@@ -62,6 +63,27 @@ describe('Pool', function () {
         ethers.utils.parseEther('0.4')
       );
     });
+  });
+
+  describe('distributeDebtToVaults()', async () => {
+    describe('market reportedDebt has an error', () => {
+      before('cause an error', async () => {
+        await MockMarket().connect(owner).setReportedDebtFailure('i failed');
+      });
+
+      after(async () => {
+        await MockMarket().connect(owner).setReportedDebtFailure('');
+      });
+
+      it('aggregates the errors and reverts', async () => {
+        await assertRevert(
+          systems().Core.connect(owner).Pool_distributeDebtToVaults(poolId, collateralAddress()),
+          'Errors(["0x0b42fd17'
+        );
+      });
+    });
+
+    // this function is tested in numerous module tests elsewhere
   });
 
   describe('recalculateVaultCollateral()', async () => {
