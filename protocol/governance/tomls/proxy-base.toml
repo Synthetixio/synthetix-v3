@@ -1,12 +1,16 @@
 [setting.salt]
 defaultValue = "governance"
 
+[setting.bundleSalt]
+defaultValue = ""
+
 [setting.owner]
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/core/InitialModuleBundle.sol:InitialModuleBundle"
 salt = "<%= settings.bundleSalt !== 'main' ? settings.bundleSalt : settings.salt %>"
 create2 = true
+ifExists = "continue"
 
 [contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"

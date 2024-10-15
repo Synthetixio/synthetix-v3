@@ -111,6 +111,8 @@ contract VaultModule is IVaultModule {
             leverage
         );
 
+        _verifyPoolCratio(poolId, collateralType);
+
         _updateAccountCollateralPools(
             accountId,
             poolId,
@@ -132,7 +134,7 @@ contract VaultModule is IVaultModule {
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
-                debt < 0 ? 0 : debt.toUint(),
+                debt,
                 newCollateralAmountD18.mulDecimal(collateralPrice),
                 minIssuanceRatioD18
             );
@@ -299,6 +301,19 @@ contract VaultModule is IVaultModule {
 
         if (market.id > 0) {
             revert CapacityLocked(market.id);
+        }
+    }
+
+    function _verifyPoolCratio(uint128 poolId, address collateralType) internal {
+        Pool.Data storage pool = Pool.load(poolId);
+        int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
+        (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);
+        if (
+            rawVaultDebt > 0 &&
+            collateralValue.divDecimal(rawVaultDebt.toUint()) <
+            CollateralConfiguration.load(collateralType).liquidationRatioD18
+        ) {
+            revert InsufficientVaultCollateralRatio(poolId, collateralType);
         }
     }
 

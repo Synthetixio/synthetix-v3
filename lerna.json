@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/@lerna-lite/cli/schemas/lerna-schema.json",
   "useWorkspaces": true,
-  "version": "3.6.2",
+  "version": "3.8.0",
   "exact": true,
   "changelog": false,
   "ignoreChanges": [
@@ -15,6 +15,15 @@
       "allowBranch": [
         "main"
       ]
+    },
+    "command": {
+      "publish": {
+        "removePackageFields": [
+          "devDependencies",
+          "scripts",
+          "depcheck"
+        ]
+      }
     }
   }
 }

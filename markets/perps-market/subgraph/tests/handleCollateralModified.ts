@@ -1,5 +1,5 @@
 import { assert, log } from 'matchstick-as';
-import { handleCollateralModified } from '../optimism-goerli';
+import { handleCollateralModified } from '../base-mainnet-andromeda';
 import { createCollateralModifiedEvent } from './event-factories/createCollateralModifiedEvent';
 
 export default function test(): void {

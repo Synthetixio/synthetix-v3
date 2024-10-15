@@ -127,6 +127,11 @@ library GlobalPerpsMarket {
         delegatedCollateralValue = delegatedCollateralValueInt.toUint();
 
         rate = lockedCredit.divDecimal(delegatedCollateralValue).to128();
+
+        // Cap at 100% utilization
+        if (rate > DecimalMath.UNIT_UINT128) {
+            rate = DecimalMath.UNIT_UINT128;
+        }
     }
 
     /// @notice get the value of collateral that is currently delegated to the perps market

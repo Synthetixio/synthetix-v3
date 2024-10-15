@@ -1,10 +1,17 @@
 {
   "name": "@synthetixio/op-gas-price-oracle",
-  "version": "3.6.1",
+  "version": "3.8.0",
   "description": "Optimism Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
   "scripts": {
     "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
     "coverage": "hardhat coverage --network hardhat",

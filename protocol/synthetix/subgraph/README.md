@@ -16,8 +16,11 @@ abis:
 # 1. fetch the latest deployments for all the supported networks
 yarn deployments
 
-# 2. generate the networks.json file
-yarn subgraphgen
+# 2. generate subgraph files
+yarn subgraph:codegen
+
+# 3. build subgraph
+yarn subgraph:build
 ```
 
 ## Testing the subgraph

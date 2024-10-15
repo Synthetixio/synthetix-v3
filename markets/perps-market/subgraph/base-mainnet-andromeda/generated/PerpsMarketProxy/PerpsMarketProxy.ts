@@ -380,6 +380,28 @@ export class CollateralDeducted__Params {
   }
 }
 
+export class InterestCharged extends ethereum.Event {
+  get params(): InterestCharged__Params {
+    return new InterestCharged__Params(this);
+  }
+}
+
+export class InterestCharged__Params {
+  _event: InterestCharged;
+
+  constructor(event: InterestCharged) {
+    this._event = event;
+  }
+
+  get accountId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get interest(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
 export class MarketUpdated extends ethereum.Event {
   get params(): MarketUpdated__Params {
     return new MarketUpdated__Params(this);
@@ -419,6 +441,10 @@ export class MarketUpdated__Params {
 
   get currentFundingVelocity(): BigInt {
     return this._event.parameters[6].value.toBigInt();
+  }
+
+  get interestRate(): BigInt {
+    return this._event.parameters[7].value.toBigInt();
   }
 }
 
@@ -641,6 +667,40 @@ export class FeatureFlagDenyAllSet__Params {
 
   get denyAll(): boolean {
     return this._event.parameters[1].value.toBoolean();
+  }
+}
+
+export class AccountFlaggedForLiquidation extends ethereum.Event {
+  get params(): AccountFlaggedForLiquidation__Params {
+    return new AccountFlaggedForLiquidation__Params(this);
+  }
+}
+
+export class AccountFlaggedForLiquidation__Params {
+  _event: AccountFlaggedForLiquidation;
+
+  constructor(event: AccountFlaggedForLiquidation) {
+    this._event = event;
+  }
+
+  get accountId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get availableMargin(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get requiredMaintenanceMargin(): BigInt {
+    return this._event.parameters[2].value.toBigInt();
+  }
+
+  get liquidationReward(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+
+  get flagReward(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
   }
 }
 
@@ -868,6 +928,28 @@ export class MaxMarketSizeSet__Params {
   }
 }
 
+export class MaxMarketValueSet extends ethereum.Event {
+  get params(): MaxMarketValueSet__Params {
+    return new MaxMarketValueSet__Params(this);
+  }
+}
+
+export class MaxMarketValueSet__Params {
+  _event: MaxMarketValueSet;
+
+  constructor(event: MaxMarketValueSet) {
+    this._event = event;
+  }
+
+  get marketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get maxMarketValue(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
 export class OrderFeesSet extends ethereum.Event {
   get params(): OrderFeesSet__Params {
     return new OrderFeesSet__Params(this);
@@ -1058,6 +1140,54 @@ export class FeeCollectorSet__Params {
   }
 }
 
+export class InterestRateParametersSet extends ethereum.Event {
+  get params(): InterestRateParametersSet__Params {
+    return new InterestRateParametersSet__Params(this);
+  }
+}
+
+export class InterestRateParametersSet__Params {
+  _event: InterestRateParametersSet;
+
+  constructor(event: InterestRateParametersSet) {
+    this._event = event;
+  }
+
+  get lowUtilizationInterestRateGradient(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get interestRateGradientBreakpoint(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get highUtilizationInterestRateGradient(): BigInt {
+    return this._event.parameters[2].value.toBigInt();
+  }
+}
+
+export class InterestRateUpdated extends ethereum.Event {
+  get params(): InterestRateUpdated__Params {
+    return new InterestRateUpdated__Params(this);
+  }
+}
+
+export class InterestRateUpdated__Params {
+  _event: InterestRateUpdated;
+
+  constructor(event: InterestRateUpdated) {
+    this._event = event;
+  }
+
+  get superMarketId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get interestRate(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+}
+
 export class KeeperCostNodeIdUpdated extends ethereum.Event {
   get params(): KeeperCostNodeIdUpdated__Params {
     return new KeeperCostNodeIdUpdated__Params(this);
@@ -1203,7 +1333,7 @@ export class PerpsMarketProxy__getAssociatedSystemResult {
   }
 }
 
-export class PerpsMarketProxy__getOpenPositionResult {
+export class PerpsMarketProxy__utilizationRateResult {
   value0: BigInt;
   value1: BigInt;
   value2: BigInt;
@@ -1216,9 +1346,44 @@ export class PerpsMarketProxy__getOpenPositionResult {
 
   toMap(): TypedMap<string, ethereum.Value> {
     let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
+    return map;
+  }
+
+  getRate(): BigInt {
+    return this.value0;
+  }
+
+  getDelegatedCollateral(): BigInt {
+    return this.value1;
+  }
+
+  getLockedCredit(): BigInt {
+    return this.value2;
+  }
+}
+
+export class PerpsMarketProxy__getOpenPositionResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+  value3: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt, value3: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+    this.value3 = value3;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
     map.set('value0', ethereum.Value.fromSignedBigInt(this.value0));
     map.set('value1', ethereum.Value.fromSignedBigInt(this.value1));
     map.set('value2', ethereum.Value.fromSignedBigInt(this.value2));
+    map.set('value3', ethereum.Value.fromUnsignedBigInt(this.value3));
     return map;
   }
 
@@ -1232,6 +1397,10 @@ export class PerpsMarketProxy__getOpenPositionResult {
 
   getPositionSize(): BigInt {
     return this.value2;
+  }
+
+  getOwedInterest(): BigInt {
+    return this.value3;
   }
 }
 
@@ -1414,6 +1583,31 @@ export class PerpsMarketProxy__commitOrderInputCommitmentStruct extends ethereum
 }
 
 export class PerpsMarketProxy__computeOrderFeesResult {
+  value0: BigInt;
+  value1: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    return map;
+  }
+
+  getOrderFees(): BigInt {
+    return this.value0;
+  }
+
+  getFillPrice(): BigInt {
+    return this.value1;
+  }
+}
+
+export class PerpsMarketProxy__computeOrderFeesWithPriceResult {
   value0: BigInt;
   value1: BigInt;
 
@@ -1735,6 +1929,38 @@ export class PerpsMarketProxy__getSettlementStrategyResultSettlementStrategyStru
 
   get commitmentPriceDelay(): BigInt {
     return this[7].toBigInt();
+  }
+}
+
+export class PerpsMarketProxy__getInterestRateParametersResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
+  }
+
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set('value0', ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set('value1', ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set('value2', ethereum.Value.fromUnsignedBigInt(this.value2));
+    return map;
+  }
+
+  getLowUtilizationInterestRateGradient(): BigInt {
+    return this.value0;
+  }
+
+  getInterestRateGradientBreakpoint(): BigInt {
+    return this.value1;
+  }
+
+  getHighUtilizationInterestRateGradient(): BigInt {
+    return this.value2;
   }
 }
 
@@ -2064,34 +2290,36 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  initializeFactory(synthetix: Address, spotMarket: Address, marketName: string): BigInt {
-    let result = super.call(
-      'initializeFactory',
-      'initializeFactory(address,address,string):(uint128)',
-      [
-        ethereum.Value.fromAddress(synthetix),
-        ethereum.Value.fromAddress(spotMarket),
-        ethereum.Value.fromString(marketName),
-      ]
-    );
+  initializeFactory(synthetix: Address, spotMarket: Address): BigInt {
+    let result = super.call('initializeFactory', 'initializeFactory(address,address):(uint128)', [
+      ethereum.Value.fromAddress(synthetix),
+      ethereum.Value.fromAddress(spotMarket),
+    ]);
 
     return result[0].toBigInt();
   }
 
-  try_initializeFactory(
-    synthetix: Address,
-    spotMarket: Address,
-    marketName: string
-  ): ethereum.CallResult<BigInt> {
+  try_initializeFactory(synthetix: Address, spotMarket: Address): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
       'initializeFactory',
-      'initializeFactory(address,address,string):(uint128)',
-      [
-        ethereum.Value.fromAddress(synthetix),
-        ethereum.Value.fromAddress(spotMarket),
-        ethereum.Value.fromString(marketName),
-      ]
+      'initializeFactory(address,address):(uint128)',
+      [ethereum.Value.fromAddress(synthetix), ethereum.Value.fromAddress(spotMarket)]
     );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  interestRate(): BigInt {
+    let result = super.call('interestRate', 'interestRate():(uint128)', []);
+
+    return result[0].toBigInt();
+  }
+
+  try_interestRate(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('interestRate', 'interestRate():(uint128)', []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -2173,6 +2401,35 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  utilizationRate(): PerpsMarketProxy__utilizationRateResult {
+    let result = super.call('utilizationRate', 'utilizationRate():(uint256,uint256,uint256)', []);
+
+    return new PerpsMarketProxy__utilizationRateResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_utilizationRate(): ethereum.CallResult<PerpsMarketProxy__utilizationRateResult> {
+    let result = super.tryCall(
+      'utilizationRate',
+      'utilizationRate():(uint256,uint256,uint256)',
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PerpsMarketProxy__utilizationRateResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
   }
 
   getAccountCollateralIds(accountId: BigInt): Array<BigInt> {
@@ -2272,14 +2529,15 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   getOpenPosition(accountId: BigInt, marketId: BigInt): PerpsMarketProxy__getOpenPositionResult {
     let result = super.call(
       'getOpenPosition',
-      'getOpenPosition(uint128,uint128):(int256,int256,int128)',
+      'getOpenPosition(uint128,uint128):(int256,int256,int128,uint256)',
       [ethereum.Value.fromUnsignedBigInt(accountId), ethereum.Value.fromUnsignedBigInt(marketId)]
     );
 
     return new PerpsMarketProxy__getOpenPositionResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
-      result[2].toBigInt()
+      result[2].toBigInt(),
+      result[3].toBigInt()
     );
   }
 
@@ -2289,7 +2547,7 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
   ): ethereum.CallResult<PerpsMarketProxy__getOpenPositionResult> {
     let result = super.tryCall(
       'getOpenPosition',
-      'getOpenPosition(uint128,uint128):(int256,int256,int128)',
+      'getOpenPosition(uint128,uint128):(int256,int256,int128,uint256)',
       [ethereum.Value.fromUnsignedBigInt(accountId), ethereum.Value.fromUnsignedBigInt(marketId)]
     );
     if (result.reverted) {
@@ -2300,9 +2558,33 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
       new PerpsMarketProxy__getOpenPositionResult(
         value[0].toBigInt(),
         value[1].toBigInt(),
-        value[2].toBigInt()
+        value[2].toBigInt(),
+        value[3].toBigInt()
       )
     );
+  }
+
+  getOpenPositionSize(accountId: BigInt, marketId: BigInt): BigInt {
+    let result = super.call(
+      'getOpenPositionSize',
+      'getOpenPositionSize(uint128,uint128):(int128)',
+      [ethereum.Value.fromUnsignedBigInt(accountId), ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getOpenPositionSize(accountId: BigInt, marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getOpenPositionSize',
+      'getOpenPositionSize(uint128,uint128):(int128)',
+      [ethereum.Value.fromUnsignedBigInt(accountId), ethereum.Value.fromUnsignedBigInt(marketId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   getRequiredMargins(accountId: BigInt): PerpsMarketProxy__getRequiredMarginsResult {
@@ -2655,6 +2937,53 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     );
   }
 
+  computeOrderFeesWithPrice(
+    marketId: BigInt,
+    sizeDelta: BigInt,
+    price: BigInt
+  ): PerpsMarketProxy__computeOrderFeesWithPriceResult {
+    let result = super.call(
+      'computeOrderFeesWithPrice',
+      'computeOrderFeesWithPrice(uint128,int128,uint256):(uint256,uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromSignedBigInt(sizeDelta),
+        ethereum.Value.fromUnsignedBigInt(price),
+      ]
+    );
+
+    return new PerpsMarketProxy__computeOrderFeesWithPriceResult(
+      result[0].toBigInt(),
+      result[1].toBigInt()
+    );
+  }
+
+  try_computeOrderFeesWithPrice(
+    marketId: BigInt,
+    sizeDelta: BigInt,
+    price: BigInt
+  ): ethereum.CallResult<PerpsMarketProxy__computeOrderFeesWithPriceResult> {
+    let result = super.tryCall(
+      'computeOrderFeesWithPrice',
+      'computeOrderFeesWithPrice(uint128,int128,uint256):(uint256,uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromSignedBigInt(sizeDelta),
+        ethereum.Value.fromUnsignedBigInt(price),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PerpsMarketProxy__computeOrderFeesWithPriceResult(
+        value[0].toBigInt(),
+        value[1].toBigInt()
+      )
+    );
+  }
+
   getOrder(accountId: BigInt): PerpsMarketProxy__getOrderResultOrderStruct {
     let result = super.call(
       'getOrder',
@@ -2680,6 +3009,38 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       changetype<PerpsMarketProxy__getOrderResultOrderStruct>(value[0].toTuple())
     );
+  }
+
+  getSettlementRewardCost(marketId: BigInt, settlementStrategyId: BigInt): BigInt {
+    let result = super.call(
+      'getSettlementRewardCost',
+      'getSettlementRewardCost(uint128,uint128):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(settlementStrategyId),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getSettlementRewardCost(
+    marketId: BigInt,
+    settlementStrategyId: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'getSettlementRewardCost',
+      'getSettlementRewardCost(uint128,uint128):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromUnsignedBigInt(settlementStrategyId),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   requiredMarginForOrder(accountId: BigInt, marketId: BigInt, sizeDelta: BigInt): BigInt {
@@ -2708,6 +3069,49 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(marketId),
         ethereum.Value.fromSignedBigInt(sizeDelta),
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  requiredMarginForOrderWithPrice(
+    accountId: BigInt,
+    marketId: BigInt,
+    sizeDelta: BigInt,
+    price: BigInt
+  ): BigInt {
+    let result = super.call(
+      'requiredMarginForOrderWithPrice',
+      'requiredMarginForOrderWithPrice(uint128,uint128,int128,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromSignedBigInt(sizeDelta),
+        ethereum.Value.fromUnsignedBigInt(price),
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_requiredMarginForOrderWithPrice(
+    accountId: BigInt,
+    marketId: BigInt,
+    sizeDelta: BigInt,
+    price: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'requiredMarginForOrderWithPrice',
+      'requiredMarginForOrderWithPrice(uint128,uint128,int128,uint256):(uint256)',
+      [
+        ethereum.Value.fromUnsignedBigInt(accountId),
+        ethereum.Value.fromUnsignedBigInt(marketId),
+        ethereum.Value.fromSignedBigInt(sizeDelta),
+        ethereum.Value.fromUnsignedBigInt(price),
       ]
     );
     if (result.reverted) {
@@ -3123,6 +3527,25 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  getMaxMarketValue(marketId: BigInt): BigInt {
+    let result = super.call('getMaxMarketValue', 'getMaxMarketValue(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_getMaxMarketValue(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMaxMarketValue', 'getMaxMarketValue(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(marketId),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getOrderFees(marketId: BigInt): PerpsMarketProxy__getOrderFeesResult {
     let result = super.call('getOrderFees', 'getOrderFees(uint128):(uint256,uint256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
@@ -3238,6 +3661,39 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  getInterestRateParameters(): PerpsMarketProxy__getInterestRateParametersResult {
+    let result = super.call(
+      'getInterestRateParameters',
+      'getInterestRateParameters():(uint128,uint128,uint128)',
+      []
+    );
+
+    return new PerpsMarketProxy__getInterestRateParametersResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try_getInterestRateParameters(): ethereum.CallResult<PerpsMarketProxy__getInterestRateParametersResult> {
+    let result = super.tryCall(
+      'getInterestRateParameters',
+      'getInterestRateParameters():(uint128,uint128,uint128)',
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PerpsMarketProxy__getInterestRateParametersResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
   }
 
   getKeeperCostNodeId(): Bytes {
@@ -3384,6 +3840,27 @@ export class PerpsMarketProxy extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigIntArray());
+  }
+
+  globalCollateralValue(collateralId: BigInt): BigInt {
+    let result = super.call('globalCollateralValue', 'globalCollateralValue(uint128):(uint256)', [
+      ethereum.Value.fromUnsignedBigInt(collateralId),
+    ]);
+
+    return result[0].toBigInt();
+  }
+
+  try_globalCollateralValue(collateralId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      'globalCollateralValue',
+      'globalCollateralValue(uint128):(uint256)',
+      [ethereum.Value.fromUnsignedBigInt(collateralId)]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   totalGlobalCollateralValue(): BigInt {
@@ -3947,10 +4424,6 @@ export class InitializeFactoryCall__Inputs {
 
   get spotMarket(): Address {
     return this._call.inputValues[1].value.toAddress();
-  }
-
-  get marketName(): string {
-    return this._call.inputValues[2].value.toString();
   }
 }
 
@@ -4750,6 +5223,40 @@ export class SetMaxMarketSizeCall__Outputs {
   }
 }
 
+export class SetMaxMarketValueCall extends ethereum.Call {
+  get inputs(): SetMaxMarketValueCall__Inputs {
+    return new SetMaxMarketValueCall__Inputs(this);
+  }
+
+  get outputs(): SetMaxMarketValueCall__Outputs {
+    return new SetMaxMarketValueCall__Outputs(this);
+  }
+}
+
+export class SetMaxMarketValueCall__Inputs {
+  _call: SetMaxMarketValueCall;
+
+  constructor(call: SetMaxMarketValueCall) {
+    this._call = call;
+  }
+
+  get marketId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get maxMarketValue(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+}
+
+export class SetMaxMarketValueCall__Outputs {
+  _call: SetMaxMarketValueCall;
+
+  constructor(call: SetMaxMarketValueCall) {
+    this._call = call;
+  }
+}
+
 export class SetOrderFeesCall extends ethereum.Call {
   get inputs(): SetOrderFeesCall__Inputs {
     return new SetOrderFeesCall__Inputs(this);
@@ -5002,6 +5509,44 @@ export class SetFeeCollectorCall__Outputs {
   }
 }
 
+export class SetInterestRateParametersCall extends ethereum.Call {
+  get inputs(): SetInterestRateParametersCall__Inputs {
+    return new SetInterestRateParametersCall__Inputs(this);
+  }
+
+  get outputs(): SetInterestRateParametersCall__Outputs {
+    return new SetInterestRateParametersCall__Outputs(this);
+  }
+}
+
+export class SetInterestRateParametersCall__Inputs {
+  _call: SetInterestRateParametersCall;
+
+  constructor(call: SetInterestRateParametersCall) {
+    this._call = call;
+  }
+
+  get lowUtilizationInterestRateGradient(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get interestRateGradientBreakpoint(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get highUtilizationInterestRateGradient(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
+}
+
+export class SetInterestRateParametersCall__Outputs {
+  _call: SetInterestRateParametersCall;
+
+  constructor(call: SetInterestRateParametersCall) {
+    this._call = call;
+  }
+}
+
 export class SetKeeperRewardGuardsCall extends ethereum.Call {
   get inputs(): SetKeeperRewardGuardsCall__Inputs {
     return new SetKeeperRewardGuardsCall__Inputs(this);
@@ -5104,6 +5649,32 @@ export class SetSynthDeductionPriorityCall__Outputs {
   _call: SetSynthDeductionPriorityCall;
 
   constructor(call: SetSynthDeductionPriorityCall) {
+    this._call = call;
+  }
+}
+
+export class UpdateInterestRateCall extends ethereum.Call {
+  get inputs(): UpdateInterestRateCall__Inputs {
+    return new UpdateInterestRateCall__Inputs(this);
+  }
+
+  get outputs(): UpdateInterestRateCall__Outputs {
+    return new UpdateInterestRateCall__Outputs(this);
+  }
+}
+
+export class UpdateInterestRateCall__Inputs {
+  _call: UpdateInterestRateCall;
+
+  constructor(call: UpdateInterestRateCall) {
+    this._call = call;
+  }
+}
+
+export class UpdateInterestRateCall__Outputs {
+  _call: UpdateInterestRateCall;
+
+  constructor(call: UpdateInterestRateCall) {
     this._call = call;
   }
 }
