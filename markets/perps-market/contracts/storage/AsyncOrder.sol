@@ -412,8 +412,25 @@ library AsyncOrder {
             orderPrice
         );
 
-        // check if fill price exceeded acceptable price
-        if (!acceptablePriceExceeded(order, fillPrice)) {
+        Position.Data storage oldPosition = PerpsMarket.accountPosition(
+            order.request.marketId,
+            order.request.accountId
+        );
+        int128 newPositionSize = oldPosition.size + order.request.sizeDelta;
+        int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
+            MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt(),
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        (bool isMarketSolvent, , ) = GlobalPerpsMarket.load().isMarketSolventForCreditDelta(
+            lockedCreditDelta
+        );
+
+        // Allow to cancel if the cancellation is due to market insolvency while not reducing the order
+        // If not, check if fill price exceeded acceptable price
+        if (
+            (isMarketSolvent || MathUtil.isSameSideReducing(oldPosition.size, newPositionSize)) &&
+            !acceptablePriceExceeded(order, fillPrice)
+        ) {
             revert AcceptablePriceNotExceeded(fillPrice, order.request.acceptablePrice);
         }
     }
