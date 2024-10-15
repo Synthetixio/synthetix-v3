@@ -587,10 +587,13 @@ library AsyncOrder {
             runtime.oldRequiredMargin;
 
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
-            .getKeeperRewardsAndCosts(marketId);
-        runtime.accumulatedLiquidationRewards += marketConfig.calculateFlagReward(
-            MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
-        );
+            .getKeeperRewardsAndCosts(
+                marketId,
+                PerpsPrice.Tolerance.DEFAULT,
+                marketConfig.calculateFlagReward(
+                    MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
+                )
+            );
         runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
             MathUtil.abs(newPositionSize)
         );
