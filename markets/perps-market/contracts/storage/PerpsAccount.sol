@@ -221,6 +221,8 @@ library PerpsAccount {
             flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
             liquidatableAccounts.add(self.id);
             seizedMarginValue = seizeCollateral(self);
+
+            // clean pending orders
             AsyncOrder.load(self.id).reset();
 
             updateAccountDebt(self, -self.debt.toInt());
@@ -471,7 +473,7 @@ library PerpsAccount {
         (
             uint256 accumulatedLiquidationRewards,
             uint256 maxNumberOfWindows
-        ) = getKeeperRewardsAndCosts(self, 0);
+        ) = getKeeperRewardsAndCosts(self, 0, stalenessTolerance, 0);
         possibleLiquidationReward = getPossibleLiquidationReward(
             self,
             accumulatedLiquidationRewards,
@@ -483,8 +485,11 @@ library PerpsAccount {
 
     function getKeeperRewardsAndCosts(
         Data storage self,
-        uint128 skipMarketId
+        uint128 skipMarketId,
+        PerpsPrice.Tolerance stalenessTolerance,
+        uint256 newPositionFlagReward
     ) internal view returns (uint256 accumulatedLiquidationRewards, uint256 maxNumberOfWindows) {
+        uint256 totalFlagReward = newPositionFlagReward;
         // use separate accounting for liquidation rewards so we can compare against global min/max liquidation reward values
         uint256[] memory marketIds = self.openPositionMarketIds.values();
         uint256[] memory prices = PerpsPrice.getCurrentPrices(
@@ -499,18 +504,25 @@ library PerpsAccount {
             PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
                 marketIds[i].to128()
             );
-
             uint256 numberOfWindows = marketConfig.numberOfLiquidationWindows(
                 MathUtil.abs(position.size)
             );
 
-            uint256 flagReward = marketConfig.calculateFlagReward(
-                MathUtil.abs(position.size).mulDecimal(prices[i])
-            );
-            accumulatedLiquidationRewards += flagReward;
+
+            uint256 notionalValue = MathUtil.abs(position.size).mulDecimal(prices[i]);
+            uint256 flagReward = marketConfig.calculateFlagReward(notionalValue);
+            totalFlagReward += flagReward;
 
             maxNumberOfWindows = MathUtil.max(numberOfWindows, maxNumberOfWindows);
         }
+        GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
+            .load();
+        uint256 totalCollateralValue = getTotalCollateralValue(self, stalenessTolerance, false);
+        uint256 collateralReward = globalConfig.calculateCollateralLiquidateReward(
+            totalCollateralValue
+        );
+        // Take the maximum between flag reward and collateral reward
+        accumulatedLiquidationRewards += MathUtil.max(totalFlagReward, collateralReward);
     }
 
     function getPossibleLiquidationReward(
