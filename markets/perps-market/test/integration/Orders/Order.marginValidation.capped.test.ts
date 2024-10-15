@@ -107,7 +107,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        fillPrice,
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -150,11 +150,8 @@ describe('Orders - capped margin validation', () => {
   });
 
   describe('openPosition 1 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(100));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -206,7 +203,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         wei(5),
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
@@ -255,11 +252,8 @@ describe('Orders - capped margin validation', () => {
   });
 
   describe('openPosition 2 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(900));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -308,7 +302,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         wei(10),
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 

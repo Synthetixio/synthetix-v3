@@ -108,7 +108,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        fillPrice,
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -151,11 +151,8 @@ describe('Orders - margin validation', () => {
   });
 
   describe('openPosition 1 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(100));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -207,7 +204,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         wei(5),
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
@@ -256,11 +253,8 @@ describe('Orders - margin validation', () => {
   });
 
   describe('openPosition 2 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(1100));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -310,7 +304,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         newBtcSize,
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
