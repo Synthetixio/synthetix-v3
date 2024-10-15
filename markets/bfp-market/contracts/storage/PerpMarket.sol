@@ -543,4 +543,24 @@ library PerpMarket {
 
         return totalValueUsd;
     }
+
+    function isMarketSolventForCreditDelta(
+        Data storage self,
+        int256 lockedCreditDelta,
+        AddressRegistry.Data memory addresses
+    ) internal view returns (bool isMarketSolvent, int256 delegatedCollateralValue, int256 credit) {
+        // establish amount of collateral currently collateralizing outstanding perp markets
+        delegatedCollateralValue = getDelegatedCollateralValueUsd(self, addresses);
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(self.id);
+
+        // establish amount of credit needed to collateralize outstanding perp markets
+        credit = getMinimumCredit(self, marketConfig, getOraclePrice(self, addresses), addresses)
+            .toInt();
+
+        // calculate new accumulated credit following the addition of the new locked credit
+        credit += lockedCreditDelta;
+
+        // Market insolvent delegatedCollateralValue < credit
+        isMarketSolvent = delegatedCollateralValue >= credit;
+    }
 }

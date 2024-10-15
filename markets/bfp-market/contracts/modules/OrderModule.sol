@@ -481,6 +481,11 @@ contract OrderModule is IOrderModule {
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+        AddressRegistry.Data memory addresses = AddressRegistry.Data({
+            synthetix: ISynthetixSystem(SYNTHETIX_CORE),
+            sUsd: SYNTHETIX_SUSD,
+            oracleManager: ORACLE_MANAGER
+        });
 
         uint64 commitmentTime = order.commitmentTime;
         (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
@@ -509,7 +514,37 @@ contract OrderModule is IOrderModule {
                 pythPrice
             );
 
-            if (!isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)) {
+            Position.Data storage oldPosition = market.positions[accountId];
+            PerpMarket.Data storage perpMarketData = PerpMarket.load(marketId);
+
+            int128 newPositionSize = oldPosition.size + order.sizeDelta;
+
+            // lockedCreditDelta is the change in credit that would be locked if the order was filled
+            int256 lockedCreditDelta = PerpMarket
+                .getMinimumCreditWithPositionSize(
+                    perpMarketData,
+                    marketConfig,
+                    pythPrice,
+                    (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
+                        .to128(),
+                    addresses
+                )
+                .toInt();
+
+            // checks if the market would be solvent with this new credit delta
+            (bool isMarketSolvent, , ) = PerpMarket.isMarketSolventForCreditDelta(
+                perpMarketData,
+                lockedCreditDelta,
+                addresses
+            );
+
+            // Allow to cancel if the cancellation is due to market insolvency while not reducing the order
+            // If not, check if fill price exceeded acceptable price
+            if (
+                (isMarketSolvent ||
+                    MathUtil.isSameSideReducing(oldPosition.size, newPositionSize)) &&
+                !isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)
+            ) {
                 revert ErrorUtil.PriceToleranceNotExceeded(
                     order.sizeDelta,
                     fillPrice,
