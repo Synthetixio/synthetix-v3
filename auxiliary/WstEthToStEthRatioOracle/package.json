@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/wsteth-to-steth-ratio-oracle",
-  "version": "3.7.1",
+  "version": "3.8.0",
   "description": "wstETH to stETH Ratio Oracle Node",
   "publishConfig": {
     "access": "public"
@@ -38,7 +38,7 @@
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
-    "@usecannon/cli": "2.17.3",
+    "@usecannon/cli": "2.18.2",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36"

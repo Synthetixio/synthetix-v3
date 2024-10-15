@@ -51,11 +51,11 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
             perpsMarketId = factory.initialize(synthetix, spotMarket);
+
+            emit FactoryInitialized(perpsMarketId);
         } else {
             perpsMarketId = factory.perpsMarketId;
         }
-
-        emit FactoryInitialized(perpsMarketId);
 
         return perpsMarketId;
     }

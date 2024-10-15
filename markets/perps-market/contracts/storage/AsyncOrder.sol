@@ -237,7 +237,6 @@ library AsyncOrder {
         uint256 availableMargin;
         uint256 currentLiquidationMargin;
         uint256 accumulatedLiquidationRewards;
-        uint256 currentLiquidationReward;
         int128 newPositionSize;
         uint256 newNotionalValue;
         int256 currentAvailableMargin;
@@ -282,7 +281,7 @@ library AsyncOrder {
             runtime.currentAvailableMargin,
             runtime.requiredInitialMargin,
             ,
-            runtime.currentLiquidationReward
+
         ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
 
         if (runtime.isEligible) {
@@ -588,10 +587,13 @@ library AsyncOrder {
             runtime.oldRequiredMargin;
 
         (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
-            .getKeeperRewardsAndCosts(marketId);
-        runtime.accumulatedLiquidationRewards += marketConfig.calculateFlagReward(
-            MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
-        );
+            .getKeeperRewardsAndCosts(
+                marketId,
+                PerpsPrice.Tolerance.DEFAULT,
+                marketConfig.calculateFlagReward(
+                    MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
+                )
+            );
         runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
             MathUtil.abs(newPositionSize)
         );
