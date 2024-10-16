@@ -313,7 +313,7 @@ describe('Orders - margin validation', () => {
         liqGuards,
         {
           costOfTx: wei(0),
-          margin: wei(200 + 900),
+          margin: wei(100),
         }
       );
 
