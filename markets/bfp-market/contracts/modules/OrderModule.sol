@@ -76,6 +76,15 @@ contract OrderModule is IOrderModule {
         Position.TradeParams tradeParams;
     }
 
+    struct Runtime_cancelOrder {
+        uint128 accountId;
+        uint128 marketId;
+        bool isStale;
+        bool isReady;
+        bool isMarketSolvent;
+        Order.Data order;
+    }
+
     // --- Helpers --- //
 
     /// @dev Reverts when `fillPrice > limitPrice` when long or `fillPrice < limitPrice` when short.
@@ -472,91 +481,108 @@ contract OrderModule is IOrderModule {
     ) external payable {
         FeatureFlag.ensureAccessToFeature(Flags.CANCEL_ORDER);
         PerpMarket.Data storage market = PerpMarket.exists(marketId);
-        Account.Data storage account = Account.exists(accountId);
-        Order.Data storage order = market.orders[accountId];
+        Runtime_cancelOrder memory runtime;
 
-        // No order available to settle.
-        if (order.sizeDelta == 0) {
+        runtime.accountId = accountId;
+        runtime.marketId = marketId;
+        runtime.order = market.orders[accountId];
+
+        if (runtime.order.sizeDelta == 0) {
             revert ErrorUtil.OrderNotFound();
         }
 
         PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration.load();
+
+        (runtime.isStale, runtime.isReady) = isOrderStaleOrReady(
+            runtime.order.commitmentTime,
+            globalConfig
+        );
+
+        if (!runtime.isReady) {
+            revert ErrorUtil.OrderNotReady();
+        }
+
+        if (!runtime.isStale) {
+            validateNonStaleOrderCancellation(runtime, priceUpdateData);
+        }
+
+        uint256 keeperFee = chargeKeeperFee(accountId, marketId);
+
+        emit OrderCanceled(accountId, marketId, keeperFee, runtime.order.commitmentTime);
+    }
+
+    function validateNonStaleOrderCancellation(
+        Runtime_cancelOrder memory runtime,
+        bytes calldata priceUpdateData
+    ) private {
+        PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(
+            runtime.marketId
+        );
+        PerpMarket.Data storage market = PerpMarket.exists(runtime.marketId);
+
+        uint256 pythPrice = PythUtil.parsePythPrice(
+            PerpMarketConfiguration.load(),
+            marketConfig,
+            runtime.order.commitmentTime,
+            priceUpdateData
+        );
+        uint256 fillPrice = Order.getFillPrice(
+            market.skew,
+            marketConfig.skewScale,
+            runtime.order.sizeDelta,
+            pythPrice
+        );
         AddressRegistry.Data memory addresses = AddressRegistry.Data({
             synthetix: ISynthetixSystem(SYNTHETIX_CORE),
             sUsd: SYNTHETIX_SUSD,
             oracleManager: ORACLE_MANAGER
         });
 
-        uint64 commitmentTime = order.commitmentTime;
-        (bool isStale, bool isReady) = isOrderStaleOrReady(commitmentTime, globalConfig);
+        Position.Data storage oldPosition = market.positions[runtime.accountId];
+        PerpMarket.Data storage perpMarketData = PerpMarket.load(runtime.marketId);
 
-        if (!isReady) {
-            revert ErrorUtil.OrderNotReady();
-        }
+        int128 newPositionSize = oldPosition.size + runtime.order.sizeDelta;
 
-        // Only do the price divergence check for non stale orders. All stale orders are allowed to be canceled.
-        if (!isStale) {
-            PerpMarketConfiguration.Data storage marketConfig = PerpMarketConfiguration.load(
-                marketId
-            );
-
-            // Order is within settlement window. Check if price tolerance has exceeded.
-            uint256 pythPrice = PythUtil.parsePythPrice(
-                globalConfig,
-                marketConfig,
-                commitmentTime,
-                priceUpdateData
-            );
-            uint256 fillPrice = Order.getFillPrice(
-                market.skew,
-                marketConfig.skewScale,
-                order.sizeDelta,
-                pythPrice
-            );
-
-            Position.Data storage oldPosition = market.positions[accountId];
-            PerpMarket.Data storage perpMarketData = PerpMarket.load(marketId);
-
-            int128 newPositionSize = oldPosition.size + order.sizeDelta;
-
-            // lockedCreditDelta is the change in credit that would be locked if the order was filled
-            int256 lockedCreditDelta = PerpMarket
-                .getMinimumCreditWithPositionSize(
-                    perpMarketData,
-                    marketConfig,
-                    pythPrice,
-                    (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
-                        .to128(),
-                    addresses
-                )
-                .toInt();
-
-            // checks if the market would be solvent with this new credit delta
-            (bool isMarketSolvent, , ) = PerpMarket.isMarketSolventForCreditDelta(
+        int256 lockedCreditDelta = PerpMarket
+            .getMinimumCreditWithPositionSize(
                 perpMarketData,
-                lockedCreditDelta,
+                marketConfig,
+                pythPrice,
+                (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
+                    .to128(),
                 addresses
+            )
+            .toInt();
+
+        (runtime.isMarketSolvent, , ) = PerpMarket.isMarketSolventForCreditDelta(
+            perpMarketData,
+            lockedCreditDelta,
+            addresses
+        );
+
+        if (
+            (runtime.isMarketSolvent ||
+                MathUtil.isSameSideReducing(oldPosition.size, newPositionSize)) &&
+            !isPriceToleranceExceeded(runtime.order.sizeDelta, fillPrice, runtime.order.limitPrice)
+        ) {
+            revert ErrorUtil.PriceToleranceNotExceeded(
+                runtime.order.sizeDelta,
+                fillPrice,
+                runtime.order.limitPrice
             );
-
-            // Allow to cancel if the cancellation is due to market insolvency while not reducing the order
-            // If not, check if fill price exceeded acceptable price
-            if (
-                (isMarketSolvent ||
-                    MathUtil.isSameSideReducing(oldPosition.size, newPositionSize)) &&
-                !isPriceToleranceExceeded(order.sizeDelta, fillPrice, order.limitPrice)
-            ) {
-                revert ErrorUtil.PriceToleranceNotExceeded(
-                    order.sizeDelta,
-                    fillPrice,
-                    order.limitPrice
-                );
-            }
         }
+    }
 
-        // If `isAccountOwner` then 0 else charge cancellation fee.
+    function chargeKeeperFee(
+        uint128 accountId,
+        uint128 marketId
+    ) private returns (uint256 keeperFee) {
+        Account.Data storage account = Account.exists(accountId);
+        PerpMarket.Data storage market = PerpMarket.exists(marketId);
 
-        uint256 keeperFee;
         if (ERC2771Context._msgSender() != account.rbac.owner) {
+            PerpMarketConfiguration.GlobalData storage globalConfig = PerpMarketConfiguration
+                .load();
             uint256 ethPrice = INodeModule(ORACLE_MANAGER)
                 .process(globalConfig.ethOracleNodeId)
                 .price
@@ -573,9 +599,6 @@ contract OrderModule is IOrderModule {
                 keeperFee
             );
         }
-
-        emit OrderCanceled(accountId, marketId, keeperFee, commitmentTime);
-        delete market.orders[accountId];
     }
 
     // --- Views --- //
