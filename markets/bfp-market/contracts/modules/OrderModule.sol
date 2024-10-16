@@ -543,23 +543,25 @@ contract OrderModule is IOrderModule {
 
         int128 newPositionSize = oldPosition.size + runtime.order.sizeDelta;
 
-        int256 lockedCreditDelta = PerpMarket
-            .getMinimumCreditWithPositionSize(
-                perpMarketData,
-                marketConfig,
-                pythPrice,
-                (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
-                    .to128(),
-                addresses
-            )
-            .toInt();
-
-        (runtime.isMarketSolvent, , ) = PerpMarket.isMarketSolventForCreditDelta(
+        // lockedCreditDelta is the change in credit that would be locked if the order was filled
+        uint256 newMinCredit = PerpMarket.getMinimumCreditWithPositionSize(
             perpMarketData,
-            lockedCreditDelta,
+            marketConfig,
+            pythPrice,
+            (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
+                .to128(),
             addresses
         );
 
+        // checks if the market would be solvent with this new credit delta
+        runtime.isMarketSolvent = PerpMarket.isMarketSolventForCredit(
+            perpMarketData,
+            newMinCredit,
+            addresses
+        );
+
+        // Allow to cancel if the cancellation is due to market insolvency while not reducing the order
+        // If not, check if fill price exceeded acceptable price
         if (
             (runtime.isMarketSolvent ||
                 MathUtil.isSameSideReducing(oldPosition.size, newPositionSize)) &&
