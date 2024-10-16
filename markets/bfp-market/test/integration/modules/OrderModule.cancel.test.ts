@@ -557,16 +557,17 @@ describe('OrderModule Cancellations', () => {
         genTrader(bs)
       );
 
-      const order = await genOrder(bs, market, collateral, collateralDepositAmount);
+      const order = await genOrder(bs, market, collateral, collateralDepositAmount, {
+        desiredSize: bn(1),
+      });
       await commitOrder(bs, marketId, trader, order);
 
       // fast forward to settlement
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
 
-      // Force the market to be insolvent
       await setMarketConfigurationById(bs, marketId, {
-        maxMarketSize: bn(1),
+        minCreditPercent: bn(1000),
       });
 
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
