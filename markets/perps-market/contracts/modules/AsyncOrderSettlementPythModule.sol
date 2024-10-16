@@ -82,6 +82,10 @@ contract AsyncOrderSettlementPythModule is
 
         Position.Data storage oldPosition;
 
+        // Load the market before settlement to capture the original market size
+        PerpsMarket.Data storage market = PerpsMarket.loadValid(runtime.marketId);
+        uint256 originalMarketSize = market.size;
+
         // validate order request can be settled; call reverts if not
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
@@ -103,18 +107,21 @@ contract AsyncOrderSettlementPythModule is
         emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
         // only update position state after pnl has been realized
-        runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
-            runtime.accountId,
-            runtime.newPosition
-        );
+        runtime.updateData = market.updatePositionData(runtime.accountId, runtime.newPosition);
         perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPosition.size);
+
+        // Capture the new market size after settlement
+        uint256 newMarketSize = market.size;
+
+        // Calculate the market size delta (change in market size)
+        int256 marketSizeDelta = newMarketSize.toInt() - originalMarketSize.toInt();
 
         emit MarketUpdated(
             runtime.updateData.marketId,
             price,
             runtime.updateData.skew,
-            runtime.updateData.size,
-            runtime.sizeDelta,
+            newMarketSize,
+            marketSizeDelta,
             runtime.updateData.currentFundingRate,
             runtime.updateData.currentFundingVelocity,
             runtime.updateData.interestRate
