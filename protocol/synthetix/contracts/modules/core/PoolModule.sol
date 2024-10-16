@@ -188,11 +188,17 @@ contract PoolModule is IPoolModule {
         }
 
         // Rebalance all markets that need to be removed.
+        bytes[] memory possibleErrors = new bytes[](removedMarkets.length);
         for (i = 0; i < removedMarkets.length && removedMarkets[i] != 0; i++) {
             // Iter avoids griefing - MarketManager can call this with user specified iters and thus clean up a grieved market.
-            Market.distributeDebtToPools(Market.load(removedMarkets[i]), 9999999999);
+            (, possibleErrors[i]) = Market.distributeDebtToPools(
+                Market.load(removedMarkets[i]),
+                9999999999
+            );
             Market.rebalancePools(removedMarkets[i], poolId, 0, 0);
         }
+
+        RevertUtil.revertManyIfError(possibleErrors);
 
         pool.totalWeightsD18 = totalWeight.to128();
 

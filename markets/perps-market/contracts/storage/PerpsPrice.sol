@@ -45,26 +45,34 @@ library PerpsPrice {
         uint256[] memory marketIds,
         Tolerance priceTolerance
     ) internal view returns (uint256[] memory prices) {
-        if (priceTolerance != Tolerance.DEFAULT) {
-            // currently this is not generally necessary and also way harder to deal with
-            revert ParameterError.InvalidParameter("priceTolerance", "currently unsupported");
-        }
-
         // map all the market ids to feed ids
+        INodeModule oracleManager = INodeModule(PerpsMarketFactory.load().oracle);
         bytes32[] memory feedIds = new bytes32[](marketIds.length);
         for (uint256 i = 0; i < marketIds.length; i++) {
             feedIds[i] = load(marketIds[i].to128()).feedId;
         }
 
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-        bytes32[] memory runtimeKeys = new bytes32[](0);
+        NodeOutput.Data[] memory outputs;
+        if (priceTolerance != Tolerance.DEFAULT) {
+            bytes32[] memory sharedRuntimeKeys = new bytes32[](1);
+            sharedRuntimeKeys[0] = bytes32("stalenessTolerance");
 
-        // do the process call
-        NodeOutput.Data[] memory outputs = INodeModule(factory.oracle).processManyWithRuntime(
-            feedIds,
-            runtimeKeys,
-            runtimeKeys
-        );
+            bytes32[][] memory runtimeKeys = new bytes32[][](marketIds.length);
+            bytes32[][] memory runtimeValues = new bytes32[][](marketIds.length);
+
+            for (uint256 i = 0; i < marketIds.length; i++) {
+                bytes32[] memory newRuntimeValues = new bytes32[](1);
+                newRuntimeValues[0] = toleranceBytes(load(marketIds[i].to128()), priceTolerance);
+                runtimeKeys[i] = sharedRuntimeKeys;
+                runtimeValues[i] = newRuntimeValues;
+            }
+
+            outputs = oracleManager.processManyWithManyRuntime(feedIds, runtimeKeys, runtimeValues);
+        } else {
+            bytes32[] memory runtimeKeys = new bytes32[](0);
+            // do the process call
+            outputs = oracleManager.processManyWithRuntime(feedIds, runtimeKeys, runtimeKeys);
+        }
 
         // extract the prices
         prices = new uint256[](marketIds.length);

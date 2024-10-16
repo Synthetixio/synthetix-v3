@@ -34,7 +34,17 @@ describe('Market', function () {
     it('returns whatever the market sends', async () => {
       await FakeMarket.setReportedDebt(9876);
 
-      assertBn.equal(await systems().Core.Market_getReportedDebt(fakeMarketId), 9876);
+      const result = await systems().Core.Market_getReportedDebt(fakeMarketId);
+      assertBn.equal(result[0], 9876);
+      assert(result[1] == '0x');
+    });
+
+    it('on upstream failure returns error instead', async () => {
+      await FakeMarket.setReportedDebtFailure('oh no');
+
+      const result = await systems().Core.Market_getReportedDebt(fakeMarketId);
+      assertBn.equal(result[0], 0);
+      assert(result[1].includes(Buffer.from('oh no', 'utf8').toString('hex')));
     });
   });
 
@@ -54,7 +64,9 @@ describe('Market', function () {
     it('returns market debt when no issuance', async () => {
       await FakeMarket.setReportedDebt(1000);
 
-      assertBn.equal(await systems().Core.Market_totalDebt(fakeMarketId), 1000);
+      const result = await systems().Core.Market_totalDebt(fakeMarketId);
+      assertBn.equal(result[0], 1000);
+      assert(result[1], '');
     });
 
     it('adds issuance to market debt', async () => {
@@ -62,7 +74,17 @@ describe('Market', function () {
       await systems().Core.connect(owner).Market_set_netIssuanceD18(fakeMarketId, -10000);
       await systems().Core.Market_distributeDebtToPools(fakeMarketId, 999999999);
 
-      assertBn.equal(await systems().Core.Market_totalDebt(fakeMarketId), -9000);
+      const result = await systems().Core.Market_totalDebt(fakeMarketId);
+      assertBn.equal(result[0], -9000);
+      assert(result[1], '');
+    });
+
+    it('on upstream failure returns error instead', async () => {
+      await FakeMarket.setReportedDebtFailure('oh no');
+
+      const result = await systems().Core.Market_totalDebt(fakeMarketId);
+      assertBn.equal(result[0], 0);
+      assert(result[1].includes(Buffer.from('oh no', 'utf8').toString('hex')));
     });
 
     // not currently possible due to lack of code to set collateral lock

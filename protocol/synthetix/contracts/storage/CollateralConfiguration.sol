@@ -8,6 +8,7 @@ import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/RevertUtil.sol";
 
 import "./OracleManager.sol";
 
@@ -209,17 +210,25 @@ library CollateralConfiguration {
     function getCollateralPrice(
         Data storage self,
         uint256 collateralAmount
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256, bytes memory possibleError) {
         OracleManager.Data memory oracleManager = OracleManager.load();
 
         bytes32[] memory runtimeKeys = new bytes32[](1);
         bytes32[] memory runtimeValues = new bytes32[](1);
         runtimeKeys[0] = bytes32("size");
         runtimeValues[0] = bytes32(collateralAmount);
-        NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress)
-            .processWithRuntime(self.oracleNodeId, runtimeKeys, runtimeValues);
 
-        return node.price.toUint();
+        try
+            INodeModule(oracleManager.oracleManagerAddress).processWithRuntime(
+                self.oracleNodeId,
+                runtimeKeys,
+                runtimeValues
+            )
+        returns (NodeOutput.Data memory node) {
+            return (node.price.toUint(), "");
+        } catch (bytes memory err) {
+            return (0, err);
+        }
     }
 
     /**
@@ -230,7 +239,7 @@ library CollateralConfiguration {
      */
     function verifyIssuanceRatio(
         Data storage self,
-        uint256 debtD18,
+        int256 debtD18,
         uint256 collateralValueD18,
         uint256 minIssuanceRatioD18
     ) internal view {
@@ -239,14 +248,42 @@ library CollateralConfiguration {
             : minIssuanceRatioD18;
 
         if (
-            debtD18 != 0 &&
-            (collateralValueD18 == 0 || collateralValueD18.divDecimal(debtD18) < issuanceRatioD18)
+            debtD18 > 0 &&
+            (collateralValueD18 == 0 ||
+                collateralValueD18.divDecimal(debtD18.toUint()) < issuanceRatioD18)
         ) {
             revert InsufficientCollateralRatio(
                 collateralValueD18,
-                debtD18,
-                collateralValueD18.divDecimal(debtD18),
+                debtD18.toUint(),
+                collateralValueD18.divDecimal(debtD18.toUint()),
                 issuanceRatioD18
+            );
+        }
+    }
+
+    /**
+     * @dev Reverts if the specified collateral and debt values produce a collateralization ratio which is below the liquidation ratio.
+     * @param self The CollateralConfiguration object whose collateral and settings are being queried.
+     * @param debtD18 The debt component of the ratio.
+     * @param collateralValueD18 The collateral component of the ratio.
+     */
+    function verifyLiquidationRatio(
+        Data storage self,
+        int256 debtD18,
+        uint256 collateralValueD18
+    ) internal view {
+        uint256 liquidationRatioD18 = self.liquidationRatioD18;
+
+        if (
+            debtD18 > 0 &&
+            (collateralValueD18 == 0 ||
+                collateralValueD18.divDecimal(debtD18.toUint()) < liquidationRatioD18)
+        ) {
+            revert InsufficientCollateralRatio(
+                collateralValueD18,
+                debtD18.toUint(),
+                collateralValueD18.divDecimal(debtD18.toUint()),
+                liquidationRatioD18
             );
         }
     }

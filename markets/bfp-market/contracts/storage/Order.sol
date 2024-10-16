@@ -109,9 +109,12 @@ library Order {
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperSettlementGasUnits * block.basefee
         );
-        uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
-            DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
-        ) + keeperFeeBufferUsd;
+        uint256 baseKeeperFeePlusProfitUsd = MathUtil.max(
+            baseKeeperFeeUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent) +
+                keeperFeeBufferUsd,
+            baseKeeperFeeUsd + globalConfig.keeperProfitMarginUsd
+        );
+
         uint256 boundedKeeperFeeUsd = MathUtil.min(
             MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
             globalConfig.maxKeeperFeeUsd
@@ -126,8 +129,9 @@ library Order {
         uint256 baseKeeperFeeUsd = ethPrice.mulDecimal(
             globalConfig.keeperCancellationGasUnits * block.basefee
         );
-        uint256 baseKeeperFeePlusProfitUsd = baseKeeperFeeUsd.mulDecimal(
-            DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent
+        uint256 baseKeeperFeePlusProfitUsd = MathUtil.max(
+            baseKeeperFeeUsd.mulDecimal(DecimalMath.UNIT + globalConfig.keeperProfitMarginPercent),
+            baseKeeperFeeUsd + globalConfig.keeperProfitMarginUsd
         );
         uint256 boundedKeeperFeeUsd = MathUtil.min(
             MathUtil.max(globalConfig.minKeeperFeeUsd, baseKeeperFeePlusProfitUsd),
