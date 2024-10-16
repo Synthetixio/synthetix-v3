@@ -87,9 +87,7 @@ contract NodeModule is INodeModule {
         bytes memory err;
         (node, err) = NodeDefinition.process(nodeId, runtimeKeys, runtimeValues);
 
-        if (err.length > 0) {
-            RevertUtil.revertWithReason(err);
-        }
+        RevertUtil.revertIfError(err);
     }
 
     function processManyWithRuntime(
@@ -121,6 +119,34 @@ contract NodeModule is INodeModule {
             }
             revert Errors(copiedErrors);
         }
+    }
+    function processManyWithManyRuntime(
+        bytes32[] memory nodeIds,
+        bytes32[][] memory runtimeKeys,
+        bytes32[][] memory runtimeValues
+    ) external view returns (NodeOutput.Data[] memory nodes) {
+        if (nodeIds.length != runtimeKeys.length) {
+            revert ParameterError.InvalidParameter("runtimeKeys", "must be same length as nodeIds");
+        }
+        if (nodeIds.length != runtimeValues.length) {
+            revert ParameterError.InvalidParameter(
+                "runtimeValues",
+                "must be same length as nodeIds"
+            );
+        }
+
+        nodes = new NodeOutput.Data[](nodeIds.length);
+        bytes[] memory possibleErrors = new bytes[](nodeIds.length);
+
+        for (uint256 i = 0; i < nodeIds.length; i++) {
+            (nodes[i], possibleErrors[i]) = NodeDefinition.process(
+                nodeIds[i],
+                runtimeKeys[i],
+                runtimeValues[i]
+            );
+        }
+
+        RevertUtil.revertManyIfError(possibleErrors);
     }
 
     /**

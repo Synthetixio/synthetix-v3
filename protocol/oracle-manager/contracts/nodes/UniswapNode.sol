@@ -43,7 +43,7 @@ library UniswapNode {
         int56 tickCumulativesDelta;
         try IUniswapV3Pool(pool).observe(secondsAgos) returns (
             int56[] memory tickCumulatives,
-            uint160[] memory _unused
+            uint160[] memory
         ) {
             tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
         } catch (bytes memory reason) {

@@ -19,6 +19,7 @@ import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {AsyncOrder} from "../storage/AsyncOrder.sol";
 
 /**
  * @title Module for liquidating accounts.
@@ -34,6 +35,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
     using PerpsMarket for PerpsMarket.Data;
     using GlobalPerpsMarketConfiguration for GlobalPerpsMarketConfiguration.Data;
     using KeeperCosts for KeeperCosts.Data;
+    using AsyncOrder for AsyncOrder.Data;
 
     /**
      * @inheritdoc ILiquidationModule
@@ -100,6 +102,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
             // clear debt
             account.updateAccountDebt(-(account.debt.toInt()));
+
+            // clean pending orders
+            AsyncOrder.load(accountId).reset();
 
             emit AccountMarginLiquidation(accountId, seizedMarginValue, liquidationReward);
         } else {
@@ -229,6 +234,10 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         LiquidateAccountRuntime memory runtime;
         runtime.accountId = account.id;
         uint256[] memory openPositionMarketIds = account.openPositionMarketIds.values();
+        uint256[] memory prices = PerpsPrice.getCurrentPrices(
+            openPositionMarketIds,
+            PerpsPrice.Tolerance.STRICT
+        );
 
         for (
             runtime.loopIterator = 0;
@@ -236,10 +245,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             runtime.loopIterator++
         ) {
             runtime.positionMarketId = openPositionMarketIds[runtime.loopIterator].to128();
-            runtime.price = PerpsPrice.getCurrentPrice(
-                runtime.positionMarketId,
-                PerpsPrice.Tolerance.STRICT
-            );
+            runtime.price = prices[runtime.loopIterator];
 
             (
                 uint256 amountLiquidated,

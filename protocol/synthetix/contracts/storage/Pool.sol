@@ -13,6 +13,7 @@ import "./PoolCollateralConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/RevertUtil.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 /**
@@ -307,12 +308,15 @@ library Pool {
     ) internal returns (int256 cumulativeDebtChange) {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         uint128 myPoolId = self.id;
+        bytes[] memory possibleErrors = new bytes[](self.marketConfigurations.length);
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
-            market.distributeDebtToPools(9999999999);
+            (, possibleErrors[i]) = market.distributeDebtToPools(9999999999);
             cumulativeDebtChange += market.accumulateDebtChange(myPoolId);
         }
+
+        RevertUtil.revertManyIfError(possibleErrors);
 
         assignDebt(self, cumulativeDebtChange);
 
@@ -357,13 +361,15 @@ library Pool {
         address collateralType
     ) internal returns (uint256 collateralPriceD18) {
         // Get the latest collateral price.
-        collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice(
-            DecimalMath.UNIT
-        );
+        (uint256 rawCollateralPriceD18, bytes memory possibleError) = CollateralConfiguration
+            .load(collateralType)
+            .getCollateralPrice(DecimalMath.UNIT);
+
+        RevertUtil.revertIfError(possibleError);
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
         (uint256 usdWeightD18, ) = self.vaults[collateralType].updateCreditCapacity(
-            collateralPriceD18
+            rawCollateralPriceD18
         );
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
@@ -371,6 +377,8 @@ library Pool {
 
         // now that available vault collateral has been recalculated, we should also rebalance the pool markets
         rebalanceMarketsInPool(self);
+
+        collateralPriceD18 = rawCollateralPriceD18;
     }
 
     /**
@@ -557,11 +565,13 @@ library Pool {
         Data storage self,
         address collateralType
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
-        uint256 collateralPriceD18 = CollateralConfiguration
-            .load(collateralType)
-            .getCollateralPrice(collateralAmountD18);
-
         collateralAmountD18 = self.vaults[collateralType].currentCollateral();
+        (uint256 collateralPriceD18, bytes memory possibleError) = CollateralConfiguration
+            .load(collateralType)
+            .getCollateralPrice(0);
+
+        RevertUtil.revertIfError(possibleError);
+
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
     }
 
@@ -574,9 +584,12 @@ library Pool {
         uint128 accountId
     ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         collateralAmountD18 = self.vaults[collateralType].currentAccountCollateral(accountId);
-        uint256 collateralPriceD18 = CollateralConfiguration
+        (uint256 collateralPriceD18, bytes memory possibleError) = CollateralConfiguration
             .load(collateralType)
             .getCollateralPrice(collateralAmountD18);
+
+        RevertUtil.revertIfError(possibleError);
+
         collateralValueD18 = collateralPriceD18.mulDecimal(collateralAmountD18);
     }
 

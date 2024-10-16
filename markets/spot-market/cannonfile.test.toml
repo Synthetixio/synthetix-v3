@@ -14,6 +14,9 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "synthetix:<%= package.version %>-testable"
 depends = []
 
+[setting.salt]
+defaultValue = ""
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 

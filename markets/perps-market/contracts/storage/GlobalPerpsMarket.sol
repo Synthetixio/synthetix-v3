@@ -87,19 +87,31 @@ library GlobalPerpsMarket {
      * @param lockedCreditDelta the proposed change in credit to be validated
      */
     function validateMarketCapacity(Data storage self, int256 lockedCreditDelta) internal view {
+        (
+            bool isMarketSolvent,
+            int256 delegatedCollateralValue,
+            int256 credit
+        ) = isMarketSolventForCreditDelta(self, lockedCreditDelta);
+
+        // revert if accumulated credit value exceeds what is currently collateralizing the perp markets
+        if (!isMarketSolvent) revert ExceedsMarketCreditCapacity(delegatedCollateralValue, credit);
+    }
+
+    function isMarketSolventForCreditDelta(
+        Data storage self,
+        int256 lockedCreditDelta
+    ) internal view returns (bool isMarketSolvent, int256 delegatedCollateralValue, int256 credit) {
         // establish amount of collateral currently collateralizing outstanding perp markets
         int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
 
         // establish amount of credit needed to collateralize outstanding perp markets
-        int256 credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
+        credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
 
         // calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
 
-        // revert if accumulated credit value exceeds what is currently collateralizing the perp markets
-        if (delegatedCollateralValue < credit) {
-            revert ExceedsMarketCreditCapacity(delegatedCollateralValue, credit);
-        }
+        // Market insolvent delegatedCollateralValue < credit
+        isMarketSolvent = delegatedCollateralValue >= credit;
     }
 
     function utilizationRate(

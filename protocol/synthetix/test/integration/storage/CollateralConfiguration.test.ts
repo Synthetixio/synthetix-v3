@@ -1,6 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assert from 'assert/strict';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
@@ -18,23 +18,33 @@ describe('CollateralConfiguration', function () {
   const initFakeCollateralConfig = async (decimals: number) => {
     [owner] = signers();
 
+    await systems().OracleManager.registerNode(
+      8,
+      ethers.utils.defaultAbiCoder.encode(['uint256'], [1000]),
+      []
+    );
+
+    const nodeId = await systems().OracleManager.getNodeId(
+      8,
+      ethers.utils.defaultAbiCoder.encode(['uint256'], [1000]),
+      []
+    );
+
     const CollateralMock = await hre.ethers.getContractFactory('CollateralMock');
     fakeCollateral = await CollateralMock.deploy();
 
     await fakeCollateral.deployed();
     await fakeCollateral.initialize('token', 'TOKEN', decimals);
     await (
-      await systems()
-        .Core.connect(owner)
-        .configureCollateral({
-          tokenAddress: fakeCollateral.address,
-          oracleNodeId: ethers.utils.formatBytes32String(''),
-          issuanceRatioD18: '5000000000000000000',
-          liquidationRatioD18: '1500000000000000000',
-          liquidationRewardD18: '20000000000000000000',
-          minDelegationD18: '20000000000000000000',
-          depositingEnabled: true,
-        })
+      await systems().Core.connect(owner).configureCollateral({
+        tokenAddress: fakeCollateral.address,
+        oracleNodeId: nodeId,
+        issuanceRatioD18: '5000000000000000000',
+        liquidationRatioD18: '1500000000000000000',
+        liquidationRewardD18: '20000000000000000000',
+        minDelegationD18: '20000000000000000000',
+        depositingEnabled: true,
+      })
     ).wait();
   };
 
@@ -111,6 +121,48 @@ describe('CollateralConfiguration', function () {
         ),
         'InsufficientCollateralRatio("0", "100", "0", "5000000000000000000")',
         systems().Core
+      );
+    });
+  });
+
+  describe('getCollateralPrice', async () => {
+    before('init', async () => {
+      await initFakeCollateralConfig(6);
+    });
+    it('returns the price if there was no error', async () => {
+      const result = await systems().Core.CollateralConfiguration_getCollateralPrice(
+        fakeCollateral.address,
+        100
+      );
+
+      assertBn.equal(result[0], 1000);
+      assert(result[1] === '0x');
+    });
+
+    it('returns error if there was an error', async () => {
+      await (
+        await systems()
+          .Core.connect(owner)
+          .configureCollateral({
+            tokenAddress: fakeCollateral.address,
+            // set to invalid node id
+            oracleNodeId: ethers.utils.formatBytes32String(''),
+            issuanceRatioD18: '5000000000000000000',
+            liquidationRatioD18: '1500000000000000000',
+            liquidationRewardD18: '20000000000000000000',
+            minDelegationD18: '20000000000000000000',
+            depositingEnabled: true,
+          })
+      ).wait();
+      const result = await systems().Core.CollateralConfiguration_getCollateralPrice(
+        fakeCollateral.address,
+        100
+      );
+
+      assertBn.equal(result[0], 0);
+      // unprocessable node hex
+      assert(
+        result[1] === '0x23a9bbc90000000000000000000000000000000000000000000000000000000000000000'
       );
     });
   });
