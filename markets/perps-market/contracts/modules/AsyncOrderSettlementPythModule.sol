@@ -131,7 +131,12 @@ contract AsyncOrderSettlementPythModule is
             // order fees are total fees minus settlement reward
             uint256 orderFees = runtime.totalFees - runtime.settlementReward;
             GlobalPerpsMarketConfiguration.Data storage s = GlobalPerpsMarketConfiguration.load();
-            s.collectFees(orderFees, asyncOrder.request.referrer, factory);
+
+            (runtime.referralFees, runtime.feeCollectorFees) = s.collectFees(
+                orderFees,
+                asyncOrder.request.referrer,
+                factory
+            );
         }
 
         // trader can now commit a new order
