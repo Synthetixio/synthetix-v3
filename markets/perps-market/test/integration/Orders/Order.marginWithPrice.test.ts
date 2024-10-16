@@ -147,7 +147,7 @@ describe('Orders - margin withPrice calculation', () => {
 
       assertBn.equal(orderFillPrice, fillPrice.bn);
 
-      ethPrice = fillPrice;
+      ethPrice = wei(ETH_MARKET_PRICE);
       btcPrice = wei(BTC_MARKET_PRICE);
     } else {
       [orderFees, orderFillPrice] = await systems().PerpsMarket.computeOrderFeesWithPrice(
@@ -166,7 +166,7 @@ describe('Orders - margin withPrice calculation', () => {
       assertBn.equal(orderFillPrice, fillPrice.bn);
 
       ethPrice = wei(ETH_MARKET_PRICE);
-      btcPrice = fillPrice;
+      btcPrice = wei(BTC_MARKET_PRICE);
     }
 
     const { initialMargin: ethInitialMargin, liquidationMargin: ethLiqMargin } = requiredMargins(

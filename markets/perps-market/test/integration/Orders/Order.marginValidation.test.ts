@@ -295,7 +295,7 @@ describe('Orders - margin validation', () => {
       );
 
       const newBtcSize = wei(10);
-      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), BTC);
+      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), BTC_MARKET_PRICE);
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.btc.imRatio,
