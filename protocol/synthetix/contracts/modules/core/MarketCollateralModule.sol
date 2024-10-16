@@ -60,6 +60,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
         collateralEntry.amountD18 += systemAmount;
         collateralType.safeTransferFrom(marketData.marketAddress, address(this), tokenAmount);
 
+        (uint256 depositedCollateralValue, bytes memory possibleError1) = marketData
+            .getDepositedCollateralValue();
+        (uint256 reportedDebt, bytes memory possibleError2) = marketData.getReportedDebt();
+
+        RevertUtil.revertIfError(possibleError1);
+        RevertUtil.revertIfError(possibleError2);
+
         emit MarketCollateralDeposited(
             marketId,
             collateralType,
@@ -67,8 +74,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
             ERC2771Context._msgSender(),
             marketData.creditCapacityD18,
             marketData.netIssuanceD18,
-            marketData.getDepositedCollateralValue(),
-            marketData.getReportedDebt()
+            depositedCollateralValue,
+            reportedDebt
         );
     }
 
@@ -107,9 +114,16 @@ contract MarketCollateralModule is IMarketCollateralModule {
         // Account for transferring out collateral
         collateralEntry.amountD18 -= systemAmount;
 
+        (uint256 depositedCollateralValue, bytes memory possibleError1) = marketData
+            .getDepositedCollateralValue();
+        (uint256 reportedDebt, bytes memory possibleError2) = marketData.getReportedDebt();
+
+        RevertUtil.revertIfError(possibleError1);
+        RevertUtil.revertIfError(possibleError2);
+
         // Ensure that the market is not withdrawing collateral such that it results in a negative getWithdrawableMarketUsd
         int256 newWithdrawableMarketUsd = marketData.creditCapacityD18 +
-            marketData.getDepositedCollateralValue().toInt();
+            depositedCollateralValue.toInt();
         if (newWithdrawableMarketUsd < 0) {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
         }
@@ -124,8 +138,8 @@ contract MarketCollateralModule is IMarketCollateralModule {
             ERC2771Context._msgSender(),
             marketData.creditCapacityD18,
             marketData.netIssuanceD18,
-            marketData.getDepositedCollateralValue(),
-            marketData.getReportedDebt()
+            depositedCollateralValue,
+            reportedDebt
         );
     }
 
@@ -191,7 +205,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
      * @inheritdoc IMarketCollateralModule
      */
     function getMarketCollateralValue(uint128 marketId) external view override returns (uint256) {
-        return Market.load(marketId).getDepositedCollateralValue();
+        (uint256 depositedCollateralValue, bytes memory possibleError) = Market
+            .load(marketId)
+            .getDepositedCollateralValue();
+
+        RevertUtil.revertIfError(possibleError);
+
+        return depositedCollateralValue;
     }
 
     /**

@@ -8,6 +8,7 @@ import "@synthetixio/oracle-manager/contracts/interfaces/INodeModule.sol";
 import "@synthetixio/oracle-manager/contracts/storage/NodeOutput.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/RevertUtil.sol";
 
 import "./OracleManager.sol";
 
@@ -209,17 +210,25 @@ library CollateralConfiguration {
     function getCollateralPrice(
         Data storage self,
         uint256 collateralAmount
-    ) internal view returns (uint256) {
+    ) internal view returns (uint256, bytes memory possibleError) {
         OracleManager.Data memory oracleManager = OracleManager.load();
 
         bytes32[] memory runtimeKeys = new bytes32[](1);
         bytes32[] memory runtimeValues = new bytes32[](1);
         runtimeKeys[0] = bytes32("size");
         runtimeValues[0] = bytes32(collateralAmount);
-        NodeOutput.Data memory node = INodeModule(oracleManager.oracleManagerAddress)
-            .processWithRuntime(self.oracleNodeId, runtimeKeys, runtimeValues);
 
-        return node.price.toUint();
+        try
+            INodeModule(oracleManager.oracleManagerAddress).processWithRuntime(
+                self.oracleNodeId,
+                runtimeKeys,
+                runtimeValues
+            )
+        returns (NodeOutput.Data memory node) {
+            return (node.price.toUint(), "");
+        } catch (bytes memory err) {
+            return (0, err);
+        }
     }
 
     /**
