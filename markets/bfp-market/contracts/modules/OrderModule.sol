@@ -509,6 +509,7 @@ contract OrderModule is IOrderModule {
         uint256 keeperFee = chargeKeeperFee(accountId, marketId);
 
         emit OrderCanceled(accountId, marketId, keeperFee, runtime.order.commitmentTime);
+        delete market.orders[accountId];
     }
 
     function validateNonStaleOrderCancellation(
