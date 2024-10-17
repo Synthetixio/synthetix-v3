@@ -26,7 +26,7 @@ describe('Orders - capped margin validation', () => {
       imRatio: wei(0.02),
       minIm: wei(0.01),
       mmScalar: wei(0.5),
-      liqRatio: wei(0.01),
+      liqRatio: wei(0.0075),
     },
   };
   const liqGuards = {
@@ -190,7 +190,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        wei(2000),
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -289,7 +289,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        wei(2000),
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
