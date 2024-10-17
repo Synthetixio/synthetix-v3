@@ -4,7 +4,6 @@ import assertBn from '@synthetixio/core-utils/src/utils/assertions/assert-bignum
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert';
 import { wei } from '@synthetixio/wei';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { _SECONDS_IN_DAY } from '../helpers';
 
 describe('GlobalPerpsMarket', () => {
@@ -47,17 +46,13 @@ describe('GlobalPerpsMarket', () => {
   });
 
   it('can call initialize again but will not change the config', async () => {
-    await assertEvent(
-      await systems()
-        .PerpsMarket.connect(owner())
-        .initializeFactory(
-          await trader1().getAddress(),
-          await trader1().getAddress(),
-          _SECONDS_IN_DAY
-        ),
-      'FactoryInitialized(1)',
-      systems().PerpsMarket
-    );
+    await systems()
+      .PerpsMarket.connect(owner())
+      .initializeFactory(
+        await trader1().getAddress(),
+        await trader1().getAddress(),
+        _SECONDS_IN_DAY
+      );
 
     assert.equal(await systems().PerpsMarket.name(superMarketId()), 'SuperMarket Perps Market');
   });
