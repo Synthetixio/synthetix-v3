@@ -445,16 +445,19 @@ library PerpsMarket {
             .mulDecimal(PerpsMarketConfiguration.load(self.id).lockedOiRatioD18.toInt());
     }
 
-    function requiredCredit(
-        uint128 marketId,
+    function requiredCredits(
+        uint256[] memory marketIds,
         PerpsPrice.Tolerance tolerance
-    ) internal view returns (uint256) {
-        return
-            PerpsMarket
-                .load(marketId)
+    ) internal view returns (uint256[] memory) {
+        uint256[] memory results = PerpsPrice.getCurrentPrices(marketIds, tolerance);
+
+        for (uint256 i = 0; i < results.length; i++) {
+            results[i] = PerpsMarket
+                .load(marketIds[i].to128())
                 .size
-                .mulDecimal(PerpsPrice.getCurrentPrice(marketId, tolerance))
-                .mulDecimal(PerpsMarketConfiguration.load(marketId).lockedOiRatioD18);
+                .mulDecimal(results[i])
+                .mulDecimal(PerpsMarketConfiguration.load(marketIds[i].to128()).lockedOiRatioD18);
+        }
     }
 
     function accountPosition(

@@ -105,7 +105,7 @@ library GlobalPerpsMarket {
         int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
 
         // establish amount of credit needed to collateralize outstanding perp markets
-        credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
+        credit = minimumCredit(self, PerpsPrice.Tolerance.ONE_MONTH).toInt();
 
         // calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
@@ -154,10 +154,12 @@ library GlobalPerpsMarket {
         PerpsPrice.Tolerance priceTolerance
     ) internal view returns (uint256 accumulatedMinimumCredit) {
         uint256 activeMarketsLength = self.activeMarkets.length();
+        uint256[] memory requiredCredits = PerpsMarket.requiredCredits(
+            self.activeMarkets.values(),
+            priceTolerance
+        );
         for (uint256 i = 1; i <= activeMarketsLength; i++) {
-            uint128 marketId = self.activeMarkets.valueAt(i).to128();
-
-            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId, priceTolerance);
+            accumulatedMinimumCredit += requiredCredits[i];
         }
     }
 
