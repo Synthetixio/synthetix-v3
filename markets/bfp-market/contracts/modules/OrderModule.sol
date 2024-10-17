@@ -557,6 +557,7 @@ contract OrderModule is IOrderModule {
         runtime.isMarketSolvent = PerpMarket.isMarketSolventForCredit(
             market,
             newMinCredit,
+            market.depositedCollateral[addresses.sUsd],
             addresses
         );
 

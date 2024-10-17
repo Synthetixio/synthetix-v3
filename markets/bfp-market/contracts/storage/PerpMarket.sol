@@ -547,10 +547,12 @@ library PerpMarket {
     function isMarketSolventForCredit(
         Data storage self,
         uint256 newMinCredit,
+        uint256 delegatedSusdValue,
         AddressRegistry.Data memory addresses
     ) internal view returns (bool isMarketSolvent) {
         // establish amount of collateral currently collateralizing outstanding perp markets
         int256 delegatedCollateralValue = getDelegatedCollateralValueUsd(self, addresses);
+        delegatedCollateralValue += delegatedSusdValue.toInt();
 
         // Market insolvent delegatedCollateralValue < credit
         isMarketSolvent = delegatedCollateralValue >= newMinCredit.toInt();
