@@ -61,12 +61,12 @@ describe('Orders - margin validation with p/d', () => {
   });
 
   const startingMargin = wei(49_250);
-  before('add margin to account', async () => {
+  before('setup positions and margin', async () => {
+    // Add margin to account
     await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(500_000));
     await systems().PerpsMarket.connect(trader2()).modifyCollateral(3, 0, startingMargin.bn);
-  });
 
-  before('trader1 opens position', async () => {
+    // Trader1 opens position
     await openPosition({
       systems,
       provider,
@@ -97,7 +97,7 @@ describe('Orders - margin validation with p/d', () => {
           liquidationRewardRatio: liqParams.liqRatio,
         },
         newSize,
-        fillPrice,
+        RNDR_PRICE,
         RNDR_SKEW_SCALE
       );
 

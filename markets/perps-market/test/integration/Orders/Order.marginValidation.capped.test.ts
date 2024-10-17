@@ -26,7 +26,7 @@ describe('Orders - capped margin validation', () => {
       imRatio: wei(0.02),
       minIm: wei(0.01),
       mmScalar: wei(0.5),
-      liqRatio: wei(0.01),
+      liqRatio: wei(0.0075),
     },
   };
   const liqGuards = {
@@ -107,7 +107,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        fillPrice,
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -150,11 +150,8 @@ describe('Orders - capped margin validation', () => {
   });
 
   describe('openPosition 1 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(100));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -193,7 +190,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        wei(2000),
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -206,7 +203,7 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         wei(5),
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
@@ -255,11 +252,8 @@ describe('Orders - capped margin validation', () => {
   });
 
   describe('openPosition 2 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(900));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -295,10 +289,11 @@ describe('Orders - capped margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        wei(2000),
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
+      const newBtcSize = wei(10);
       const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), BTC_MARKET_PRICE);
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
@@ -307,8 +302,8 @@ describe('Orders - capped margin validation', () => {
           maintenanceMarginScalar: liqParams.btc.mmScalar,
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
-        wei(10),
-        fillPrice,
+        newBtcSize,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
