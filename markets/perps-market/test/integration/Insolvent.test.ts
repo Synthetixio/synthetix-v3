@@ -1,13 +1,11 @@
 import { PerpsMarket, bn, bootstrapMarkets } from './bootstrap';
-import { calculateInterestRate, openPosition } from './helpers';
+import { calculateInterestRate, openPosition, _SECONDS_IN_DAY } from './helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-
-const _SECONDS_IN_DAY = 24 * 60 * 60;
 
 const _TRADER_SIZE = wei(200);
 const _ETH_PRICE = wei(2000);
@@ -89,7 +87,6 @@ describe('Insolvent test', () => {
       1,
       systems().CollateralMock.address
     );
-    console.log(currentCollateralAmount);
     // very low amount to make market insolvent
     await systems()
       .Core.connect(staker())

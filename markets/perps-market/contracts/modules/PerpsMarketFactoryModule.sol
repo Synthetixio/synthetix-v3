@@ -42,7 +42,8 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
      */
     function initializeFactory(
         ISynthetixSystem synthetix,
-        ISpotMarketSystem spotMarket
+        ISpotMarketSystem spotMarket,
+        uint32 minDelegationTime
     ) external override returns (uint128) {
         OwnableStorage.onlyOwner();
 
@@ -50,7 +51,7 @@ contract PerpsMarketFactoryModule is IPerpsMarketFactoryModule {
 
         uint128 perpsMarketId;
         if (factory.perpsMarketId == 0) {
-            perpsMarketId = factory.initialize(synthetix, spotMarket);
+            perpsMarketId = factory.initialize(synthetix, spotMarket, minDelegationTime);
 
             emit FactoryInitialized(perpsMarketId);
         } else {
