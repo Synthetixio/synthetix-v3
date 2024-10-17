@@ -236,4 +236,11 @@ interface IGlobalPerpsMarketModule {
      * @dev InterestRateUpdated event is emitted
      */
     function updateInterestRate() external;
+
+    /**
+     * @notice Updates the minimum delegation time for a market.
+     * @param marketId Market to update
+     * @param minDelegationTime Minimum delegation time in seconds
+     */
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external;
 }

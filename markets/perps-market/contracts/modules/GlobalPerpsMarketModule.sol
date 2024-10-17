@@ -15,6 +15,7 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {ISynthetixSystem} from "../interfaces/external/ISynthetixSystem.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -25,6 +26,12 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SetUtil for SetUtil.UintSet;
     using KeeperCosts for KeeperCosts.Data;
+
+    address immutable SYNTHETIX_CORE;
+
+    constructor(address _synthetix) {
+        SYNTHETIX_CORE = _synthetix;
+    }
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
@@ -270,5 +277,13 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         (uint128 interestRate, ) = InterestRate.update(PerpsPrice.Tolerance.DEFAULT);
 
         emit InterestRateUpdated(PerpsMarketFactory.load().perpsMarketId, interestRate);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function setMinDelegationTime(uint128 marketId, uint32 minDelegationTime) external {
+        OwnableStorage.onlyOwner();
+        ISynthetixSystem(SYNTHETIX_CORE).setMarketMinDelegateTime(marketId, minDelegationTime);
     }
 }
