@@ -174,7 +174,7 @@ contract AsyncOrderSettlementPythModule is
     /// @dev Emit settlement events in a helper function to reduce stack depth
     function _emitSettlementEvents(
         SettleOrderRuntime memory runtime,
-        AsyncOrder.Data storage asyncOrder
+        AsyncOrder.Data memory asyncOrder
     ) internal {
         emit InterestCharged(runtime.accountId, runtime.chargedInterest);
 
