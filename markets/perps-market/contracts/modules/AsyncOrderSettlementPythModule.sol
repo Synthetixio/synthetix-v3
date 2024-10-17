@@ -10,6 +10,7 @@ import {Flags} from "../utils/Flags.sol";
 import {PerpsMarket} from "../storage/PerpsMarket.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Position} from "../storage/Position.sol";
+import {MarketUpdate} from "../storage/MarketUpdate.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
@@ -82,6 +83,10 @@ contract AsyncOrderSettlementPythModule is
 
         Position.Data storage oldPosition;
 
+        // Load the market before settlement to capture the original market size
+        PerpsMarket.Data storage market = PerpsMarket.loadValid(runtime.marketId);
+        uint256 originalMarketSize = market.size;
+
         // validate order request can be settled; call reverts if not
         (runtime.newPosition, runtime.totalFees, runtime.fillPrice, oldPosition) = asyncOrder
             .validateRequest(settlementStrategy, price);
@@ -103,41 +108,74 @@ contract AsyncOrderSettlementPythModule is
         emit AccountCharged(runtime.accountId, runtime.chargedAmount, perpsAccount.debt);
 
         // only update position state after pnl has been realized
-        runtime.updateData = PerpsMarket.loadValid(runtime.marketId).updatePositionData(
-            runtime.accountId,
-            runtime.newPosition
-        );
+        runtime.updateData = _processPositionUpdate(price, runtime, market, originalMarketSize);
         perpsAccount.updateOpenPositions(runtime.marketId, runtime.newPosition.size);
-
-        emit MarketUpdated(
-            runtime.updateData.marketId,
-            price,
-            runtime.updateData.skew,
-            runtime.updateData.size,
-            runtime.sizeDelta,
-            runtime.updateData.currentFundingRate,
-            runtime.updateData.currentFundingVelocity,
-            runtime.updateData.interestRate
-        );
 
         runtime.settlementReward = AsyncOrder.settlementRewardCost(settlementStrategy);
 
+        // Process fees
+        _processFees(runtime, asyncOrder, factory);
+
+        // Emit events in a helper function
+        _emitSettlementEvents(runtime, asyncOrder);
+
+        // Reset the async order
+        asyncOrder.reset();
+    }
+
+    /// @dev Updates the position and market data
+    function _processPositionUpdate(
+        uint256 price,
+        SettleOrderRuntime memory runtime,
+        PerpsMarket.Data storage market,
+        uint256 originalMarketSize
+    ) internal returns (MarketUpdate.Data memory) {
+        // Update position data
+        MarketUpdate.Data memory updateData = market.updatePositionData(
+            runtime.accountId,
+            runtime.newPosition
+        );
+
+        // Calculate the market size delta (change in market size)
+        int256 marketSizeDelta = market.size.toInt() - originalMarketSize.toInt();
+
+        // Emit MarketUpdated event
+        emit MarketUpdated(
+            updateData.marketId,
+            price,
+            updateData.skew,
+            market.size,
+            marketSizeDelta,
+            updateData.currentFundingRate,
+            updateData.currentFundingVelocity,
+            updateData.interestRate
+        );
+
+        return updateData;
+    }
+
+    /// @dev Processes the order fees and settlement rewards
+    function _processFees(
+        SettleOrderRuntime memory runtime,
+        AsyncOrder.Data storage asyncOrder,
+        PerpsMarketFactory.Data storage factory
+    ) internal {
         // if settlement reward is non-zero, pay keeper
         if (runtime.settlementReward > 0) {
             factory.withdrawMarketUsd(ERC2771Context._msgSender(), runtime.settlementReward);
         }
 
-        {
-            // order fees are total fees minus settlement reward
-            uint256 orderFees = runtime.totalFees - runtime.settlementReward;
-            GlobalPerpsMarketConfiguration.Data storage s = GlobalPerpsMarketConfiguration.load();
-            s.collectFees(orderFees, asyncOrder.request.referrer, factory);
-        }
+        // order fees are total fees minus settlement reward
+        uint256 orderFees = runtime.totalFees - runtime.settlementReward;
+        GlobalPerpsMarketConfiguration.Data storage s = GlobalPerpsMarketConfiguration.load();
+        s.collectFees(orderFees, asyncOrder.request.referrer, factory);
+    }
 
-        // trader can now commit a new order
-        asyncOrder.reset();
-
-        /// @dev two events emitted to avoid stack limitations
+    /// @dev Emit settlement events in a helper function to reduce stack depth
+    function _emitSettlementEvents(
+        SettleOrderRuntime memory runtime,
+        AsyncOrder.Data memory asyncOrder
+    ) internal {
         emit InterestCharged(runtime.accountId, runtime.chargedInterest);
 
         emit OrderSettled(
