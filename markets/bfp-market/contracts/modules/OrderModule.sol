@@ -539,13 +539,12 @@ contract OrderModule is IOrderModule {
         });
 
         Position.Data storage oldPosition = market.positions[runtime.accountId];
-        PerpMarket.Data storage perpMarketData = PerpMarket.load(runtime.marketId);
 
         int128 newPositionSize = oldPosition.size + runtime.order.sizeDelta;
 
         // lockedCreditDelta is the change in credit that would be locked if the order was filled
         uint256 newMinCredit = PerpMarket.getMinimumCreditWithPositionSize(
-            perpMarketData,
+            market,
             marketConfig,
             pythPrice,
             (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
@@ -555,7 +554,7 @@ contract OrderModule is IOrderModule {
 
         // checks if the market would be solvent with this new credit delta
         runtime.isMarketSolvent = PerpMarket.isMarketSolventForCredit(
-            perpMarketData,
+            market,
             newMinCredit,
             addresses
         );
