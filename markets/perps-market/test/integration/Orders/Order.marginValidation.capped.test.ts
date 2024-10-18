@@ -26,7 +26,7 @@ describe('Orders - capped margin validation', () => {
       imRatio: wei(0.02),
       minIm: wei(0.01),
       mmScalar: wei(0.5),
-      liqRatio: wei(0.0075),
+      liqRatio: wei(0.01),
     },
   };
   const liqGuards = {
