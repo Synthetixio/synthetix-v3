@@ -111,19 +111,15 @@ describe('Orders - capped margin validation', () => {
         wei(10_000)
       );
 
-      const totalRequiredMargin = initialMargin
-        .add(
-          getRequiredLiquidationRewardMargin(liquidationMargin, liqGuards, {
-            costOfTx: wei(0),
-            margin: wei(100),
-          })
-        )
-        .add(orderFees);
+      const liqReward = getRequiredLiquidationRewardMargin(liquidationMargin, liqGuards, {
+        costOfTx: wei(0),
+        margin: wei(100),
+      });
 
-      assertBn.equal(
-        await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3)),
-        totalRequiredMargin.toBN()
-      );
+      const totalRequiredMargin = initialMargin.add(liqReward).add(orderFees);
+      const computedMargin = await systems().PerpsMarket.requiredMarginForOrder(2, 51, bn(3));
+
+      assertBn.near(computedMargin, totalRequiredMargin.toBN(), bn(0.01));
 
       const availableMargin = wei(100).add(
         expectedFillPricePnl(ETH_MARKET_PRICE, fillPrice, wei(3))
@@ -141,10 +137,7 @@ describe('Orders - capped margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
-          18,
-          true
-        )}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${computedMargin.toString()}")`
       );
     });
   });

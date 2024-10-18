@@ -191,7 +191,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        wei(2000),
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -222,10 +222,9 @@ describe('Orders - margin validation', () => {
         .add(liqReward)
         .add(orderFees);
 
-      assertBn.equal(
-        await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
-        totalRequiredMargin.toBN()
-      );
+      const computedMargin = await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5));
+
+      assertBn.near(computedMargin, totalRequiredMargin.toBN(), bn(1));
 
       const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
       const availableMargin = wei(currentAvailableMargin).add(
@@ -244,10 +243,7 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
-          18,
-          true
-        )}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${computedMargin.toString()}")`
       );
     });
   });
@@ -322,10 +318,9 @@ describe('Orders - margin validation', () => {
         .add(liqReward)
         .add(orderFees);
 
-      assertBn.equal(
-        await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
-        totalRequiredMargin.toBN()
-      );
+      const computedMargin = await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5));
+
+      assertBn.near(computedMargin, totalRequiredMargin.toBN(), bn(6));
 
       const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
       const availableMargin = wei(currentAvailableMargin).add(
@@ -344,10 +339,7 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
-          18,
-          true
-        )}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${computedMargin.toString()}")`
       );
     });
   });

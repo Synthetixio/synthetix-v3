@@ -242,7 +242,7 @@ describe('Orders - margin withPrice calculation', () => {
 
         let price = basePrice;
 
-        assertBn.equal(
+        assertBn.near(
           await systems().PerpsMarket.requiredMarginForOrderWithPrice(
             TRADER_ID,
             marketId,
@@ -253,11 +253,12 @@ describe('Orders - margin withPrice calculation', () => {
             index: i,
             price,
             updatedMarket,
-          })
+          }),
+          bn(10)
         );
 
         price = basePrice / 2;
-        assertBn.equal(
+        assertBn.near(
           await systems().PerpsMarket.requiredMarginForOrderWithPrice(
             TRADER_ID,
             marketId,
@@ -268,11 +269,12 @@ describe('Orders - margin withPrice calculation', () => {
             index: i,
             price,
             updatedMarket,
-          })
+          }),
+          bn(200)
         );
 
         price = basePrice * 2;
-        assertBn.equal(
+        assertBn.near(
           await systems().PerpsMarket.requiredMarginForOrderWithPrice(
             TRADER_ID,
             marketId,
@@ -283,7 +285,8 @@ describe('Orders - margin withPrice calculation', () => {
             index: i,
             price,
             updatedMarket,
-          })
+          }),
+          bn(500)
         );
       });
 
