@@ -25,6 +25,7 @@ contract PoolModule is IPoolModule {
     using DecimalMath for uint256;
     using Pool for Pool.Data;
     using Market for Market.Data;
+    using Vault for Vault.Data;
 
     bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
 
@@ -303,6 +304,34 @@ contract PoolModule is IPoolModule {
      */
     function getPoolName(uint128 poolId) external view override returns (string memory poolName) {
         return Pool.load(poolId).name;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function getAccountMinDelegateTime(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view returns (uint64 minDelegateTime) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        // Identify the vault that corresponds to this collateral type and pool id.
+        Vault.Data storage vault = pool.vaults[collateralType];
+        uint64 lastDelegationTime = vault.currentEpoch().lastDelegationTime[accountId];
+        uint32 requiredMinDelegationTime = pool.getRequiredMinDelegationTime();
+        minDelegateTime = lastDelegationTime + requiredMinDelegationTime;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function getPoolMinConfigurationTime(
+        uint128 poolId
+    ) external view returns (uint64 minConfigurationTime) {
+        // Identify the vault that corresponds to this collateral type and pool id.
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        uint32 requiredMinDelegationTime = pool.getRequiredMinDelegationTime();
+        minConfigurationTime = pool.lastConfigurationTime + requiredMinDelegationTime;
     }
 
     /**
