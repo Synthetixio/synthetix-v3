@@ -31,23 +31,23 @@ export default function test(): void {
     now + 2000
   );
   handlePermissionRevoked(newPermissionRevokedEvent);
-  assert.fieldEquals('AccountPermissionUsers', `1-${address}`, 'address', address);
+  assert.fieldEquals('AccountPermissionUser', `1-${address}`, 'address', address);
   assert.fieldEquals('Account', '1', 'permissions', `[1-${address}]`);
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'created_at',
     (now + 1000).toString()
   );
-  assert.fieldEquals('AccountPermissionUsers', `1-${address}`, 'created_at_block', now.toString());
+  assert.fieldEquals('AccountPermissionUser', `1-${address}`, 'created_at_block', now.toString());
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'updated_at',
     (now + 3000).toString()
   );
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'updated_at_block',
     (now + 2000).toString()
@@ -57,7 +57,7 @@ export default function test(): void {
   assert.fieldEquals('Account', '1', 'updated_at', (now + 3000).toString());
   assert.fieldEquals('Account', '1', 'updated_at_block', (now + 2000).toString());
   assert.notInStore(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     Bytes.fromByteArray(ByteArray.fromHexString(Address.fromString(address).toHex())).toString()
   );
 }
