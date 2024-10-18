@@ -27,6 +27,7 @@ library PerpsMarketFactory {
 
     bytes32 private constant _SLOT_PERPS_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.perps-market.PerpsMarketFactory"));
+    uint32 constant DEFAULT_MIN_DELEGATE_TIME = 24 hours; // 86400 seconds
 
     error PerpsMarketNotInitialized();
     error PerpsMarketAlreadyInitialized();
@@ -72,12 +73,19 @@ library PerpsMarketFactory {
     function initialize(
         Data storage self,
         ISynthetixSystem synthetix,
-        ISpotMarketSystem spotMarket
+        ISpotMarketSystem spotMarket,
+        uint32 minDelegationTime
     ) internal returns (uint128 perpsMarketId) {
         onlyIfNotInitialized(self); // redundant check, but kept here in case this internal is called somewhere else
 
         (address usdTokenAddress, ) = synthetix.getAssociatedSystem("USDToken");
         perpsMarketId = synthetix.registerMarket(address(this));
+
+        if (minDelegationTime > 0) {
+            synthetix.setMarketMinDelegateTime(perpsMarketId, minDelegationTime);
+        } else {
+            synthetix.setMarketMinDelegateTime(perpsMarketId, DEFAULT_MIN_DELEGATE_TIME);
+        }
 
         self.spotMarket = spotMarket;
         self.synthetix = synthetix;

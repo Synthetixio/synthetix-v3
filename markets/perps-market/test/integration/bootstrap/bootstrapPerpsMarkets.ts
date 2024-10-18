@@ -4,6 +4,8 @@ import { ethers } from 'ethers';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
 import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { bootstrapSynthMarkets } from '@synthetixio/spot-market/test/common';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { _SECONDS_IN_DAY } from '../helpers';
 
 export type PerpsMarket = {
   marketId: () => ethers.BigNumber;
@@ -86,14 +88,17 @@ export const bootstrapPerpsMarkets = (
     // create super market
     superMarketId = await contracts.PerpsMarket.callStatic.initializeFactory(
       contracts.Core.address,
-      contracts.SpotMarket.address
+      contracts.SpotMarket.address,
+      _SECONDS_IN_DAY
     );
     await contracts.PerpsMarket.initializeFactory(
       contracts.Core.address,
-      contracts.SpotMarket.address
+      contracts.SpotMarket.address,
+      _SECONDS_IN_DAY
     );
 
     await contracts.PerpsMarket.connect(r.owner()).setPerpsMarketName('SuperMarket');
+    await fastForwardTo((await getTime(r.provider())) + _SECONDS_IN_DAY + 10, r.provider());
     await contracts.Core.connect(r.owner()).setPoolConfiguration(r.poolId, [
       {
         marketId: superMarketId,
