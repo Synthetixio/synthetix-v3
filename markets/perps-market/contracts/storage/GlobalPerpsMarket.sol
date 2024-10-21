@@ -158,7 +158,7 @@ library GlobalPerpsMarket {
             self.activeMarkets.values(),
             priceTolerance
         );
-        for (uint256 i = 1; i <= activeMarketsLength; i++) {
+        for (uint256 i = 0; i < activeMarketsLength; i++) {
             accumulatedMinimumCredit += requiredCredits[i];
         }
     }
