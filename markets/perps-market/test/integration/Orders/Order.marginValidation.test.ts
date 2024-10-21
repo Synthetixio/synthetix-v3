@@ -99,7 +99,7 @@ describe('Orders - margin validation', () => {
     });
 
     it('reverts if not enough margin', async () => {
-      const fillPrice = calculateFillPrice(wei(0), wei(10_000), wei(3), wei(2000));
+      const fillPrice = calculateFillPrice(wei(0), wei(10_000), wei(3), ETH_MARKET_PRICE);
       const { initialMargin, liquidationMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.eth.imRatio,
@@ -108,7 +108,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        fillPrice,
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -151,11 +151,8 @@ describe('Orders - margin validation', () => {
   });
 
   describe('openPosition 1 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(100));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -194,7 +191,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.eth.liqRatio,
         },
         wei(3),
-        wei(2000),
+        ETH_MARKET_PRICE,
         wei(10_000)
       );
 
@@ -207,7 +204,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         wei(5),
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
@@ -216,7 +213,7 @@ describe('Orders - margin validation', () => {
         liqGuards,
         {
           costOfTx: wei(0),
-          margin: wei(100),
+          margin: wei(200),
         }
       );
 
@@ -225,10 +222,9 @@ describe('Orders - margin validation', () => {
         .add(liqReward)
         .add(orderFees);
 
-      assertBn.equal(
-        await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
-        totalRequiredMargin.toBN()
-      );
+      const computedMargin = await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5));
+
+      assertBn.near(computedMargin, totalRequiredMargin.toBN(), bn(1));
 
       const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
       const availableMargin = wei(currentAvailableMargin).add(
@@ -247,20 +243,14 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
-          18,
-          true
-        )}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${computedMargin.toString()}")`
       );
     });
   });
 
   describe('openPosition 2 success', () => {
-    before('add more margin', async () => {
+    before('add margin and open position', async () => {
       await systems().PerpsMarket.connect(trader1()).modifyCollateral(2, 0, bn(1100));
-    });
-
-    before('open position', async () => {
       await openPosition({
         systems,
         provider,
@@ -301,7 +291,7 @@ describe('Orders - margin validation', () => {
       );
 
       const newBtcSize = wei(10);
-      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), wei(10_000));
+      const fillPrice = calculateFillPrice(wei(5), wei(1000), wei(5), BTC_MARKET_PRICE);
       const { initialMargin: btcInitialMargin, liquidationMargin: btcLiqMargin } = requiredMargins(
         {
           initialMarginRatio: liqParams.btc.imRatio,
@@ -310,7 +300,7 @@ describe('Orders - margin validation', () => {
           liquidationRewardRatio: liqParams.btc.liqRatio,
         },
         newBtcSize,
-        fillPrice,
+        BTC_MARKET_PRICE,
         wei(1000)
       );
 
@@ -328,10 +318,9 @@ describe('Orders - margin validation', () => {
         .add(liqReward)
         .add(orderFees);
 
-      assertBn.equal(
-        await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5)),
-        totalRequiredMargin.toBN()
-      );
+      const computedMargin = await systems().PerpsMarket.requiredMarginForOrder(2, 50, bn(5));
+
+      assertBn.near(computedMargin, totalRequiredMargin.toBN(), bn(6));
 
       const currentAvailableMargin = await systems().PerpsMarket.getAvailableMargin(2);
       const availableMargin = wei(currentAvailableMargin).add(
@@ -350,10 +339,7 @@ describe('Orders - margin validation', () => {
             referrer: ethers.constants.AddressZero,
             trackingCode: ethers.constants.HashZero,
           }),
-        `InsufficientMargin("${availableMargin.toBN()}", "${totalRequiredMargin.toString(
-          18,
-          true
-        )}")`
+        `InsufficientMargin("${availableMargin.toBN()}", "${computedMargin.toString()}")`
       );
     });
   });

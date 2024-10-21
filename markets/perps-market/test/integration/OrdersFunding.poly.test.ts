@@ -1,11 +1,9 @@
 import { PerpsMarket, bn, bootstrapMarkets } from './bootstrap';
-import { calculateFillPrice, openPosition } from './helpers';
+import { calculateFillPrice, openPosition, _SECONDS_IN_DAY } from './helpers';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-
-const _SECONDS_IN_DAY = 24 * 60 * 60;
 
 const _SKEW_SCALE = bn(10_000);
 const _TRADER_SIZE = bn(20);
