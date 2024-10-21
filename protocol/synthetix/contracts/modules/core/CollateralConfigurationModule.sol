@@ -69,10 +69,11 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      * @inheritdoc ICollateralConfigurationModule
      */
     function getCollateralPrice(address collateralType) external view override returns (uint256) {
-        return
-            CollateralConfiguration.getCollateralPrice(
-                CollateralConfiguration.load(collateralType),
-                DecimalMath.UNIT
-            );
+        (uint256 collateralPriceD18, bytes memory possibleError) = CollateralConfiguration
+            .getCollateralPrice(CollateralConfiguration.load(collateralType), DecimalMath.UNIT);
+
+        RevertUtil.revertIfError(possibleError);
+
+        return collateralPriceD18;
     }
 }

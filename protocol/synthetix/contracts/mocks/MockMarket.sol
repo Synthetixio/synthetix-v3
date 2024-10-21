@@ -13,6 +13,7 @@ contract MockMarket is IMarket {
     using DecimalMath for uint256;
 
     uint256 private _reportedDebt;
+    string private _reportedDebtFailure;
     uint256 private _locked;
     uint256 private _price;
 
@@ -82,11 +83,18 @@ contract MockMarket is IMarket {
         _reportedDebt = newReportedDebt;
     }
 
+    function setReportedDebtFailure(string memory error) external {
+        _reportedDebtFailure = error;
+    }
+
     function setLocked(uint256 newLocked) external {
         _locked = newLocked;
     }
 
     function reportedDebt(uint128) external view override returns (uint256) {
+        if (keccak256(bytes(_reportedDebtFailure)) != keccak256("")) {
+            revert(_reportedDebtFailure);
+        }
         return _reportedDebt;
     }
 
