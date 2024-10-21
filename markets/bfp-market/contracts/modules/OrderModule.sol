@@ -547,7 +547,7 @@ contract OrderModule is IOrderModule {
         uint256 newMinCredit = PerpMarket.getMinimumCreditWithPositionSize(
             market,
             marketConfig,
-            pythPrice,
+            market.getOraclePrice(addresses),
             (MathUtil.abs(newPositionSize).toInt() - MathUtil.abs(oldPosition.size).toInt())
                 .to128(),
             addresses
