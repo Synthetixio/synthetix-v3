@@ -448,8 +448,8 @@ library PerpsMarket {
     function requiredCredits(
         uint256[] memory marketIds,
         PerpsPrice.Tolerance tolerance
-    ) internal view returns (uint256[] memory) {
-        uint256[] memory results = PerpsPrice.getCurrentPrices(marketIds, tolerance);
+    ) internal view returns (uint256[] memory results) {
+        results = PerpsPrice.getCurrentPrices(marketIds, tolerance);
 
         for (uint256 i = 0; i < results.length; i++) {
             results[i] = PerpsMarket
