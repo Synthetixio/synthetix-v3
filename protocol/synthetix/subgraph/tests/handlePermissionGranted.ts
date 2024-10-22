@@ -11,22 +11,22 @@ export default function test(): void {
   const newPermissionGrantedEvent = createPermissionGrantedEvent(1, address, 1234, now + 1000, now);
   handleAccountCreated(newAccountCreatedEvent);
   handlePermissionGranted(newPermissionGrantedEvent);
-  assert.fieldEquals('AccountPermissionUsers', `1-${address}`, 'id', `1-${address}`);
+  assert.fieldEquals('AccountPermissionUser', `1-${address}`, 'id', `1-${address}`);
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'permissions',
     `[${Bytes.fromByteArray(Bytes.fromI64(1234)).toHex()}]`
   );
-  assert.fieldEquals('AccountPermissionUsers', `1-${address}`, 'address', address);
-  assert.fieldEquals('AccountPermissionUsers', `1-${address}`, 'account', '1');
+  assert.fieldEquals('AccountPermissionUser', `1-${address}`, 'address', address);
+  assert.fieldEquals('AccountPermissionUser', `1-${address}`, 'account', '1');
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'created_at',
     (now + 1000).toString()
   );
-  assert.fieldEquals('AccountPermissionUsers', `1-${address}`, 'created_at_block', now.toString());
+  assert.fieldEquals('AccountPermissionUser', `1-${address}`, 'created_at_block', now.toString());
   assert.fieldEquals('Account', '1', 'permissions', `[1-${address}]`);
   assert.fieldEquals('Account', '1', 'created_at', now.toString());
   assert.fieldEquals('Account', '1', 'created_at_block', (now - 1000).toString());
@@ -42,7 +42,7 @@ export default function test(): void {
   );
   handlePermissionGranted(newPermissionGrantedEvent2);
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'permissions',
     `[${Bytes.fromByteArray(Bytes.fromI64(1234)).toHex()}, ${Bytes.fromByteArray(
@@ -52,13 +52,13 @@ export default function test(): void {
   assert.fieldEquals('Account', '1', 'updated_at_block', (now + 1000).toString());
   assert.fieldEquals('Account', '1', 'updated_at', (now + 2000).toString());
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'updated_at_block',
     (now + 1000).toString()
   );
   assert.fieldEquals(
-    'AccountPermissionUsers',
+    'AccountPermissionUser',
     `1-${address}`,
     'updated_at',
     (now + 2000).toString()
