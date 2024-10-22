@@ -42,4 +42,8 @@ library MathUtil {
     function sameSide(int256 a, int256 b) internal pure returns (bool) {
         return (a == 0) || (b == 0) || (a > 0) == (b > 0);
     }
+
+    function isSameSideReducing(int128 a, int128 b) internal pure returns (bool) {
+        return sameSide(a, b) && abs(b) < abs(a);
+    }
 }
