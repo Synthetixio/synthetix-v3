@@ -1,12 +1,11 @@
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { calculateInterestRate, openPosition } from '../helpers';
+import { calculateInterestRate, openPosition, _SECONDS_IN_DAY } from '../helpers';
 import Wei, { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-const _SECONDS_IN_DAY = 24 * 60 * 60;
 const _SECONDS_IN_YEAR = 31557600;
 
 const _TRADER_SIZE = wei(20);
@@ -248,6 +247,7 @@ describe('Position - interest rates', () => {
     });
 
     before('undelegate 10%', async () => {
+      await fastForwardTo((await getTime(provider())) + _SECONDS_IN_DAY + 10, provider());
       const currentCollateralAmount = await systems().Core.getPositionCollateral(
         1,
         1,

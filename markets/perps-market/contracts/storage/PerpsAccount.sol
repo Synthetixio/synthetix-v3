@@ -536,7 +536,7 @@ library PerpsAccount {
         uint256 costOfLiquidation = keeperCosts.getLiquidateKeeperCosts();
         uint256 liquidateAndFlagCost = globalConfig.keeperReward(
             accumulatedLiquidationRewards,
-            costOfFlagging,
+            costOfFlagging + costOfLiquidation,
             getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT, false)
         );
         uint256 liquidateWindowsCosts = numOfWindows == 0
