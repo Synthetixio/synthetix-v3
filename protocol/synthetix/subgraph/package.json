@@ -25,7 +25,7 @@
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.81.0",
     "@graphprotocol/graph-ts": "^0.35.1",
-    "@usecannon/cli": "2.18.2",
+    "@usecannon/cli": "2.18.3",
     "ethers": "^5.7.2",
     "matchstick-as": "^0.6.0",
     "prettier": "^3.2.5"
