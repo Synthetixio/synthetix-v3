@@ -585,11 +585,9 @@ describe('OrderModule Cancellations', () => {
       const canceledEvent = findEventSafe(receipt, 'OrderCanceled', BfpMarketProxy);
       const keeperFee = canceledEvent!.args.keeperFee;
 
-      await assertEvents(
+      await assertEvent(
         receipt,
-        [
-          `OrderCanceled(${trader.accountId}, ${marketId}, ${keeperFee}, ${orderDigestBefore.commitmentTime})`,
-        ],
+        `OrderCanceled(${trader.accountId}, ${marketId}, ${keeperFee}, ${orderDigestBefore.commitmentTime})`,
         BfpMarketProxy
       );
     });
