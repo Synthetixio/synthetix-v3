@@ -82,7 +82,7 @@ library GlobalPerpsMarket {
 
     /**
      * @notice assert the locked credit delta does not exceed market capacity
-     * @dev reverts if applying the delta exceeds the market's credit capacity
+     * @dev reverts if applying the delta exceeds the markets credit capacity
      * @param self reference to the global perps market data
      * @param lockedCreditDelta the proposed change in credit to be validated
      */
@@ -102,10 +102,10 @@ library GlobalPerpsMarket {
         int256 lockedCreditDelta
     ) internal view returns (bool isMarketSolvent, int256 delegatedCollateralValue, int256 credit) {
         // establish amount of collateral currently collateralizing outstanding perp markets
-        int256 delegatedCollateralValue = getDelegatedCollateralValue(self);
+        delegatedCollateralValue = getDelegatedCollateralValue(self);
 
         // establish amount of credit needed to collateralize outstanding perp markets
-        credit = minimumCredit(self, PerpsPrice.Tolerance.DEFAULT).toInt();
+        credit = minimumCredit(self, PerpsPrice.Tolerance.ONE_MONTH).toInt();
 
         // calculate new accumulated credit following the addition of the new locked credit
         credit += lockedCreditDelta;
@@ -153,11 +153,13 @@ library GlobalPerpsMarket {
         Data storage self,
         PerpsPrice.Tolerance priceTolerance
     ) internal view returns (uint256 accumulatedMinimumCredit) {
-        uint256 activeMarketsLength = self.activeMarkets.length();
-        for (uint256 i = 1; i <= activeMarketsLength; i++) {
-            uint128 marketId = self.activeMarkets.valueAt(i).to128();
-
-            accumulatedMinimumCredit += PerpsMarket.requiredCredit(marketId, priceTolerance);
+        uint256[] memory activeMarkets = self.activeMarkets.values();
+        uint256[] memory requiredCredits = PerpsMarket.requiredCredits(
+            activeMarkets,
+            priceTolerance
+        );
+        for (uint256 i = 0; i < activeMarkets.length; i++) {
+            accumulatedMinimumCredit += requiredCredits[i];
         }
     }
 

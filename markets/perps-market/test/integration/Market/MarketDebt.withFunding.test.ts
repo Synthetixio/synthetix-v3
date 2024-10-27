@@ -1,11 +1,12 @@
 import { fastForwardTo, getTxTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { PerpsMarket, bn, bootstrapMarkets } from '../bootstrap';
-import { depositCollateral, openPosition, _SECONDS_IN_DAY } from '../helpers';
+import { depositCollateral, openPosition } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
 const _SKEW_SCALE = bn(25_000);
 const _MAX_FUNDING_VELOCITY = bn(3);
+const _SECONDS_IN_DAY = 24 * 60 * 60;
 
 const interestRateParams = {
   lowUtilGradient: bn(0.0003),

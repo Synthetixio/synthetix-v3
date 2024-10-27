@@ -566,12 +566,30 @@ describe('OrderModule Cancellations', () => {
       const { publishTime, settlementTime } = await getFastForwardTimestamp(bs, marketId, trader);
       await fastForwardTo(settlementTime, provider());
 
+      const orderDigestBefore = await BfpMarketProxy.getOrderDigest(trader.accountId, marketId);
+      assertBn.equal(orderDigestBefore.sizeDelta, order.sizeDelta);
+
+      // Forces market insolvency
       await setMarketConfigurationById(bs, marketId, {
-        minCreditPercent: bn(1000),
+        minCreditPercent: bn(9999000),
       });
 
       const { updateData } = await getPythPriceDataByMarketId(bs, marketId, publishTime);
-      await BfpMarketProxy.connect(keeper()).cancelOrder(trader.accountId, marketId, updateData);
+
+      const { receipt } = await withExplicitEvmMine(
+        () =>
+          BfpMarketProxy.connect(trader.signer).cancelOrder(trader.accountId, marketId, updateData),
+        provider()
+      );
+
+      const canceledEvent = findEventSafe(receipt, 'OrderCanceled', BfpMarketProxy);
+      const keeperFee = canceledEvent!.args.keeperFee;
+
+      await assertEvent(
+        receipt,
+        `OrderCanceled(${trader.accountId}, ${marketId}, ${keeperFee}, ${orderDigestBefore.commitmentTime})`,
+        BfpMarketProxy
+      );
     });
   });
 });

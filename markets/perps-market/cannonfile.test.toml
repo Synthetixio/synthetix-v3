@@ -68,7 +68,6 @@ salt = "<%= settings.salt %>"
 
 [contract.GlobalPerpsMarketModule]
 artifact = "GlobalPerpsMarketModule"
-args = ["<%= imports.synthetix.contracts.CoreProxy.address %>"]
 
 # Core
 [router.PerpsMarketRouter]
