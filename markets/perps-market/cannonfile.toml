@@ -25,6 +25,9 @@ defaultValue = "synthetix-spot-market:latest"
 [setting.salt]
 defaultValue = "snax"
 
+[setting.minDelegationTime]
+defaultValue = "0"
+
 [import.synthetix]
 source = "<%= settings.synthetixPackage %>"
 preset = "<%= settings.synthetixPreset %>"
@@ -145,6 +148,7 @@ func = "initializeFactory"
 args = [
     "<%= imports.synthetix.contracts.CoreProxy.address %>",
     "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
+    "<%= settings.minDelegationTime %>",
 ]
 fromCall.func = "owner"
 extra.superMarketId.event = "FactoryInitialized"
