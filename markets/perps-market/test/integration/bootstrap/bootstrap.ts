@@ -20,8 +20,6 @@ import {
 import { createKeeperCostNode } from './createKeeperCostNode';
 import { MockGasPriceNode } from '../../../typechain-types/contracts/mocks/MockGasPriceNode';
 import { MockPythERC7412Wrapper } from '../../../typechain-types/contracts/mocks/MockPythERC7412Wrapper';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { _SECONDS_IN_DAY } from '../helpers';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -171,7 +169,6 @@ export function bootstrapMarkets(data: BootstrapArgs) {
       weightD18: ethers.utils.parseEther('1'),
       maxDebtShareValueD18: ethers.utils.parseEther('1'),
     }));
-    await fastForwardTo((await getTime(provider())) + _SECONDS_IN_DAY + 10, provider());
     await systems()
       .Core.connect(owner())
       .setPoolConfiguration(poolId, [
