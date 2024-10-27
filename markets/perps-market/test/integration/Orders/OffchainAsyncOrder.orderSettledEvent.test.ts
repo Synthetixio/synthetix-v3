@@ -4,7 +4,8 @@ import { openPosition } from '../helpers';
 import { wei } from '@synthetixio/wei';
 import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import { _SECONDS_IN_DAY } from '../helpers';
+
+const _SECONDS_IN_DAY = 24 * 60 * 60;
 
 const _SKEW_SCALE = bn(10_000);
 const _ETH_PRICE = bn(2000);

@@ -245,26 +245,4 @@ interface IPoolModule {
      * @param optionalCollateralType in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
      */
     function rebalancePool(uint128 poolId, address optionalCollateralType) external;
-
-    /**
-     * @notice gets the min delegation time for an account in a pool's vault based on collateral type. must be lower than current block.timestamp for a delegation to occur
-     * @param poolId the pool id
-     * @param collateralType the address of the collateral
-     * @param accountId in addition to rebalancing the pool, calculate updated collaterals and debts for the specified vault
-     * @return minDelegateTime the min delegation time
-     */
-    function getAccountMinDelegateTime(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType
-    ) external view returns (uint64 minDelegateTime);
-
-    /**
-     * @notice gets the min configuration time for the next pool configuration. must be lower than current block.timestamp for a configuration to occur
-     * @param poolId the pool id
-     * @return minConfigurationTime the min configuration time
-     */
-    function getPoolMinConfigurationTime(
-        uint128 poolId
-    ) external view returns (uint64 minConfigurationTime);
 }
