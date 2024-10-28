@@ -2,11 +2,8 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {
-    IExternalNode,
-    NodeOutput,
-    NodeDefinition
-} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
+import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
+import {IExternalNode, NodeOutput, NodeDefinition} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
 import {ArbGasInfo} from "./interfaces/ArbGasInfo.sol";
 
 contract ArbGasPriceOracle is IExternalNode {
@@ -128,9 +125,12 @@ contract ArbGasPriceOracle is IExternalNode {
             runtimeParams.l2FlagGasUnits,
             runtimeParams.l1LiquidateGasUnits,
             runtimeParams.l2LiquidateGasUnits
-        ) = abi.decode(nodeDefinition.parameters, (address, uint256, uint256, uint256, uint256, uint256, uint256));
+        ) = abi.decode(
+            nodeDefinition.parameters,
+            (address, uint256, uint256, uint256, uint256, uint256, uint256)
+        );
 
-        if (ForkDetector.isFork()) {
+        if (ForkDetector.isDevFork()) {
             return true;
         }
 
@@ -155,7 +155,9 @@ contract ArbGasPriceOracle is IExternalNode {
      * @return true if the contract supports the given interface, false otherwise
      */
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IExternalNode).interfaceId || interfaceId == this.supportsInterface.selector;
+        return
+            interfaceId == type(IExternalNode).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 
     /**
@@ -168,15 +170,12 @@ contract ArbGasPriceOracle is IExternalNode {
      * @param runtimeParams the runtime parameters for the cost of execution calculation
      * @return costOfExecutionGrossEth the cost of execution in ETH
      */
-    function getCostOfExecutionEth(RuntimeParams memory runtimeParams)
-        internal
-        view
-        returns (uint256 costOfExecutionGrossEth)
-    {
+    function getCostOfExecutionEth(
+        RuntimeParams memory runtimeParams
+    ) internal view returns (uint256 costOfExecutionGrossEth) {
         uint256 perArbGasTotal = 1;
-        if (!ForkDetector.isFork()) {
-            return 0.001 ether;
-            (,,,,, perArbGasTotal) = PRECOMPILE.getPricesInWei();
+        if (!ForkDetector.isDevFork()) {
+            (, , , , , perArbGasTotal) = PRECOMPILE.getPricesInWei();
         }
 
         // fetch & define L2 gas price
@@ -199,7 +198,9 @@ contract ArbGasPriceOracle is IExternalNode {
         //   -> P = L2 basefee
         // (3) G is gas limit that also accounts for L1 dimension
         //   -> G = L2 gas used + ( L1 calldata price * L1 calldata size) / (L2 gas price)
-        costOfExecutionGrossEth = perArbGasTotal * (gasUnitsL2 + ((l1BaseFee * gasUnitsL1) / perArbGasTotal));
+        costOfExecutionGrossEth =
+            perArbGasTotal *
+            (gasUnitsL2 + ((l1BaseFee * gasUnitsL1) / perArbGasTotal));
     }
 
     /**
@@ -208,11 +209,9 @@ contract ArbGasPriceOracle is IExternalNode {
      * @return gasUnitsL1 the gas units consumed on L1
      * @return gasUnitsL2 the gas units consumed on L2
      */
-    function getGasUnits(RuntimeParams memory runtimeParams)
-        internal
-        pure
-        returns (uint256 gasUnitsL1, uint256 gasUnitsL2)
-    {
+    function getGasUnits(
+        RuntimeParams memory runtimeParams
+    ) internal pure returns (uint256 gasUnitsL1, uint256 gasUnitsL2) {
         if (runtimeParams.executionKind == KIND_SETTLEMENT) {
             gasUnitsL1 = runtimeParams.l1SettleGasUnits;
             gasUnitsL2 = runtimeParams.l2SettleGasUnits;

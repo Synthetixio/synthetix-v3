@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {AbstractProxy} from "@synthetixio/core-contracts/contracts/proxy/AbstractProxy.sol";
+import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {IERC7412} from "./interfaces/IERC7412.sol";
 import {Price} from "./storage/Price.sol";
@@ -17,6 +18,9 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     error NotSupported(uint8 updateType);
 
     address public immutable pythAddress;
+
+    // NOTE: this value is only settable on a fork
+    mapping(bytes32 => int256) overridePrices;
 
     constructor(address _pythAddress) {
         pythAddress = _pythAddress;
@@ -53,14 +57,25 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         );
     }
 
+    function setLatestPrice(bytes32 priceId, int256 newPrice) external {
+        ForkDetector.requireFork();
+
+        overridePrices[priceId] = newPrice;
+    }
+
     function getLatestPrice(
         bytes32 priceId,
         uint256 stalenessTolerance
     ) external view returns (int256) {
+        bool isFork = ForkDetector.isDevFork();
+        if (isFork && overridePrices[priceId] != 0) {
+            return overridePrices[priceId];
+        }
+
         IPyth pyth = IPyth(pythAddress);
         PythStructs.Price memory pythData = pyth.getPriceUnsafe(priceId);
 
-        if (block.timestamp <= stalenessTolerance + pythData.publishTime) {
+        if (isFork || block.timestamp <= stalenessTolerance + pythData.publishTime) {
             return _getScaledPrice(pythData.price, pythData.expo);
         }
 
