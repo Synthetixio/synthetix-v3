@@ -49,6 +49,7 @@ library SettlementStrategy {
     }
 
     enum Type {
-        PYTH
+        PYTH,
+        CHAINLINK
     }
 }
