@@ -8,6 +8,8 @@
 /**/contracts/generated
 /utils/hardhat-router/test
 **/contracts/routers
+**/lib
+
 artifacts
 cache
 coverage

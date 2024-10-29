@@ -34,6 +34,14 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         return bytes32("PYTH");
     }
 
+    function setBenchmarkPrice(bytes32 priceId, uint64 requestedTime, int256 newPrice) external {
+        ForkDetector.requireFork();
+
+        // solhint-disable-next-line numcast/safe-cast
+        Price.load(priceId).benchmarkPrices[requestedTime].price = int64(newPrice);
+        Price.load(priceId).benchmarkPrices[requestedTime].expo = -18;
+    }
+
     function getBenchmarkPrice(
         bytes32 priceId,
         uint64 requestedTime
@@ -42,6 +50,14 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
         if (priceData.price > 0) {
             return _getScaledPrice(priceData.price, priceData.expo);
+        }
+
+        if (ForkDetector.isDevFork() && priceData.price == 0) {
+            // Return whatever the latest available price is on chain to avoid difficult errors
+            // if price is set negative then oracle data required will still  be returned
+            IPyth pyth = IPyth(pythAddress);
+            PythStructs.Price memory pythData = pyth.getPriceUnsafe(priceId);
+            return _getScaledPrice(pythData.price, pythData.expo);
         }
 
         revert OracleDataRequired(

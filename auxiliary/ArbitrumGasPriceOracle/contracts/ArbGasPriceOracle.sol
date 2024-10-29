@@ -174,19 +174,19 @@ contract ArbGasPriceOracle is IExternalNode {
         RuntimeParams memory runtimeParams
     ) internal view returns (uint256 costOfExecutionGrossEth) {
         uint256 perArbGasTotal = 1;
+        uint256 l1BaseFee = 1;
         if (!ForkDetector.isDevFork()) {
+            // fetch & define L2 gas price
+            /// @dev perArbGasTotal is the best estimate of the L2 gas price "base fee" in wei
             (, , , , , perArbGasTotal) = PRECOMPILE.getPricesInWei();
+
+            // fetch & define L1 gas base fee; incorporate overhead buffer
+            /// @dev if the estimate is too low or high at the time of the L1 batch submission,
+            /// the transaction will still be processed, but the arbitrum nitro mechanism will
+            /// amortize the deficit/surplus over subsequent users of the chain
+            /// (i.e. lowering/raising the L1 base fee for a period of time)
+            l1BaseFee = PRECOMPILE.getL1BaseFeeEstimate();
         }
-
-        // fetch & define L2 gas price
-        /// @dev perArbGasTotal is the best estimate of the L2 gas price "base fee" in wei
-
-        // fetch & define L1 gas base fee; incorporate overhead buffer
-        /// @dev if the estimate is too low or high at the time of the L1 batch submission,
-        /// the transaction will still be processed, but the arbitrum nitro mechanism will
-        /// amortize the deficit/surplus over subsequent users of the chain
-        /// (i.e. lowering/raising the L1 base fee for a period of time)
-        uint256 l1BaseFee = PRECOMPILE.getL1BaseFeeEstimate();
 
         // fetch & define gas units consumed on L1 and L2 for the given execution kind
         (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
