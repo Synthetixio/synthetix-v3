@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/governance",
-  "version": "3.8.1",
+  "version": "3.9.1",
   "description": "On-Chain elections for all Synthetix councils",
   "publishConfig": {
     "access": "public"
