@@ -227,6 +227,75 @@
           "slot": "6",
           "offset": 0
         }
+      ],
+      "Runtime_cancelOrder": [
+        {
+          "type": "uint128",
+          "name": "accountId",
+          "size": 16,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "marketId",
+          "size": 16,
+          "slot": "0",
+          "offset": 16
+        },
+        {
+          "type": "bool",
+          "name": "isStale",
+          "size": 1,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "isReady",
+          "size": 1,
+          "slot": "1",
+          "offset": 1
+        },
+        {
+          "type": "bool",
+          "name": "isMarketSolvent",
+          "size": 1,
+          "slot": "1",
+          "offset": 2
+        },
+        {
+          "type": "struct",
+          "name": "order",
+          "members": [
+            {
+              "type": "int128",
+              "name": "sizeDelta"
+            },
+            {
+              "type": "uint64",
+              "name": "commitmentTime"
+            },
+            {
+              "type": "uint256",
+              "name": "limitPrice"
+            },
+            {
+              "type": "uint128",
+              "name": "keeperFeeBufferUsd"
+            },
+            {
+              "type": "array",
+              "name": "hooks",
+              "value": {
+                "type": "address"
+              }
+            }
+          ],
+          "size": 128,
+          "slot": "2",
+          "offset": 0
+        }
       ]
     }
   },
