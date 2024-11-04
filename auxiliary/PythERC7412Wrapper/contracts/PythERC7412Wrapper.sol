@@ -3,13 +3,12 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {AbstractProxy} from "@synthetixio/core-contracts/contracts/proxy/AbstractProxy.sol";
 import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {IERC7412} from "./interfaces/IERC7412.sol";
 import {Price} from "./storage/Price.sol";
 
-contract PythERC7412Wrapper is IERC7412, AbstractProxy {
+contract PythERC7412Wrapper is IERC7412 {
     using DecimalMath for int64;
     using SafeCastI256 for int256;
 
@@ -27,10 +26,6 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
     constructor(address _pythAddress) {
         pythAddress = _pythAddress;
-    }
-
-    function _getImplementation() internal view override returns (address) {
-        return pythAddress;
     }
 
     function oracleId() external pure returns (bytes32) {
@@ -123,7 +118,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         if (updateType == 1) {
             (
                 ,
-                /* uint8 _updateType */ uint64 stalenessTolerance,
+                /* uint8 _updateType */
+                uint64 stalenessTolerance,
                 bytes32[] memory priceIds,
                 bytes[] memory updateData
             ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
@@ -156,7 +152,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         } else if (updateType == 2) {
             (
                 ,
-                /* uint8 _updateType */ uint64 timestamp,
+                /* uint8 _updateType */
+                uint64 timestamp,
                 bytes32[] memory priceIds,
                 bytes[] memory updateData
             ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
