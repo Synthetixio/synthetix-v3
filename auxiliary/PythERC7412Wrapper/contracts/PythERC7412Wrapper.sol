@@ -12,7 +12,7 @@ contract PythERC7412Wrapper is IERC7412 {
     using DecimalMath for int64;
     using SafeCastI256 for int256;
 
-    event ForkBenchmarkPriceSet(bytes32 priceId, uint64 requestedTime, int256 newPrice);
+    event ForkBenchmarkPriceSet(bytes32 priceId, uint64 requestedTime, int256 newPrice, int32 expo);
     event ForkLatestPriceSet(bytes32 priceId, int256 newPrice);
 
     int256 private constant PRECISION = 18;
@@ -32,14 +32,19 @@ contract PythERC7412Wrapper is IERC7412 {
         return bytes32("PYTH");
     }
 
-    function setBenchmarkPrice(bytes32 priceId, uint64 requestedTime, int256 newPrice) external {
+    function setBenchmarkPrice(
+        bytes32 priceId,
+        uint64 requestedTime,
+        int256 newPrice,
+        int32 expo
+    ) external {
         ForkDetector.requireFork();
 
         // solhint-disable-next-line numcast/safe-cast
         Price.load(priceId).benchmarkPrices[requestedTime].price = int64(newPrice);
-        Price.load(priceId).benchmarkPrices[requestedTime].expo = -18;
+        Price.load(priceId).benchmarkPrices[requestedTime].expo = expo;
 
-        emit ForkBenchmarkPriceSet(priceId, requestedTime, newPrice);
+        emit ForkBenchmarkPriceSet(priceId, requestedTime, newPrice, expo);
     }
 
     function getBenchmarkPrice(

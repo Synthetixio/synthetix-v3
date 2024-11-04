@@ -6,7 +6,7 @@ import "../contracts/PythERC7412Wrapper.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract MockPythApi {
-    function getPriceUnsafe() external pure returns (PythStructs.Price memory price) {
+    function getPriceUnsafe(bytes32) external pure returns (PythStructs.Price memory price) {
         return PythStructs.Price(100, 0, -17, 0);
     }
 }
@@ -47,13 +47,13 @@ contract PythERC7412WrapperTest is Test {
     }
 
     function testSetBenchmarkPrice() external {
-        wrapper.setBenchmarkPrice(testFeedId, 100, 1234);
+        wrapper.setBenchmarkPrice(testFeedId, 100, 1234, -18);
 
         assertEq(wrapper.getBenchmarkPrice(testFeedId, 100), 1234);
     }
 
     function testGetBenchmarkPriceWithSkip() external {
-        wrapper.setBenchmarkPrice(testFeedId, 100, -1);
+        wrapper.setBenchmarkPrice(testFeedId, 100, -1, -18);
 
         vm.expectRevert(
             abi.encodeWithSelector(
