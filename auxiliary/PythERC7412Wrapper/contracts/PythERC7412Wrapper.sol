@@ -13,6 +13,9 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
     using DecimalMath for int64;
     using SafeCastI256 for int256;
 
+    event ForkBenchmarkPriceSet(bytes32 priceId, uint64 requestedTime, int256 newPrice);
+    event ForkLatestPriceSet(bytes32 priceId, int256 newPrice);
+
     int256 private constant PRECISION = 18;
 
     error NotSupported(uint8 updateType);
@@ -40,6 +43,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         // solhint-disable-next-line numcast/safe-cast
         Price.load(priceId).benchmarkPrices[requestedTime].price = int64(newPrice);
         Price.load(priceId).benchmarkPrices[requestedTime].expo = -18;
+
+        emit ForkBenchmarkPriceSet(priceId, requestedTime, newPrice);
     }
 
     function getBenchmarkPrice(
@@ -77,6 +82,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         ForkDetector.requireFork();
 
         overridePrices[priceId] = newPrice;
+
+        emit ForkLatestPriceSet(priceId, newPrice);
     }
 
     function getLatestPrice(
@@ -115,8 +122,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
         if (updateType == 1) {
             (
-                uint8 _updateType,
-                uint64 stalenessTolerance,
+                ,
+                /* uint8 _updateType */ uint64 stalenessTolerance,
                 bytes32[] memory priceIds,
                 bytes[] memory updateData
             ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
@@ -148,8 +155,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
             }
         } else if (updateType == 2) {
             (
-                uint8 _updateType,
-                uint64 timestamp,
+                ,
+                /* uint8 _updateType */ uint64 timestamp,
                 bytes32[] memory priceIds,
                 bytes[] memory updateData
             ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));

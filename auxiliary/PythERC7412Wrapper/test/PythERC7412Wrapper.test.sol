@@ -6,7 +6,7 @@ import "../contracts/PythERC7412Wrapper.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract MockPythApi {
-    function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
+    function getPriceUnsafe() external view returns (PythStructs.Price memory price) {
         return PythStructs.Price(100, 0, -17, 0);
     }
 }
