@@ -173,8 +173,8 @@ contract ArbGasPriceOracle is IExternalNode {
     function getCostOfExecutionEth(
         RuntimeParams memory runtimeParams
     ) internal view returns (uint256 costOfExecutionGrossEth) {
-        uint256 perArbGasTotal = 1;
-        uint256 l1BaseFee = 1;
+        uint256 perArbGasTotal = 10000000;
+        uint256 l1BaseFee = 300000000;
         if (!ForkDetector.isDevFork()) {
             // fetch & define L2 gas price
             /// @dev perArbGasTotal is the best estimate of the L2 gas price "base fee" in wei
