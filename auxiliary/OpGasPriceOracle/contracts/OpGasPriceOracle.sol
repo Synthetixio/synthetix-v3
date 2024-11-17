@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {IExternalNode, NodeOutput, NodeDefinition} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
 import "./interfaces/IOVM_GasPriceOracle_fjord.sol";
@@ -21,6 +22,7 @@ contract OpGasPriceOracle is IExternalNode {
     uint256 public constant KIND_SETTLEMENT = 0;
     uint256 public constant KIND_FLAG = 1;
     uint256 public constant KIND_LIQUIDATE = 2;
+
     struct RuntimeParams {
         // Set up params
         // Order execution
@@ -129,6 +131,11 @@ contract OpGasPriceOracle is IExternalNode {
     function getCostOfExecutionEth(
         RuntimeParams memory runtimeParams
     ) internal view returns (uint256 costOfExecutionGrossEth) {
+        if (ForkDetector.isDevFork()) {
+            // return some default value as this precompiled contract may misbehave outside of actual OP network
+            return 0.001 ether;
+        }
+
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);
         OvmGasPriceOracleMode oracleMode;
 
@@ -233,6 +240,11 @@ contract OpGasPriceOracle is IExternalNode {
                 uint256
             )
         );
+
+        // skip the oracle call check if on a fork
+        if (ForkDetector.isDevFork()) {
+            return true;
+        }
 
         // Must be able to call the oracle
         IOVM_GasPriceOracle ovmGasPriceOracle = IOVM_GasPriceOracle(ovmGasPriceOracleAddress);

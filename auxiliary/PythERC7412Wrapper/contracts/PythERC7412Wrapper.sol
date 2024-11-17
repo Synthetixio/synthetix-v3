@@ -3,14 +3,17 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {AbstractProxy} from "@synthetixio/core-contracts/contracts/proxy/AbstractProxy.sol";
+import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
 import {PythStructs, IPyth} from "@synthetixio/oracle-manager/contracts/interfaces/external/IPyth.sol";
 import {IERC7412} from "./interfaces/IERC7412.sol";
 import {Price} from "./storage/Price.sol";
 
-contract PythERC7412Wrapper is IERC7412, AbstractProxy {
+contract PythERC7412Wrapper is IERC7412 {
     using DecimalMath for int64;
     using SafeCastI256 for int256;
+
+    event ForkBenchmarkPriceSet(bytes32 priceId, uint64 requestedTime, int256 newPrice, int32 expo);
+    event ForkLatestPriceSet(bytes32 priceId, int256 newPrice);
 
     int256 private constant PRECISION = 18;
 
@@ -18,16 +21,30 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
     address public immutable pythAddress;
 
+    // NOTE: this value is only settable on a fork
+    mapping(bytes32 => int256) overridePrices;
+
     constructor(address _pythAddress) {
         pythAddress = _pythAddress;
     }
 
-    function _getImplementation() internal view override returns (address) {
-        return pythAddress;
-    }
-
     function oracleId() external pure returns (bytes32) {
         return bytes32("PYTH");
+    }
+
+    function setBenchmarkPrice(
+        bytes32 priceId,
+        uint64 requestedTime,
+        int256 newPrice,
+        int32 expo
+    ) external {
+        ForkDetector.requireFork();
+
+        // solhint-disable-next-line numcast/safe-cast
+        Price.load(priceId).benchmarkPrices[requestedTime].price = int64(newPrice);
+        Price.load(priceId).benchmarkPrices[requestedTime].expo = expo;
+
+        emit ForkBenchmarkPriceSet(priceId, requestedTime, newPrice, expo);
     }
 
     function getBenchmarkPrice(
@@ -38,6 +55,14 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
         if (priceData.price > 0) {
             return _getScaledPrice(priceData.price, priceData.expo);
+        }
+
+        if (ForkDetector.isDevFork() && priceData.price == 0) {
+            // Return whatever the latest available price is on chain to avoid difficult errors
+            // if price is set negative then oracle data required will still  be returned
+            IPyth pyth = IPyth(pythAddress);
+            PythStructs.Price memory pythData = pyth.getPriceUnsafe(priceId);
+            return _getScaledPrice(pythData.price, pythData.expo);
         }
 
         revert OracleDataRequired(
@@ -53,14 +78,27 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
         );
     }
 
+    function setLatestPrice(bytes32 priceId, int256 newPrice) external {
+        ForkDetector.requireFork();
+
+        overridePrices[priceId] = newPrice;
+
+        emit ForkLatestPriceSet(priceId, newPrice);
+    }
+
     function getLatestPrice(
         bytes32 priceId,
         uint256 stalenessTolerance
     ) external view returns (int256) {
+        bool isFork = ForkDetector.isDevFork();
+        if (isFork && overridePrices[priceId] != 0) {
+            return overridePrices[priceId];
+        }
+
         IPyth pyth = IPyth(pythAddress);
         PythStructs.Price memory pythData = pyth.getPriceUnsafe(priceId);
 
-        if (block.timestamp <= stalenessTolerance + pythData.publishTime) {
+        if (isFork || block.timestamp <= stalenessTolerance + pythData.publishTime) {
             return _getScaledPrice(pythData.price, pythData.expo);
         }
 
@@ -84,7 +122,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
 
         if (updateType == 1) {
             (
-                uint8 _updateType,
+                ,
+                /* uint8 _updateType */
                 uint64 stalenessTolerance,
                 bytes32[] memory priceIds,
                 bytes[] memory updateData
@@ -117,7 +156,8 @@ contract PythERC7412Wrapper is IERC7412, AbstractProxy {
             }
         } else if (updateType == 2) {
             (
-                uint8 _updateType,
+                ,
+                /* uint8 _updateType */
                 uint64 timestamp,
                 bytes32[] memory priceIds,
                 bytes[] memory updateData

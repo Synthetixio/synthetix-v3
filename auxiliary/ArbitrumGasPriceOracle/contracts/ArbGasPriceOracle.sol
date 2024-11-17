@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastU256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
 import {IExternalNode, NodeOutput, NodeDefinition} from "@synthetixio/oracle-manager/contracts/interfaces/external/IExternalNode.sol";
 import {ArbGasInfo} from "./interfaces/ArbGasInfo.sol";
 
@@ -129,6 +130,10 @@ contract ArbGasPriceOracle is IExternalNode {
             (address, uint256, uint256, uint256, uint256, uint256, uint256)
         );
 
+        if (ForkDetector.isDevFork()) {
+            return true;
+        }
+
         // verify the oracle can be properly called
         try PRECOMPILE.getPricesInWei() {
             // do nothing
@@ -168,16 +173,20 @@ contract ArbGasPriceOracle is IExternalNode {
     function getCostOfExecutionEth(
         RuntimeParams memory runtimeParams
     ) internal view returns (uint256 costOfExecutionGrossEth) {
-        // fetch & define L2 gas price
-        /// @dev perArbGasTotal is the best estimate of the L2 gas price "base fee" in wei
-        (, , , , , uint256 perArbGasTotal) = PRECOMPILE.getPricesInWei();
+        uint256 perArbGasTotal = 10000000;
+        uint256 l1BaseFee = 300000000;
+        if (!ForkDetector.isDevFork()) {
+            // fetch & define L2 gas price
+            /// @dev perArbGasTotal is the best estimate of the L2 gas price "base fee" in wei
+            (, , , , , perArbGasTotal) = PRECOMPILE.getPricesInWei();
 
-        // fetch & define L1 gas base fee; incorporate overhead buffer
-        /// @dev if the estimate is too low or high at the time of the L1 batch submission,
-        /// the transaction will still be processed, but the arbitrum nitro mechanism will
-        /// amortize the deficit/surplus over subsequent users of the chain
-        /// (i.e. lowering/raising the L1 base fee for a period of time)
-        uint256 l1BaseFee = PRECOMPILE.getL1BaseFeeEstimate();
+            // fetch & define L1 gas base fee; incorporate overhead buffer
+            /// @dev if the estimate is too low or high at the time of the L1 batch submission,
+            /// the transaction will still be processed, but the arbitrum nitro mechanism will
+            /// amortize the deficit/surplus over subsequent users of the chain
+            /// (i.e. lowering/raising the L1 base fee for a period of time)
+            l1BaseFee = PRECOMPILE.getL1BaseFeeEstimate();
+        }
 
         // fetch & define gas units consumed on L1 and L2 for the given execution kind
         (uint256 gasUnitsL1, uint256 gasUnitsL2) = getGasUnits(runtimeParams);
