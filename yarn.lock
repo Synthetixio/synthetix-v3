@@ -8300,12 +8300,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"forge-std@workspace:markets/perps-market/lib/cannon-std/lib/forge-std":
-  version: 0.0.0-use.local
-  resolution: "forge-std@workspace:markets/perps-market/lib/cannon-std/lib/forge-std"
-  languageName: unknown
-  linkType: soft
-
 "form-data-encoder@npm:^2.1.2":
   version: 2.1.4
   resolution: "form-data-encoder@npm:2.1.4"
