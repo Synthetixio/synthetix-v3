@@ -298,7 +298,14 @@ library Market {
      *
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.creditCapacityD18 < getLockedCreditCapacity(self).toInt();
+        (
+            uint256 depositedCollateralValue,
+            bytes memory possibleError
+        ) = getDepositedCollateralValue(self);
+        RevertUtil.revertIfError(possibleError);
+        return
+            self.creditCapacityD18 + depositedCollateralValue.toInt() <
+            getLockedCreditCapacity(self).toInt();
     }
 
     /**
