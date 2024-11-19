@@ -263,7 +263,7 @@ library Market {
 
     /**
      * @dev Returns the amount of credit capacity that a certain pool provides to the market.
-
+     *
      * This credit capacity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which represents the amount of USD denominated credit capacity that the pool has provided to the market.
      */
     function getPoolCreditCapacity(
@@ -344,6 +344,16 @@ library Market {
     }
 
     /**
+     * @dev Returns the debt per share at which a pool will be bumped from a market
+     */
+    function getPoolMaxDebtPerShare(
+        Data storage self,
+        uint128 poolId
+    ) internal view returns (int256 maxShareValueD18) {
+        return -self.inRangePools.getById(poolId).priority;
+    }
+
+    /**
      * @dev Determine the amount of debt the pool would assume if its lastValue was updated
      * Needed for optimization.
      *
@@ -395,7 +405,7 @@ library Market {
         int256 newPoolMaxShareValueD18
     ) internal returns (int256 debtChangeD18) {
         uint256 oldCreditCapacityD18 = getPoolCreditCapacity(self, poolId);
-        int256 oldPoolMaxShareValueD18 = -self.inRangePools.getById(poolId).priority;
+        int256 oldPoolMaxShareValueD18 = getPoolMaxDebtPerShare(self, poolId);
 
         // Sanity checks
         // require(oldPoolMaxShareValue == 0, "value is not 0");
@@ -537,10 +547,10 @@ library Market {
             // 2 cases where we want to break out of this loop
             if (
                 // If there is no pool in range, and we are going down
-                (maxDistributedD18 - actuallyDistributedD18 > 0 &&
-                    self.poolsDebtDistribution.totalSharesD18 == 0) ||
                 // If there is a pool in ragne, and the lowest max value per share does not hit the limit, exit
                 // Note: `-edgePool.priority` is actually the max value per share limit of the pool
+                (maxDistributedD18 - actuallyDistributedD18 > 0 &&
+                    self.poolsDebtDistribution.totalSharesD18 == 0) ||
                 (self.poolsDebtDistribution.totalSharesD18 > 0 &&
                     -edgePool.priority >=
                     k * getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18)))

@@ -308,6 +308,22 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
+    function getPoolTotalDebt(uint128 poolId) external view override returns (int256 totalDebtD18) {
+        return Pool.load(poolId).totalVaultDebtsD18;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function getPoolDebtPerShare(
+        uint128 poolId
+    ) external view override returns (int256 debtPerShareD18) {
+        (, debtPerShareD18) = Pool.load(poolId).getCurrentCreditCapacityAndDebtPerShare();
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
     function setMinLiquidityRatio(uint256 minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
 
