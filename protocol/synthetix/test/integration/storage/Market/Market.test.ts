@@ -35,6 +35,33 @@ describe('Market', function () {
 
   const restore = snapshotCheckpoint(provider);
 
+  describe('getDepositedCollateralValue()', async () => {
+    it('says 0 when no collateral is deposited', async () => {
+      assertBn.equal((await systems().Core.Market_getDepositedCollateralValue(fakeMarketId))[0], 0);
+    });
+
+    it('says the deposited value when collateral is deposited', async () => {
+      await systems().Core.configureMaximumMarketCollateral(
+        fakeMarketId,
+        collateralAddress(),
+        depositAmount
+      );
+
+      await (await collateralContract().mint(await owner.getAddress(), depositAmount)).wait();
+      await (
+        await collateralContract()
+          .connect(owner)
+          .approve(FakeMarket.address, ethers.constants.MaxUint256)
+      ).wait();
+      await (await FakeMarket.depositCollateral(collateralAddress(), depositAmount)).wait();
+
+      assertBn.equal(
+        (await systems().Core.Market_getDepositedCollateralValue(fakeMarketId))[0],
+        depositAmount
+      );
+    });
+  });
+
   describe('getReportedDebt()', async () => {
     before(restore);
 
@@ -96,33 +123,6 @@ describe('Market', function () {
 
     // not currently possible due to lack of code to set collateral lock
     it.skip('also subtracts from market debt', async () => {});
-  });
-
-  describe('getDepositedCollateralValue()', async () => {
-    it('says 0 when no collateral is deposited', async () => {
-      assertBn.equal((await systems().Core.Market_getDepositedCollateralValue(fakeMarketId))[0], 0);
-    });
-
-    it('says the deposited value when collateral is deposited', async () => {
-      await systems().Core.configureMaximumMarketCollateral(
-        fakeMarketId,
-        collateralAddress(),
-        depositAmount
-      );
-
-      await collateralContract().mint(await owner.getAddress(), depositAmount);
-      await (
-        await collateralContract()
-          .connect(owner)
-          .approve(FakeMarket.address, ethers.constants.MaxUint256)
-      ).wait();
-      await (await FakeMarket.depositCollateral(collateralAddress(), depositAmount)).wait();
-
-      assertBn.equal(
-        (await systems().Core.Market_getDepositedCollateralValue(fakeMarketId))[0],
-        depositAmount
-      );
-    });
   });
 
   describe('isCapacityLocked()', async () => {
