@@ -308,8 +308,10 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function getPoolTotalDebt(uint128 poolId) external view override returns (int256 totalDebtD18) {
-        return Pool.load(poolId).totalVaultDebtsD18;
+    function getPoolTotalDebt(uint128 poolId) external override returns (int256 totalDebtD18) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        pool.distributeDebtToVaults(address(0));
+        return pool.totalVaultDebtsD18;
     }
 
     /**
@@ -317,8 +319,10 @@ contract PoolModule is IPoolModule {
      */
     function getPoolDebtPerShare(
         uint128 poolId
-    ) external view override returns (int256 debtPerShareD18) {
-        (, debtPerShareD18) = Pool.load(poolId).getCurrentCreditCapacityAndDebtPerShare();
+    ) external override returns (int256 debtPerShareD18) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        pool.distributeDebtToVaults(address(0));
+        (, debtPerShareD18) = pool.getCurrentCreditCapacityAndDebtPerShare();
     }
 
     /**

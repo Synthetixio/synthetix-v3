@@ -222,14 +222,14 @@ interface IPoolModule {
      * @param poolId The id of the pool whose total debt is being queried
      * @return totalDebtD18 The total debt of all vaults put together
      */
-    function getPoolTotalDebt(uint128 poolId) external view returns (int256 totalDebtD18);
+    function getPoolTotalDebt(uint128 poolId) external returns (int256 totalDebtD18);
 
     /**
      * @notice Returns the current pool debt divided by the computed value of the underlying vault liquidity
      * @param poolId The id of the pool whose total debt is being queried
      * @return debtPerShareD18 The total debt of all vaults put together divided by the computed collateral value of those vaults
      */
-    function getPoolDebtPerShare(uint128 poolId) external view returns (int256 debtPerShareD18);
+    function getPoolDebtPerShare(uint128 poolId) external returns (int256 debtPerShareD18);
 
     /**
      * @notice Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
