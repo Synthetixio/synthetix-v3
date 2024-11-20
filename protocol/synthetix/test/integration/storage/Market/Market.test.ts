@@ -4,10 +4,11 @@ import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { MockMarket } from '../../../../typechain-types/contracts/mocks/MockMarket';
-import { bootstrap } from '../../bootstrap';
+import { bootstrapWithStakedPool } from '../../bootstrap';
 
 describe('Market', function () {
-  const { systems, provider, signers } = bootstrap();
+  const { systems, provider, signers, collateralAddress, collateralContract, depositAmount } =
+    bootstrapWithStakedPool();
 
   const One = ethers.utils.parseEther('1');
 
@@ -22,6 +23,12 @@ describe('Market', function () {
     await FakeMarket.deployed();
 
     [owner] = signers();
+
+    await FakeMarket.connect(owner).initialize(
+      systems().Core.address,
+      fakeMarketId,
+      ethers.utils.parseEther('1')
+    );
 
     await systems().Core.connect(owner).Market_set_marketAddress(fakeMarketId, FakeMarket.address);
   });
@@ -91,8 +98,32 @@ describe('Market', function () {
     it.skip('also subtracts from market debt', async () => {});
   });
 
-  // not currently possible due to lack of code to set collateral lock
-  describe.skip('getDepositedCollateralValue()', async () => {});
+  describe('getDepositedCollateralValue()', async () => {
+    it('says 0 when no collateral is deposited', async () => {
+      assertBn.equal((await systems().Core.Market_getDepositedCollateralValue(fakeMarketId))[0], 0);
+    });
+
+    it('says the deposited value when collateral is deposited', async () => {
+      await systems().Core.configureMaximumMarketCollateral(
+        fakeMarketId,
+        collateralAddress(),
+        depositAmount
+      );
+
+      await collateralContract().mint(await owner.getAddress(), depositAmount);
+      await (
+        await collateralContract()
+          .connect(owner)
+          .approve(FakeMarket.address, ethers.constants.MaxUint256)
+      ).wait();
+      await (await FakeMarket.depositCollateral(collateralAddress(), depositAmount)).wait();
+
+      assertBn.equal(
+        (await systems().Core.Market_getDepositedCollateralValue(fakeMarketId))[0],
+        depositAmount
+      );
+    });
+  });
 
   describe('isCapacityLocked()', async () => {
     before(restore);
@@ -100,6 +131,30 @@ describe('Market', function () {
     it('unlocked when no locking', async () => {
       await FakeMarket.setLocked(0);
       await systems().Core.connect(owner).Market_set_creditCapacityD18(fakeMarketId, 0);
+
+      assert.equal(await systems().Core.Market_isCapacityLocked(fakeMarketId), false);
+    });
+
+    it('includes deposited collateral if any', async () => {
+      await FakeMarket.setLocked(0);
+      await systems().Core.connect(owner).Market_set_creditCapacityD18(fakeMarketId, -500);
+
+      assert.equal(await systems().Core.Market_isCapacityLocked(fakeMarketId), true);
+      await systems()
+        .Core.connect(owner)
+        .configureMaximumMarketCollateral(
+          fakeMarketId,
+          collateralAddress(),
+          ethers.constants.MaxUint256
+        );
+
+      await collateralContract().mint(await owner.getAddress(), depositAmount);
+      await (
+        await collateralContract()
+          .connect(owner)
+          .approve(FakeMarket.address, ethers.constants.MaxUint256)
+      ).wait();
+      await (await FakeMarket.depositCollateral(collateralAddress(), depositAmount)).wait();
 
       assert.equal(await systems().Core.Market_isCapacityLocked(fakeMarketId), false);
     });
