@@ -3,6 +3,8 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {Price} from "../storage/Price.sol";
@@ -10,6 +12,7 @@ import {IAtomicOrderModule} from "../interfaces/IAtomicOrderModule.sol";
 import {SynthUtil} from "../utils/SynthUtil.sol";
 import {OrderFees} from "../storage/OrderFees.sol";
 import {Transaction} from "../utils/TransactionUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 
 /**
  * @title Module for buying and selling atomically registered synths.
@@ -28,6 +31,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 maxUsdAmount,
         address referrer
     ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -70,7 +76,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmountCharged - collectedFees);
-        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), synthAmount);
+        synth.mint(ERC2771Context._msgSender(), synthAmount);
 
         emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer, price);
 
@@ -98,6 +104,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -141,7 +150,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         spotMarketFactory.depositToMarketManager(marketId, usdAmount - collectedFees);
-        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), synthAmount);
+        synth.mint(ERC2771Context._msgSender(), synthAmount);
 
         emit SynthBought(marketId, synthAmount, fees, collectedFees, referrer, price);
 
@@ -245,6 +254,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -273,7 +285,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         // Burn synths provided
         // Burn after calculation because skew is calculating using total supply prior to fill
-        SynthUtil.getToken(marketId).burn(ERC2771Context._msgSender(), synthAmount);
+        synth.burn(ERC2771Context._msgSender(), synthAmount);
 
         uint256 collectedFees = config.collectFees(
             marketId,
@@ -302,6 +314,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 maxSynthAmount,
         address referrer
     ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -328,7 +343,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             revert InvalidPrices();
         }
 
-        SynthUtil.getToken(marketId).burn(ERC2771Context._msgSender(), synthToBurn);
+        synth.burn(ERC2771Context._msgSender(), synthToBurn);
         uint256 collectedFees = config.collectFees(
             marketId,
             fees,

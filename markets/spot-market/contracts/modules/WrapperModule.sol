@@ -5,15 +5,17 @@ import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {IWrapperModule} from "../interfaces/IWrapperModule.sol";
 import {OrderFees} from "../storage/OrderFees.sol";
 import {Transaction} from "../utils/TransactionUtil.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {Wrapper} from "../storage/Wrapper.sol";
 import {Price} from "../storage/Price.sol";
 import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {SynthUtil} from "../utils/SynthUtil.sol";
+import {Flags} from "../utils/Flags.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
@@ -61,6 +63,9 @@ contract WrapperModule is IWrapperModule {
         uint256 wrapAmount,
         uint256 minAmountReceived
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
@@ -106,7 +111,7 @@ contract WrapperModule is IWrapperModule {
             wrapAmount
         );
 
-        SynthUtil.getToken(marketId).mint(ERC2771Context._msgSender(), amountToMint);
+        synth.mint(ERC2771Context._msgSender(), amountToMint);
 
         emit SynthWrapped(marketId, amountToMint, fees, collectedFees);
     }
@@ -119,12 +124,13 @@ contract WrapperModule is IWrapperModule {
         uint256 unwrapAmount,
         uint256 minAmountReceived
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
         wrapperStore.validateWrapper();
-
-        ITokenModule synth = SynthUtil.getToken(marketId);
 
         // burn from seller
         synth.burn(ERC2771Context._msgSender(), unwrapAmount);
