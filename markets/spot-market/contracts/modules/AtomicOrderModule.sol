@@ -32,8 +32,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
         ITokenModule synth = SynthUtil.getToken(marketId);
-        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
-
+        if(FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))){
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -105,8 +106,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
         ITokenModule synth = SynthUtil.getToken(marketId);
-        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
-
+        if(FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))){
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -255,8 +257,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
         ITokenModule synth = SynthUtil.getToken(marketId);
-        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
-
+        if(FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))){
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
@@ -315,8 +318,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         address referrer
     ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
         ITokenModule synth = SynthUtil.getToken(marketId);
-        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
-
+        if(FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))){
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 

@@ -64,7 +64,9 @@ contract WrapperModule is IWrapperModule {
         uint256 minAmountReceived
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
         ITokenModule synth = SynthUtil.getToken(marketId);
-        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
+        if(FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))){
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
 
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
@@ -125,8 +127,9 @@ contract WrapperModule is IWrapperModule {
         uint256 minAmountReceived
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
         ITokenModule synth = SynthUtil.getToken(marketId);
-        FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth));
-
+        if(FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))){
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
