@@ -164,6 +164,13 @@ export function bootstrapWithSynth(name: string, token: string) {
     );
   });
 
+  before('enable trading', async () => {
+    await contracts.Core.connect(coreOwner).setFeatureFlagAllowAll(
+      formatBytes32String('tradingEnabled'),
+      true
+    );
+  });
+
   // add weight to market from pool
 
   before('delegate pool collateral to market', async () => {
