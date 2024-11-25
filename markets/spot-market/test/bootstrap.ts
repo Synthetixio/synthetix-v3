@@ -16,6 +16,7 @@ import { MockPythERC7412Wrapper } from '../typechain-types';
 import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
 import { STRICT_PRICE_TOLERANCE } from './common';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
+import { formatBytes32String } from 'ethers/lib/utils';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -132,6 +133,12 @@ export function bootstrapWithSynth(name: string, token: string) {
       await marketOwner.getAddress()
     );
     await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
+
+    const synthAddress = await contracts.SpotMarket.getSynth(marketId);
+    await contracts.Core.addToFeatureFlagAllowlist(
+      formatBytes32String('tradingEnabled'),
+      synthAddress
+    );
   });
 
   before('configure market collateral supply cap', async () => {
