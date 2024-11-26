@@ -104,22 +104,43 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 orderFees, uint256 fillPrice) {
-        (orderFees, fillPrice) = _computeOrderFees(
-            marketId,
-            sizeDelta,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-        );
+        _computeOrderFeesWithPrice(marketId, sizeDelta, PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT));
     }
 
     /**
      * @inheritdoc IAsyncOrderModule
      */
-    function computeOrderFeesWithPrice(
+    function computeOrderFeesWithPrice(uint128 marketId, int128 sizeDelta, uint256 price) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        _computeOrderFeesWithPrice(marketId, sizeDelta, price);
+    }
+
+    function _computeOrderFeesWithPrice(
         uint128 marketId,
         int128 sizeDelta,
         uint256 price
-    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
-        (orderFees, fillPrice) = _computeOrderFees(marketId, sizeDelta, price);
+    ) internal view returns (uint256 orderFees, uint256 fillPrice) {
+        // create a fake order commitment request
+        AsyncOrder.Data memory order = AsyncOrder.Data(
+            0,
+            AsyncOrder.OrderCommitmentRequest(
+                marketId,
+                0,
+                sizeDelta,
+                0,
+                0,
+                bytes32(0),
+                address(0)
+            )
+        );
+
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
+        PerpsAccount.Data storage account = PerpsAccount.load(order.request.accountId);
+
+        // probably should be doing this but cant because the interface (view) doesn't allow it
+        //perpsMarketData.recomputeFunding(orderPrice);
+
+        (Position.Data[] memory positions, uint256[] memory prices) = account.getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+        (,,, fillPrice, orderFees) = order.createUpdatedPosition(PerpsMarketConfiguration.load(marketId).settlementStrategies[0], price, positions);
     }
 
     /**
@@ -140,13 +161,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 requiredMargin) {
-        return
-            _requiredMarginForOrder(
-                accountId,
-                marketId,
-                sizeDelta,
-                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-            );
+        return _requiredMarginForOrderWithPrice(accountId, marketId, sizeDelta, PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT));
     }
 
     function requiredMarginForOrderWithPrice(
@@ -155,59 +170,43 @@ contract AsyncOrderModule is IAsyncOrderModule {
         int128 sizeDelta,
         uint256 price
     ) external view override returns (uint256 requiredMargin) {
-        return _requiredMarginForOrder(accountId, marketId, sizeDelta, price);
+        return _requiredMarginForOrderWithPrice(accountId, marketId, sizeDelta, price);
     }
 
-    function _requiredMarginForOrder(
+    function _requiredMarginForOrderWithPrice(
         uint128 accountId,
         uint128 marketId,
         int128 sizeDelta,
-        uint256 orderPrice
+        uint256 price
     ) internal view returns (uint256 requiredMargin) {
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            marketId
-        );
-
-        Position.Data storage oldPosition = PerpsMarket.accountPosition(marketId, accountId);
-        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (uint256 currentInitialMargin, , ) = account.getAccountRequiredMargins(
-            PerpsPrice.Tolerance.DEFAULT
-        );
-        (uint256 orderFees, uint256 fillPrice) = _computeOrderFees(marketId, sizeDelta, orderPrice);
-
-        return
-            AsyncOrder.getRequiredMarginWithNewPosition(
-                account,
-                marketConfig,
+        // create a fake order commitment request
+        AsyncOrder.Data memory order = AsyncOrder.Data(
+            0,
+            AsyncOrder.OrderCommitmentRequest(
                 marketId,
-                oldPosition.size,
-                oldPosition.size + sizeDelta,
-                fillPrice,
-                currentInitialMargin
-            ) + orderFees;
-    }
-
-    function _computeOrderFees(
-        uint128 marketId,
-        int128 sizeDelta,
-        uint256 orderPrice
-    ) private view returns (uint256 orderFees, uint256 fillPrice) {
-        int256 skew = PerpsMarket.load(marketId).skew;
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            marketId
-        );
-        fillPrice = AsyncOrder.calculateFillPrice(
-            skew,
-            marketConfig.skewScale,
-            sizeDelta,
-            orderPrice
+                accountId,
+                sizeDelta,
+                0,
+                0,
+                bytes32(0),
+                address(0)
+            )
         );
 
-        orderFees = AsyncOrder.calculateOrderFee(
-            sizeDelta,
-            fillPrice,
-            skew,
-            marketConfig.orderFees
-        );
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
+        PerpsAccount.Data storage account = PerpsAccount.load(order.request.accountId);
+
+        // probably should be doing this but cant because the interface (view) doesn't allow it
+        //perpsMarketData.recomputeFunding(orderPrice);
+
+        (Position.Data[] memory positions, uint256[] memory prices) = account.getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+
+        SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
+            .loadValidSettlementStrategy(marketId, 0);
+        (positions, , , , ) = order.createUpdatedPosition(PerpsMarketConfiguration.load(marketId).settlementStrategies[0], price, positions);
+
+        (uint256 totalCollateralValueWithDiscount, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
+
+        (requiredMargin,, ) = account.getAccountRequiredMargins(positions, prices, totalCollateralValueWithoutDiscount);
     }
 }

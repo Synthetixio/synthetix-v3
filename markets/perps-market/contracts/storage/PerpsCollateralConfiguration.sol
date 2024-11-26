@@ -129,12 +129,11 @@ library PerpsCollateralConfiguration {
         Data storage self,
         uint256 amount,
         ISpotMarketSystem spotMarket,
-        PerpsPrice.Tolerance stalenessTolerance,
-        bool useDiscount
-    ) internal view returns (uint256 collateralValueInUsd, uint256 discount) {
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal view returns (uint256 undiscountedCollateralValueInUsd, uint256 discount) {
         uint256 skewScale = spotMarket.getMarketSkewScale(self.id);
-        // only discount collateral if skew scale is set on spot market and useDiscount is set to true
-        if (useDiscount && skewScale != 0) {
+        // only discount collateral if skew scale is set on spot market
+        if (skewScale != 0) {
             uint256 impactOnSkew = amount.divDecimal(skewScale).mulDecimal(self.discountScalar);
             discount = (
                 MathUtil.min(
@@ -150,9 +149,6 @@ library PerpsCollateralConfiguration {
             sellTxnType,
             Price.Tolerance(uint256(stalenessTolerance)) // solhint-disable-line numcast/safe-cast
         );
-        uint256 valueWithoutDiscount = amount.mulDecimal(collateralPrice);
-
-        // if discount is 0, this just gets multiplied by 1
-        collateralValueInUsd = valueWithoutDiscount.mulDecimal(DecimalMath.UNIT - discount);
+        undiscountedCollateralValueInUsd = amount.mulDecimal(collateralPrice);
     }
 }

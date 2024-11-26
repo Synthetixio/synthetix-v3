@@ -6,6 +6,7 @@ import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMa
 import {SafeCastU256, SafeCastI256, SafeCastU128} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {Position} from "./Position.sol";
 import {AsyncOrder} from "./AsyncOrder.sol";
+import {OrderFee} from "./OrderFee.sol";
 import {PerpsMarketConfiguration} from "./PerpsMarketConfiguration.sol";
 import {MarketUpdate} from "./MarketUpdate.sol";
 import {MathUtil} from "../utils/MathUtil.sol";
@@ -361,55 +362,44 @@ library PerpsMarket {
         return (block.timestamp - self.lastFundingTime).divDecimal(1 days).toInt();
     }
 
-    function validatePositionSize(
+    function getLongSize(Data storage self) internal view returns (uint256) {
+        return (self.size.toInt() + self.skew).toUint() / 2;
+    }
+
+    function getShortSize(Data storage self) internal view returns (uint256) {
+        return (self.size.toInt() - self.skew).toUint() / 2;
+    }
+
+    /**
+     * @notice ensures that the given market size (either in the long or short direction) does not exceed the maximum configured size.
+     * The size limitation is the same for long or short, so put the total size of the side you want to check.
+     * @param size the total size of the side you want to check against the limit.
+     */
+    function validateGivenMarketSize(
         Data storage self,
-        uint256 maxSize,
-        uint256 maxValue,
-        uint256 price,
-        int128 oldSize,
-        int128 newSize
+        uint256 size,
+        uint256 price
     ) internal view {
-        // Allow users to reduce an order no matter the market conditions.
-        bool isReducingInterest = MathUtil.isSameSideReducing(oldSize, newSize);
-        if (!isReducingInterest) {
-            int256 newSkew = self.skew - oldSize + newSize;
+        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
-            int256 newMarketSize = self.size.toInt() -
-                MathUtil.abs(oldSize).toInt() +
-                MathUtil.abs(newSize).toInt();
+        if (marketConfig.maxMarketSize < size) {
+            revert PerpsMarketConfiguration.MaxOpenInterestReached(
+                self.id,
+                marketConfig.maxMarketSize,
+                size.toInt()
+            );
+        }
 
-            int256 newSideSize;
-            if (0 < newSize) {
-                // long case: marketSize + skew
-                //            = (|longSize| + |shortSize|) + (longSize + shortSize)
-                //            = 2 * longSize
-                newSideSize = newMarketSize + newSkew;
-            } else {
-                // short case: marketSize - skew
-                //            = (|longSize| + |shortSize|) - (longSize + shortSize)
-                //            = 2 * -shortSize
-                newSideSize = newMarketSize - newSkew;
-            }
-
-            // newSideSize still includes an extra factor of 2 here, so we will divide by 2 in the actual condition
-            if (maxSize < MathUtil.abs(newSideSize / 2)) {
-                revert PerpsMarketConfiguration.MaxOpenInterestReached(
-                    self.id,
-                    maxSize,
-                    newSideSize / 2
-                );
-            }
-
-            // same check but with value (size * price)
-            // note that if maxValue param is set to 0, this validation is skipped
-            if (maxValue > 0 && maxValue < MathUtil.abs(newSideSize / 2).mulDecimal(price)) {
-                revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
-                    self.id,
-                    maxValue,
-                    newSideSize / 2,
-                    price
-                );
-            }
+        // same check but with value (size * price)
+        // note that if maxValue param is set to 0, this validation is skipped
+        uint256 maxMarketValue = marketConfig.maxMarketValue;
+        if (maxMarketValue > 0 && maxMarketValue < size.mulDecimal(price)) {
+            revert PerpsMarketConfiguration.MaxUSDOpenInterestReached(
+                self.id,
+                maxMarketValue,
+                size.toInt(),
+                price
+            );
         }
     }
 
@@ -465,5 +455,129 @@ library PerpsMarket {
         uint128 accountId
     ) internal view returns (Position.Data storage position) {
         position = load(marketId).positions[accountId];
+    }
+
+    /**
+     * @notice Calculates the order fees.
+     */
+    function calculateOrderFee(
+        Data storage self,
+        int256 sizeDelta,
+        uint256 fillPrice
+    ) internal view returns (uint256) {
+        int256 marketSkew = self.skew;
+        OrderFee.Data storage orderFeeData = PerpsMarketConfiguration.load(self.id).orderFees;
+        int256 notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
+
+        // does this trade keep the skew on one side?
+        if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
+            // use a flat maker/taker fee for the entire size depending on whether the skew is increased or reduced.
+            //
+            // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
+            // otherwise if the order is opposite to the skew, the maker fee is charged.
+
+            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
+                ? orderFeeData.takerFee
+                : orderFeeData.makerFee;
+            return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
+        }
+
+        // this trade flips the skew.
+        //
+        // the proportion of size that moves in the direction after the flip should not be considered
+        // as a maker (reducing skew) as it's now taking (increasing skew) in the opposite direction. hence,
+        // a different fee is applied on the proportion increasing the skew.
+
+        // The proportions are computed as follows:
+        // makerSize = abs(marketSkew) => since we are reversing the skew, the maker size is the current skew
+        // takerSize = abs(marketSkew + sizeDelta) => since we are reversing the skew, the taker size is the new skew
+        //
+        // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
+
+        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
+            orderFeeData.makerFee
+        );
+
+        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
+            orderFeeData.takerFee
+        );
+
+        return takerFee + makerFee;
+    }
+
+    /**
+     * @notice Calls `computeFillPrice` with the given size while filling in the current values for this market
+     */
+    function calculateFillPrice(Data storage self, int128 size, uint256 price) internal view returns (uint256) {
+        uint128 marketId = self.id;
+        return computeFillPrice(
+            PerpsMarket.load(marketId).skew,
+            PerpsMarketConfiguration.load(marketId).skewScale,
+            price,
+            size
+        );
+    }
+
+    /**
+     * @notice Does the calculation to determine the fill price for an order.
+     */
+    function computeFillPrice(
+        int256 skew,
+        uint256 skewScale,
+        uint256 price,
+        int128 size
+    ) internal pure returns (uint256) {
+        // How is the p/d-adjusted price calculated using an example:
+        //
+        // price      = $1200 USD (oracle)
+        // size       = 100
+        // skew       = 0
+        // skew_scale = 1,000,000 (1M)
+        //
+        // Then,
+        //
+        // pd_before = 0 / 1,000,000
+        //           = 0
+        // pd_after  = (0 + 100) / 1,000,000
+        //           = 100 / 1,000,000
+        //           = 0.0001
+        //
+        // price_before = 1200 * (1 + pd_before)
+        //              = 1200 * (1 + 0)
+        //              = 1200
+        // price_after  = 1200 * (1 + pd_after)
+        //              = 1200 * (1 + 0.0001)
+        //              = 1200 * (1.0001)
+        //              = 1200.12
+        // Finally,
+        //
+        // fill_price = (price_before + price_after) / 2
+        //            = (1200 + 1200.12) / 2
+        //            = 1200.06
+        if (skewScale == 0) {
+            return price;
+        }
+        // calculate pd (premium/discount) before and after trade
+        int256 pdBefore = skew.divDecimal(skewScale.toInt());
+        int256 newSkew = skew + size;
+        int256 pdAfter = newSkew.divDecimal(skewScale.toInt());
+
+        // calculate price before and after trade with pd applied
+        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
+        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
+
+        // the fill price is the average of those prices
+        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
+    }
+
+    /**
+     * @notice PnL incurred from closing old position/opening new position based on fill price
+     */
+    function computeFillPricePnl(
+        uint256 fillPrice,
+        uint256 marketPrice,
+        int256 sizeDelta
+    ) internal pure returns (int256) {
+        return sizeDelta.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
     }
 }

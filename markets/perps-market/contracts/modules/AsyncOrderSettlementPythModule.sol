@@ -81,7 +81,7 @@ contract AsyncOrderSettlementPythModule is
 
         GlobalPerpsMarket.load().checkLiquidation(runtime.accountId);
 
-        Position.Data storage oldPosition;
+        Position.Data memory oldPosition;
 
         // Load the market before settlement to capture the original market size
         PerpsMarket.Data storage market = PerpsMarket.loadValid(runtime.marketId);
