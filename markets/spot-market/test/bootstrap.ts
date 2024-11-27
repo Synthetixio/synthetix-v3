@@ -194,9 +194,9 @@ export function bootstrapWithSynth(name: string, token: string) {
 export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
   bootstrapStakers(r.systems, r.signers);
 
-  let trader1: ethers.Signer, trader2: ethers.Signer;
+  let trader1: ethers.Signer, trader2: ethers.Signer, trader3: ethers.Signer;
   before('identify traders', () => {
-    [, , , trader1, trader2] = r.signers();
+    [, , , trader1, trader2, trader3] = r.signers();
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -205,6 +205,7 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
     ...r,
     trader1: () => trader1,
     trader2: () => trader2,
+    trader3: () => trader3,
     restore,
   };
 }
