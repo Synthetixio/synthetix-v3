@@ -48,8 +48,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             .load()
             .liquidatableAccounts;
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        PerpsAccount.MemoryContext memory ctx = account
-            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.STRICT);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.STRICT
+        );
         if (!liquidatableAccounts.contains(accountId)) {
             (
                 uint256 totalCollateralValueWithDiscount,
@@ -99,8 +100,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             revert AccountHasOpenPositions(accountId);
         }
 
-        PerpsAccount.MemoryContext memory ctx = account
-            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.STRICT);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.STRICT
+        );
         (
             uint256 totalCollateralValueWithDiscount,
             uint256 totalCollateralValueWithoutDiscount
@@ -154,7 +156,14 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         for (uint256 i = 0; i < numberOfAccountsToLiquidate; i++) {
             uint128 accountId = liquidatableAccounts[i].to128();
-            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId).getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.STRICT), 0, 0, false);
+            liquidationReward += _liquidateAccount(
+                PerpsAccount.load(accountId).getOpenPositionsAndCurrentPrices(
+                    PerpsPrice.Tolerance.STRICT
+                ),
+                0,
+                0,
+                false
+            );
         }
     }
 
@@ -176,7 +185,14 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 continue;
             }
 
-            liquidationReward += _liquidateAccount(PerpsAccount.load(accountId).getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.STRICT), 0, 0, false);
+            liquidationReward += _liquidateAccount(
+                PerpsAccount.load(accountId).getOpenPositionsAndCurrentPrices(
+                    PerpsPrice.Tolerance.STRICT
+                ),
+                0,
+                0,
+                false
+            );
         }
     }
 
@@ -197,8 +213,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         }
 
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        PerpsAccount.MemoryContext memory ctx = account
-            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.DEFAULT
+        );
         (
             uint256 totalCollateralValueWithDiscount,
             uint256 totalCollateralValueWithoutDiscount
@@ -217,8 +234,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         if (account.hasOpenPositions()) {
             return false;
         } else {
-            PerpsAccount.MemoryContext memory ctx = account
-                .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+            PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+                PerpsPrice.Tolerance.DEFAULT
+            );
             (
                 uint256 totalCollateralValueWithDiscount,
                 uint256 totalCollateralValueWithoutDiscount
@@ -261,13 +279,12 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         uint256 totalCollateralValue,
         bool positionFlagged
     ) internal returns (uint256 keeperLiquidationReward) {
-
         //PerpsAccount.MemoryContext memory ctx = account
         //    .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.STRICT);
 
         uint256 i;
         uint256 totalLiquidated;
-        for (i = 0;i < ctx.positions.length;i++) {
+        for (i = 0; i < ctx.positions.length; i++) {
             (
                 uint256 amountLiquidated,
                 int128 newPositionSize,
@@ -300,24 +317,26 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         }
 
         uint256 totalFlaggingRewards;
-        for (uint256 j = 0;j <= MathUtil.min(i, ctx.positions.length - 1);j++) {
+        for (uint256 j = 0; j <= MathUtil.min(i, ctx.positions.length - 1); j++) {
             // using oldPositionAbsSize to calculate flag reward
             if (
                 ERC2771Context._msgSender() !=
                 PerpsMarketConfiguration.load(ctx.positions[j].marketId).endorsedLiquidator
             ) {
-                    totalFlaggingRewards += PerpsMarketConfiguration
-                        .load(ctx.positions[j].marketId)
-                        .calculateFlagReward(MathUtil.abs(ctx.positions[j].size).mulDecimal(ctx.prices[j]));
+                totalFlaggingRewards += PerpsMarketConfiguration
+                    .load(ctx.positions[j].marketId)
+                    .calculateFlagReward(
+                        MathUtil.abs(ctx.positions[j].size).mulDecimal(ctx.prices[j])
+                    );
             }
         }
 
         if (
             ERC2771Context._msgSender() !=
-            PerpsMarketConfiguration.load(ctx.positions[MathUtil.min(i, ctx.positions.length - 1)].marketId).endorsedLiquidator
+            PerpsMarketConfiguration
+                .load(ctx.positions[MathUtil.min(i, ctx.positions.length - 1)].marketId)
+                .endorsedLiquidator
         ) {
-            
-
             // Use max of collateral or positions flag rewards
             uint256 totalCollateralLiquidateRewards = GlobalPerpsMarketConfiguration
                 .load()
@@ -331,8 +350,7 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
 
         bool accountFullyLiquidated;
 
-        uint256 totalLiquidationCost =
-            KeeperCosts.load().getLiquidateKeeperCosts() +
+        uint256 totalLiquidationCost = KeeperCosts.load().getLiquidateKeeperCosts() +
             costOfFlagExecution;
         if (positionFlagged || totalLiquidated > 0) {
             keeperLiquidationReward = _processLiquidationRewards(
@@ -340,7 +358,8 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
                 totalLiquidationCost,
                 totalCollateralValue
             );
-            accountFullyLiquidated = PerpsAccount.load(ctx.accountId).openPositionMarketIds.length() == 0;
+            accountFullyLiquidated =
+                PerpsAccount.load(ctx.accountId).openPositionMarketIds.length() == 0;
             if (
                 accountFullyLiquidated &&
                 GlobalPerpsMarket.load().liquidatableAccounts.contains(ctx.accountId)

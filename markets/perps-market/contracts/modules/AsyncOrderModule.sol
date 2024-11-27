@@ -210,10 +210,11 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // probably should be doing this but cant because the interface (view) doesn't allow it
         //perpsMarketData.recomputeFunding(orderPrice);
 
-        PerpsAccount.MemoryContext memory ctx = account
-            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.DEFAULT
+        );
 
-        (ctx,,,, ) = order.createUpdatedPosition(
+        (ctx, , , , ) = order.createUpdatedPosition(
             PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
             price,
             ctx

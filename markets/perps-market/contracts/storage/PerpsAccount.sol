@@ -214,10 +214,7 @@ library PerpsAccount {
             uint256 liquidationReward
         )
     {
-        availableMargin = getAvailableMargin(
-            ctx,
-            totalCollateralValueWithDiscount
-        );
+        availableMargin = getAvailableMargin(ctx, totalCollateralValueWithDiscount);
 
         (
             requiredInitialMargin,
@@ -235,7 +232,9 @@ library PerpsAccount {
             .liquidatableAccounts;
 
         if (!liquidatableAccounts.contains(self.id)) {
-            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(self.id);
+            flagKeeperCost = KeeperCosts.load().getFlagKeeperCosts(
+                getNumberOfUpdatedFeedsRequired(self)
+            );
             liquidatableAccounts.add(self.id);
             seizedMarginValue = seizeCollateral(self);
 
@@ -317,7 +316,10 @@ library PerpsAccount {
             revert InsufficientSynthCollateral(collateralId, collateralAmount, amountToWithdraw);
         }
 
-        MemoryContext memory ctx = getOpenPositionsAndCurrentPrices(self, PerpsPrice.Tolerance.STRICT);
+        MemoryContext memory ctx = getOpenPositionsAndCurrentPrices(
+            self,
+            PerpsPrice.Tolerance.STRICT
+        );
         (
             uint256 totalCollateralValueWithDiscount,
             uint256 totalCollateralValueWithoutDiscount
@@ -374,10 +376,7 @@ library PerpsAccount {
                 uint256 requiredInitialMargin,
                 ,
                 uint256 liquidationReward
-            ) = getAccountRequiredMargins(
-                    ctx,
-                    totalNonDiscountedCollateralValue
-                );
+            ) = getAccountRequiredMargins(ctx, totalNonDiscountedCollateralValue);
             uint256 requiredMargin = requiredInitialMargin + liquidationReward;
             withdrawableMargin =
                 getAvailableMargin(ctx, totalDiscountedCollateralValue) -
@@ -418,7 +417,12 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (MemoryContext memory ctx) {
         uint256[] memory marketIds = self.openPositionMarketIds.values();
-        ctx = MemoryContext(self.id, stalenessTolerance, new Position.Data[](marketIds.length), PerpsPrice.getCurrentPrices(marketIds, stalenessTolerance));
+        ctx = MemoryContext(
+            self.id,
+            stalenessTolerance,
+            new Position.Data[](marketIds.length),
+            PerpsPrice.getCurrentPrices(marketIds, stalenessTolerance)
+        );
         for (uint256 i = 0; i < ctx.positions.length; i++) {
             ctx.positions[i] = PerpsMarket.load(marketIds[i].to128()).positions[self.id];
         }
@@ -439,28 +443,31 @@ library PerpsAccount {
         MemoryContext memory ctx,
         Position.Data memory newPosition
     ) internal view returns (MemoryContext memory newCtx) {
-        uint256 oldPositionPos = PerpsAccount.findPositionByMarketId(
-            ctx,
-            newPosition.marketId
-        );
+        uint256 oldPositionPos = PerpsAccount.findPositionByMarketId(ctx, newPosition.marketId);
         if (oldPositionPos < ctx.positions.length) {
             ctx.positions[oldPositionPos] = newPosition;
             newCtx = ctx;
         } else {
             // we have to expand the size of the array
-            newCtx = MemoryContext(ctx.accountId, ctx.stalenessTolerance, new Position.Data[](ctx.positions.length + 1), new uint256[](ctx.positions.length + 1));
+            newCtx = MemoryContext(
+                ctx.accountId,
+                ctx.stalenessTolerance,
+                new Position.Data[](ctx.positions.length + 1),
+                new uint256[](ctx.positions.length + 1)
+            );
             for (uint256 i = 0; i < ctx.positions.length; i++) {
                 newCtx.positions[i] = ctx.positions[i];
                 newCtx.prices[i] = ctx.prices[i];
             }
             newCtx.positions[ctx.positions.length] = newPosition;
-            newCtx.prices[ctx.positions.length] = PerpsPrice.getCurrentPrice(newPosition.marketId, ctx.stalenessTolerance);
+            newCtx.prices[ctx.positions.length] = PerpsPrice.getCurrentPrice(
+                newPosition.marketId,
+                ctx.stalenessTolerance
+            );
         }
     }
 
-    function getAccountPnl(
-        MemoryContext memory ctx
-    ) internal view returns (int256 totalPnl) {
+    function getAccountPnl(MemoryContext memory ctx) internal view returns (int256 totalPnl) {
         for (uint256 i = 0; i < ctx.positions.length; i++) {
             (int256 pnl, , , , , ) = ctx.positions[i].getPnl(ctx.prices[i]);
             totalPnl += pnl;
@@ -478,7 +485,10 @@ library PerpsAccount {
     ) internal view returns (int256) {
         int256 accountPnl = getAccountPnl(ctx);
 
-        return totalCollateralValueWithDiscount.toInt() + accountPnl - load(ctx.accountId).debt.toInt();
+        return
+            totalCollateralValueWithDiscount.toInt() +
+            accountPnl -
+            load(ctx.accountId).debt.toInt();
     }
 
     function getTotalNotionalOpenInterest(
@@ -670,11 +680,7 @@ library PerpsAccount {
         // update market data
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
 
-        return (
-            amountToLiquidate,
-            newPositionSize,
-            marketUpdateData
-        );
+        return (amountToLiquidate, newPositionSize, marketUpdateData);
     }
 
     function hasOpenPositions(Data storage self) internal view returns (bool) {
