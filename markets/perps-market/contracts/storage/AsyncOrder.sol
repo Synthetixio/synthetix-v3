@@ -232,12 +232,12 @@ library AsyncOrder {
         Data memory order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice,
-        Position.Data[] memory positions
+        PerpsAccount.MemoryContext memory ctx
     )
         internal
         view
         returns (
-            Position.Data[] memory newPositions,
+            PerpsAccount.MemoryContext memory newCtx,
             Position.Data memory oldPosition,
             Position.Data memory newPosition,
             uint256 fillPrice,
@@ -257,7 +257,7 @@ library AsyncOrder {
         });
 
         // update the account positions list, so we can now conveniently recompute required margin
-        newPositions = PerpsAccount.upsertPosition(positions, newPosition);
+        newCtx = PerpsAccount.upsertPosition(ctx, newPosition);
 
         orderFees =
             perpsMarketData.calculateOrderFee(newPosition.size - oldPosition.size, fillPrice) +
@@ -292,7 +292,7 @@ library AsyncOrder {
             revert ZeroSizeOrder();
         }
 
-        (Position.Data[] memory positions, uint256[] memory prices) = PerpsAccount
+        PerpsAccount.MemoryContext memory ctx = PerpsAccount
             .load(order.request.accountId)
             .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
         (
@@ -305,15 +305,12 @@ library AsyncOrder {
         // verify if the account is *currently* liquidatable
         // we are only checking this here because once an account enters liquidation they are not allowed to dig themselves out by repaying
         {
-            PerpsAccount.Data storage account = PerpsAccount.load(order.request.accountId);
-
             int256 currentAvailableMargin;
             {
                 bool isEligibleForLiquidation;
-                (isEligibleForLiquidation, currentAvailableMargin, , , ) = account
+                (isEligibleForLiquidation, currentAvailableMargin, , , ) = PerpsAccount
                     .isEligibleForLiquidation(
-                        positions,
-                        prices,
+                        ctx,
                         totalCollateralValueWithDiscount,
                         totalCollateralValueWithoutDiscount
                     );
@@ -326,11 +323,11 @@ library AsyncOrder {
             // now get the new state of the market by calling `createUpdatedPosition(order, orderPrice);`
             PerpsMarket.load(order.request.marketId).recomputeFunding(orderPrice);
 
-            (positions, oldPosition, newPosition, fillPrice, orderFees) = createUpdatedPosition(
+            (ctx, oldPosition, newPosition, fillPrice, orderFees) = createUpdatedPosition(
                 order,
                 strategy,
                 orderPrice,
-                positions
+                ctx
             );
 
             // compute order fees and verify we can pay for them
@@ -351,9 +348,8 @@ library AsyncOrder {
             currentAvailableMargin -= orderFees.toInt();
 
             // check that the new account margin would be satisfied
-            (uint256 totalRequiredMargin, , ) = account.getAccountRequiredMargins(
-                positions,
-                prices,
+            (uint256 totalRequiredMargin, , ) = PerpsAccount.getAccountRequiredMargins(
+                ctx,
                 totalCollateralValueWithoutDiscount
             );
 

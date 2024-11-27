@@ -134,9 +134,9 @@ contract PerpsAccountModule is IPerpsAccountModule {
      */
     function totalAccountOpenInterest(uint128 accountId) external view override returns (uint256) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (Position.Data[] memory positions, uint256[] memory prices) = account
+        PerpsAccount.MemoryContext memory ctx = account
             .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
-        return PerpsAccount.getTotalNotionalOpenInterest(positions, prices);
+        return PerpsAccount.getTotalNotionalOpenInterest(ctx);
     }
 
     /**
@@ -180,14 +180,13 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 availableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (Position.Data[] memory positions, uint256[] memory prices) = account
+        PerpsAccount.MemoryContext memory ctx = account
             .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
         (uint256 totalCollateralValueWithDiscount, ) = account.getTotalCollateralValue(
             PerpsPrice.Tolerance.DEFAULT
         );
-        availableMargin = PerpsAccount.load(accountId).getAvailableMargin(
-            positions,
-            prices,
+        availableMargin = PerpsAccount.getAvailableMargin(
+            ctx,
             totalCollateralValueWithDiscount
         );
     }
@@ -199,17 +198,16 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        (Position.Data[] memory positions, uint256[] memory prices) = account
+        PerpsAccount.MemoryContext memory ctx = account
             .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
         (
             uint256 totalCollateralValueWithDiscount,
             uint256 totalCollateralValueWithoutDiscount
         ) = account.getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
-        withdrawableMargin = account.getWithdrawableMargin(
-            positions,
-            prices,
-            totalCollateralValueWithDiscount,
-            totalCollateralValueWithoutDiscount
+        withdrawableMargin = PerpsAccount.getWithdrawableMargin(
+            ctx,
+            totalCollateralValueWithoutDiscount,
+            totalCollateralValueWithDiscount
         );
     }
 
@@ -233,13 +231,13 @@ contract PerpsAccountModule is IPerpsAccountModule {
             return (0, 0, 0);
         }
 
-        (Position.Data[] memory positions, uint256[] memory prices) = account
+        PerpsAccount.MemoryContext memory ctx = account
             .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
         (, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(
             PerpsPrice.Tolerance.DEFAULT
         );
-        (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = account
-            .getAccountRequiredMargins(positions, prices, totalCollateralValueWithoutDiscount);
+        (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = PerpsAccount
+            .getAccountRequiredMargins(ctx, totalCollateralValueWithoutDiscount);
 
         // Include liquidation rewards to required initial margin and required maintenance margin
         requiredInitialMargin += maxLiquidationReward;

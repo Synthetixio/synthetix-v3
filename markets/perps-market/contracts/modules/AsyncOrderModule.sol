@@ -139,13 +139,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // probably should be doing this but cant because the interface (view) doesn't allow it
         //perpsMarketData.recomputeFunding(orderPrice);
 
-        (Position.Data[] memory positions, ) = account.getOpenPositionsAndCurrentPrices(
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
             PerpsPrice.Tolerance.DEFAULT
         );
         (, , , fillPrice, orderFees) = order.createUpdatedPosition(
             PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
             price,
-            positions
+            ctx
         );
     }
 
@@ -210,22 +210,21 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // probably should be doing this but cant because the interface (view) doesn't allow it
         //perpsMarketData.recomputeFunding(orderPrice);
 
-        (Position.Data[] memory positions, uint256[] memory prices) = account
+        PerpsAccount.MemoryContext memory ctx = account
             .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
 
-        (positions, , , , ) = order.createUpdatedPosition(
+        (ctx,,,, ) = order.createUpdatedPosition(
             PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
             price,
-            positions
+            ctx
         );
 
         (, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(
             PerpsPrice.Tolerance.DEFAULT
         );
 
-        (requiredMargin, , ) = account.getAccountRequiredMargins(
-            positions,
-            prices,
+        (requiredMargin, , ) = PerpsAccount.getAccountRequiredMargins(
+            ctx,
             totalCollateralValueWithoutDiscount
         );
     }
