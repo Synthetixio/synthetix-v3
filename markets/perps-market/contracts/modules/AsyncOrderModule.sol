@@ -142,11 +142,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
             PerpsPrice.Tolerance.DEFAULT
         );
-        (, , , fillPrice, orderFees) = order.createUpdatedPosition(
-            PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
-            price,
-            ctx
-        );
+        (, , , fillPrice, orderFees) = order.createUpdatedPosition(price, ctx);
     }
 
     /**
@@ -214,11 +210,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             PerpsPrice.Tolerance.DEFAULT
         );
 
-        (ctx, , , , ) = order.createUpdatedPosition(
-            PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
-            price,
-            ctx
-        );
+        (ctx, , , , ) = order.createUpdatedPosition(price, ctx);
 
         (, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(
             PerpsPrice.Tolerance.DEFAULT

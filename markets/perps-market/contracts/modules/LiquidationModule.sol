@@ -114,7 +114,9 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
         );
         if (isEligible) {
             // margin is sent to liquidation rewards distributor in getMarginLiquidationCostAndSeizeMargin
-            uint256 marginLiquidateCost = KeeperCosts.load().getFlagKeeperCosts(account.id);
+            uint256 marginLiquidateCost = KeeperCosts.load().getFlagKeeperCosts(
+                account.getNumberOfUpdatedFeedsRequired()
+            );
             uint256 seizedMarginValue = account.seizeCollateral();
 
             // keeper is rewarded in _liquidateAccount
@@ -270,20 +272,11 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
     }
 
-    /**
-     * @dev liquidates an account
-     */
-    function _liquidateAccount(
+    function _liquidateAccountPositions(
         PerpsAccount.MemoryContext memory ctx,
-        uint256 costOfFlagExecution,
-        uint256 totalCollateralValue,
-        bool positionFlagged
-    ) internal returns (uint256 keeperLiquidationReward) {
-        //PerpsAccount.MemoryContext memory ctx = account
-        //    .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.STRICT);
-
+        uint256 totalCollateralValue
+    ) internal returns (uint256 totalLiquidated, uint256 totalFlaggingRewards) {
         uint256 i;
-        uint256 totalLiquidated;
         for (i = 0; i < ctx.positions.length; i++) {
             (
                 uint256 amountLiquidated,
@@ -316,7 +309,6 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
         }
 
-        uint256 totalFlaggingRewards;
         for (uint256 j = 0; j <= MathUtil.min(i, ctx.positions.length - 1); j++) {
             // using oldPositionAbsSize to calculate flag reward
             if (
@@ -348,6 +340,30 @@ contract LiquidationModule is ILiquidationModule, IMarketEvents {
             );
         }
 
+        return (totalLiquidated, totalFlaggingRewards);
+    }
+
+    /**
+     * @dev liquidates an account
+     */
+    function _liquidateAccount(
+        PerpsAccount.MemoryContext memory ctx,
+        uint256 costOfFlagExecution,
+        uint256 totalCollateralValue,
+        bool positionFlagged
+    ) internal returns (uint256 keeperLiquidationReward) {
+        uint256 totalLiquidated;
+        uint256 totalFlaggingRewards;
+        if (ctx.positions.length > 0) {
+            (totalLiquidated, totalFlaggingRewards) = _liquidateAccountPositions(
+                ctx,
+                totalCollateralValue
+            );
+        } else {
+            totalFlaggingRewards = GlobalPerpsMarketConfiguration
+                .load()
+                .calculateCollateralLiquidateReward(totalCollateralValue);
+        }
         bool accountFullyLiquidated;
 
         uint256 totalLiquidationCost = KeeperCosts.load().getLiquidateKeeperCosts() +

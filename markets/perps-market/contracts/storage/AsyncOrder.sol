@@ -230,7 +230,6 @@ library AsyncOrder {
      */
     function createUpdatedPosition(
         Data memory order,
-        SettlementStrategy.Data storage strategy,
         uint256 orderPrice,
         PerpsAccount.MemoryContext memory ctx
     )
@@ -259,9 +258,10 @@ library AsyncOrder {
         // update the account positions list, so we can now conveniently recompute required margin
         newCtx = PerpsAccount.upsertPosition(ctx, newPosition);
 
-        orderFees =
-            perpsMarketData.calculateOrderFee(newPosition.size - oldPosition.size, fillPrice) +
-            settlementRewardCost(strategy);
+        orderFees = perpsMarketData.calculateOrderFee(
+            newPosition.size - oldPosition.size,
+            fillPrice
+        );
     }
 
     /**
@@ -325,10 +325,12 @@ library AsyncOrder {
 
             (ctx, oldPosition, newPosition, fillPrice, orderFees) = createUpdatedPosition(
                 order,
-                strategy,
                 orderPrice,
                 ctx
             );
+
+            // add the additional settlement fee, which is not included as part of the updating position fee
+            orderFees += settlementRewardCost(strategy);
 
             // compute order fees and verify we can pay for them
             // only account for negative pnl

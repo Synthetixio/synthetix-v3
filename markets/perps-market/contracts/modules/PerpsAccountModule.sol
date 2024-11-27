@@ -124,7 +124,7 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function totalCollateralValue(
         uint128 accountId
     ) external view override returns (uint256 totalValue) {
-        (totalValue, ) = PerpsAccount.load(accountId).getTotalCollateralValue(
+        (, totalValue) = PerpsAccount.load(accountId).getTotalCollateralValue(
             PerpsPrice.Tolerance.DEFAULT
         );
     }
