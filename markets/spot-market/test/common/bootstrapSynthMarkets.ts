@@ -5,7 +5,6 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
 import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { SynthRouter } from '../generated/typechain';
-import { formatBytes32String } from 'ethers/lib/utils';
 
 export type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;
@@ -76,10 +75,6 @@ export function bootstrapSynthMarkets(
       );
       synthAddress = await contracts.SpotMarket.getSynth(marketId);
       synth = contracts.Synth(synthAddress);
-      await contracts.Core.addToFeatureFlagAllowlist(
-        formatBytes32String('tradingEnabled'),
-        synthAddress
-      );
     });
 
     before('delegate collateral to market from pool', async () => {

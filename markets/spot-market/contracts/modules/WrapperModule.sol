@@ -63,15 +63,15 @@ contract WrapperModule is IWrapperModule {
         uint256 wrapAmount,
         uint256 minAmountReceived
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
-        ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
-
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
         wrapperStore.validateWrapper();
+
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         uint256 wrapAmountD18 = Price
@@ -126,14 +126,15 @@ contract WrapperModule is IWrapperModule {
         uint256 unwrapAmount,
         uint256 minAmountReceived
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
-        ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
         wrapperStore.validateWrapper();
+
+        ITokenModule synth = SynthUtil.getToken(marketId);
+        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
+            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
+        }
 
         // burn from seller
         synth.burn(ERC2771Context._msgSender(), unwrapAmount);

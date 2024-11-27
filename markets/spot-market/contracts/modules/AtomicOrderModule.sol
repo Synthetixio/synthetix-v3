@@ -31,12 +31,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 maxUsdAmount,
         address referrer
     ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.validateMarket(marketId);
+
         ITokenModule synth = SynthUtil.getToken(marketId);
         if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
             revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
         }
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(
@@ -105,12 +106,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.validateMarket(marketId);
+
         ITokenModule synth = SynthUtil.getToken(marketId);
         if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
             revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
         }
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.validateMarket(marketId);
 
         // transfer usd funds
         spotMarketFactory.usdToken.transferFrom(
@@ -256,12 +258,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.validateMarket(marketId);
+
         ITokenModule synth = SynthUtil.getToken(marketId);
         if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
             revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
         }
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(
@@ -317,12 +320,13 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 maxSynthAmount,
         address referrer
     ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
+        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
+        spotMarketFactory.validateMarket(marketId);
+
         ITokenModule synth = SynthUtil.getToken(marketId);
         if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
             revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
         }
-        SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
-        spotMarketFactory.validateMarket(marketId);
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(

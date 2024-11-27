@@ -135,7 +135,7 @@ export function bootstrapWithSynth(name: string, token: string) {
     await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
 
     const synthAddress = await contracts.SpotMarket.getSynth(marketId);
-    await contracts.Core.addToFeatureFlagAllowlist(
+    await contracts.SpotMarket.addToFeatureFlagAllowlist(
       formatBytes32String('tradingEnabled'),
       synthAddress
     );
@@ -161,13 +161,6 @@ export function bootstrapWithSynth(name: string, token: string) {
       r.oracleNodeId(),
       result.oracleNodeId,
       STRICT_PRICE_TOLERANCE
-    );
-  });
-
-  before('enable trading', async () => {
-    await contracts.Core.connect(coreOwner).setFeatureFlagAllowAll(
-      formatBytes32String('tradingEnabled'),
-      true
     );
   });
 
