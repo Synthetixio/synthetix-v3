@@ -111,7 +111,7 @@ library Position {
             );
     }
 
-    function getNotionalValue(Data memory self, uint256 price) internal view returns (uint256) {
+    function getNotionalValue(Data memory self, uint256 price) internal pure returns (uint256) {
         return MathUtil.abs(self.size).mulDecimal(price);
     }
 }

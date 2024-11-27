@@ -375,11 +375,7 @@ library PerpsMarket {
      * The size limitation is the same for long or short, so put the total size of the side you want to check.
      * @param size the total size of the side you want to check against the limit.
      */
-    function validateGivenMarketSize(
-        Data storage self,
-        uint256 size,
-        uint256 price
-    ) internal view {
+    function validateGivenMarketSize(Data storage self, uint256 size, uint256 price) internal view {
         PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(self.id);
 
         if (marketConfig.maxMarketSize < size) {
@@ -508,14 +504,19 @@ library PerpsMarket {
     /**
      * @notice Calls `computeFillPrice` with the given size while filling in the current values for this market
      */
-    function calculateFillPrice(Data storage self, int128 size, uint256 price) internal view returns (uint256) {
+    function calculateFillPrice(
+        Data storage self,
+        int128 size,
+        uint256 price
+    ) internal view returns (uint256) {
         uint128 marketId = self.id;
-        return computeFillPrice(
-            PerpsMarket.load(marketId).skew,
-            PerpsMarketConfiguration.load(marketId).skewScale,
-            price,
-            size
-        );
+        return
+            computeFillPrice(
+                PerpsMarket.load(marketId).skew,
+                PerpsMarketConfiguration.load(marketId).skewScale,
+                price,
+                size
+            );
     }
 
     /**

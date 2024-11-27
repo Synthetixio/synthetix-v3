@@ -104,14 +104,23 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 orderFees, uint256 fillPrice) {
-        _computeOrderFeesWithPrice(marketId, sizeDelta, PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT));
+        return
+            _computeOrderFeesWithPrice(
+                marketId,
+                sizeDelta,
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            );
     }
 
     /**
      * @inheritdoc IAsyncOrderModule
      */
-    function computeOrderFeesWithPrice(uint128 marketId, int128 sizeDelta, uint256 price) external view override returns (uint256 orderFees, uint256 fillPrice) {
-        _computeOrderFeesWithPrice(marketId, sizeDelta, price);
+    function computeOrderFeesWithPrice(
+        uint128 marketId,
+        int128 sizeDelta,
+        uint256 price
+    ) external view override returns (uint256 orderFees, uint256 fillPrice) {
+        return _computeOrderFeesWithPrice(marketId, sizeDelta, price);
     }
 
     function _computeOrderFeesWithPrice(
@@ -122,25 +131,22 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // create a fake order commitment request
         AsyncOrder.Data memory order = AsyncOrder.Data(
             0,
-            AsyncOrder.OrderCommitmentRequest(
-                marketId,
-                0,
-                sizeDelta,
-                0,
-                0,
-                bytes32(0),
-                address(0)
-            )
+            AsyncOrder.OrderCommitmentRequest(marketId, 0, sizeDelta, 0, 0, bytes32(0), address(0))
         );
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
         PerpsAccount.Data storage account = PerpsAccount.load(order.request.accountId);
 
         // probably should be doing this but cant because the interface (view) doesn't allow it
         //perpsMarketData.recomputeFunding(orderPrice);
 
-        (Position.Data[] memory positions, uint256[] memory prices) = account.getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
-        (,,, fillPrice, orderFees) = order.createUpdatedPosition(PerpsMarketConfiguration.load(marketId).settlementStrategies[0], price, positions);
+        (Position.Data[] memory positions, ) = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        (, , , fillPrice, orderFees) = order.createUpdatedPosition(
+            PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
+            price,
+            positions
+        );
     }
 
     /**
@@ -161,7 +167,13 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         int128 sizeDelta
     ) external view override returns (uint256 requiredMargin) {
-        return _requiredMarginForOrderWithPrice(accountId, marketId, sizeDelta, PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT));
+        return
+            _requiredMarginForOrderWithPrice(
+                accountId,
+                marketId,
+                sizeDelta,
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            );
     }
 
     function requiredMarginForOrderWithPrice(
@@ -193,20 +205,28 @@ contract AsyncOrderModule is IAsyncOrderModule {
             )
         );
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
         PerpsAccount.Data storage account = PerpsAccount.load(order.request.accountId);
 
         // probably should be doing this but cant because the interface (view) doesn't allow it
         //perpsMarketData.recomputeFunding(orderPrice);
 
-        (Position.Data[] memory positions, uint256[] memory prices) = account.getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+        (Position.Data[] memory positions, uint256[] memory prices) = account
+            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
 
-        SettlementStrategy.Data storage strategy = PerpsMarketConfiguration
-            .loadValidSettlementStrategy(marketId, 0);
-        (positions, , , , ) = order.createUpdatedPosition(PerpsMarketConfiguration.load(marketId).settlementStrategies[0], price, positions);
+        (positions, , , , ) = order.createUpdatedPosition(
+            PerpsMarketConfiguration.load(marketId).settlementStrategies[0],
+            price,
+            positions
+        );
 
-        (uint256 totalCollateralValueWithDiscount, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
+        (, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(
+            PerpsPrice.Tolerance.DEFAULT
+        );
 
-        (requiredMargin,, ) = account.getAccountRequiredMargins(positions, prices, totalCollateralValueWithoutDiscount);
+        (requiredMargin, , ) = account.getAccountRequiredMargins(
+            positions,
+            prices,
+            totalCollateralValueWithoutDiscount
+        );
     }
 }

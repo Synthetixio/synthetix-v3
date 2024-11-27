@@ -181,10 +181,16 @@ library PerpsAccount {
         );
 
         int256 totalLiquidationReward = globalConfig
-            .keeperReward(liquidationRewardForKeeper, totalLiquidationCost, totalCollateralValueWithoutDiscount)
+            .keeperReward(
+                liquidationRewardForKeeper,
+                totalLiquidationCost,
+                totalCollateralValueWithoutDiscount
+            )
             .toInt();
 
-        availableMargin = getAvailableMargin(self, positions, prices, totalCollateralValueWithDiscount) - totalLiquidationReward;
+        availableMargin =
+            getAvailableMargin(self, positions, prices, totalCollateralValueWithDiscount) -
+            totalLiquidationReward;
         isEligible = availableMargin < 0 && self.debt > 0;
     }
 
@@ -205,7 +211,12 @@ library PerpsAccount {
             uint256 liquidationReward
         )
     {
-        availableMargin = getAvailableMargin(self, positions, prices, totalCollateralValueWithDiscount);
+        availableMargin = getAvailableMargin(
+            self,
+            positions,
+            prices,
+            totalCollateralValueWithDiscount
+        );
 
         (
             requiredInitialMargin,
@@ -305,10 +316,22 @@ library PerpsAccount {
             revert InsufficientSynthCollateral(collateralId, collateralAmount, amountToWithdraw);
         }
 
-        (Position.Data[] memory positions, uint256[] memory prices) = getOpenPositionsAndCurrentPrices(self, PerpsPrice.Tolerance.STRICT);
-        (uint256 totalCollateralValueWithDiscount, uint256 totalCollateralValueWithoutDiscount) = getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT);
+        (
+            Position.Data[] memory positions,
+            uint256[] memory prices
+        ) = getOpenPositionsAndCurrentPrices(self, PerpsPrice.Tolerance.STRICT);
+        (
+            uint256 totalCollateralValueWithDiscount,
+            uint256 totalCollateralValueWithoutDiscount
+        ) = getTotalCollateralValue(self, PerpsPrice.Tolerance.DEFAULT);
 
-        int256 withdrawableMarginUsd = getWithdrawableMargin(self, positions, prices, totalCollateralValueWithoutDiscount, totalCollateralValueWithDiscount);
+        int256 withdrawableMarginUsd = getWithdrawableMargin(
+            self,
+            positions,
+            prices,
+            totalCollateralValueWithoutDiscount,
+            totalCollateralValueWithDiscount
+        );
         // Note: this can only happen if account is liquidatable
         if (withdrawableMarginUsd < 0) {
             revert AccountLiquidatable(self.id);
@@ -356,7 +379,12 @@ library PerpsAccount {
                 uint256 requiredInitialMargin,
                 ,
                 uint256 liquidationReward
-            ) = getAccountRequiredMargins(self, positions, prices, totalNonDiscountedCollateralValue);
+            ) = getAccountRequiredMargins(
+                    self,
+                    positions,
+                    prices,
+                    totalNonDiscountedCollateralValue
+                );
             uint256 requiredMargin = requiredInitialMargin + liquidationReward;
             withdrawableMargin =
                 getAvailableMargin(self, positions, prices, totalDiscountedCollateralValue) -
@@ -370,7 +398,6 @@ library PerpsAccount {
         Data storage self,
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (uint256 discounted, uint256 nonDiscounted) {
-        uint256 totalCollateralValue;
         ISpotMarketSystem spotMarket = PerpsMarketFactory.load().spotMarket;
         for (uint256 i = 1; i <= self.activeCollateralTypes.length(); i++) {
             uint128 collateralId = self.activeCollateralTypes.valueAt(i).to128();
@@ -380,11 +407,9 @@ library PerpsAccount {
                 discounted += amount;
                 nonDiscounted += amount;
             } else {
-                (uint256 value, uint256 discount) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
-                    amount,
-                    spotMarket,
-                    stalenessTolerance
-                );
+                (uint256 value, uint256 discount) = PerpsCollateralConfiguration
+                    .load(collateralId)
+                    .valueInUsd(amount, spotMarket, stalenessTolerance);
                 nonDiscounted += value;
                 discounted += value.mulDecimal(DecimalMath.UNIT - discount);
             }
@@ -395,36 +420,46 @@ library PerpsAccount {
      * @notice Retrieves current open positions and their corresponding market prices (given staleness tolerance) for the given account.
      * These values are required inputs to many functions below.
      */
-    function getOpenPositionsAndCurrentPrices(Data storage self, PerpsPrice.Tolerance stalenessTolerance) internal view returns (Position.Data[] memory positions, uint256[] memory prices) {
+    function getOpenPositionsAndCurrentPrices(
+        Data storage self,
+        PerpsPrice.Tolerance stalenessTolerance
+    ) internal view returns (Position.Data[] memory positions, uint256[] memory prices) {
         uint256[] memory marketIds = self.openPositionMarketIds.values();
 
         positions = new Position.Data[](marketIds.length);
-        for (uint256 i = 0;i < positions.length;i++) {
+        for (uint256 i = 0; i < positions.length; i++) {
             positions[i] = PerpsMarket.load(marketIds[i].to128()).positions[self.id];
         }
 
         prices = PerpsPrice.getCurrentPrices(marketIds, stalenessTolerance);
     }
 
-    function findPositionByMarketId(Position.Data[] memory positions, uint128 marketId) internal pure returns (uint256 i) {
-        for (;i < positions.length;i++) {
+    function findPositionByMarketId(
+        Position.Data[] memory positions,
+        uint128 marketId
+    ) internal pure returns (uint256 i) {
+        for (; i < positions.length; i++) {
             if (positions[i].marketId == marketId) {
                 break;
             }
         }
     }
 
-    function upsertPosition(Position.Data[] memory positions, Position.Data memory newPosition) internal pure returns (Position.Data[] memory) {
-        uint256 oldPositionPos = PerpsAccount.findPositionByMarketId(positions, newPosition.marketId);
+    function upsertPosition(
+        Position.Data[] memory positions,
+        Position.Data memory newPosition
+    ) internal pure returns (Position.Data[] memory) {
+        uint256 oldPositionPos = PerpsAccount.findPositionByMarketId(
+            positions,
+            newPosition.marketId
+        );
         if (oldPositionPos < positions.length) {
             positions[oldPositionPos] = newPosition;
             return positions;
         } else {
             // we have to expand the size of the array
             Position.Data[] memory newPositions = new Position.Data[](positions.length);
-            for (uint256 i = 0;i < positions.length;i++) {
-
-            }
+            for (uint256 i = 0; i < positions.length; i++) {}
             newPositions[positions.length] = newPosition;
             return newPositions;
         }
@@ -459,7 +494,7 @@ library PerpsAccount {
     function getTotalNotionalOpenInterest(
         Position.Data[] memory positions,
         uint256[] memory prices
-    ) internal view returns (uint256 totalAccountOpenInterest) {
+    ) internal pure returns (uint256 totalAccountOpenInterest) {
         for (uint256 i = 0; i < positions.length; i++) {
             uint256 openInterest = positions[i].getNotionalValue(prices[i]);
             totalAccountOpenInterest += openInterest;
@@ -516,12 +551,13 @@ library PerpsAccount {
         return (initialMargin, maintenanceMargin, possibleLiquidationReward);
     }
 
-    function getNumberOfUpdatedFeedsRequired(Data storage self) internal view returns (uint256 numberOfUpdatedFeeds) {
+    function getNumberOfUpdatedFeedsRequired(
+        Data storage self
+    ) internal view returns (uint256 numberOfUpdatedFeeds) {
         uint256 numberOfCollateralFeeds = self.activeCollateralTypes.contains(SNX_USD_MARKET_ID)
             ? self.activeCollateralTypes.length() - 1
             : self.activeCollateralTypes.length();
-        numberOfUpdatedFeeds = numberOfCollateralFeeds +
-            self.openPositionMarketIds.length();
+        numberOfUpdatedFeeds = numberOfCollateralFeeds + self.openPositionMarketIds.length();
     }
 
     function getKeeperRewardsAndCosts(
@@ -560,7 +596,6 @@ library PerpsAccount {
         uint256 numOfWindows,
         uint256 totalNonDiscountedCollateralValue,
         uint256 numberOfUpdatedFeeds
-
     ) internal view returns (uint256 possibleLiquidationReward) {
         GlobalPerpsMarketConfiguration.Data storage globalConfig = GlobalPerpsMarketConfiguration
             .load();
