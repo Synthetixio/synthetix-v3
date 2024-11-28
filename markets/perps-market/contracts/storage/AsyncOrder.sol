@@ -350,13 +350,16 @@ library AsyncOrder {
             currentAvailableMargin -= orderFees.toInt();
 
             // check that the new account margin would be satisfied
-            (uint256 totalRequiredMargin, , ) = PerpsAccount.getAccountRequiredMargins(
-                ctx,
-                totalCollateralValueWithoutDiscount
-            );
+            (uint256 totalRequiredMargin, , uint256 possibleLiquidationReward) = PerpsAccount
+                .getAccountRequiredMargins(ctx, totalCollateralValueWithoutDiscount);
 
-            if (currentAvailableMargin < totalRequiredMargin.toInt()) {
-                revert InsufficientMargin(currentAvailableMargin, totalRequiredMargin);
+            if (
+                currentAvailableMargin < (totalRequiredMargin + possibleLiquidationReward).toInt()
+            ) {
+                revert InsufficientMargin(
+                    currentAvailableMargin,
+                    totalRequiredMargin + possibleLiquidationReward
+                );
             }
         }
 

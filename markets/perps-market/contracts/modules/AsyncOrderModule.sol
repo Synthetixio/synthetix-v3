@@ -14,6 +14,7 @@ import {PerpsPrice} from "../storage/PerpsPrice.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 
 /**
@@ -158,6 +159,20 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
     }
 
+    function requiredMarginImmut(
+        uint128 accountId,
+        uint128 marketId,
+        int128 sizeDelta
+    ) external returns (uint256 requiredMargin) {
+        return
+            _requiredMarginForOrderWithPrice(
+                accountId,
+                marketId,
+                sizeDelta,
+                PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
+            );
+    }
+
     function requiredMarginForOrder(
         uint128 accountId,
         uint128 marketId,
@@ -210,15 +225,26 @@ contract AsyncOrderModule is IAsyncOrderModule {
             PerpsPrice.Tolerance.DEFAULT
         );
 
-        (ctx, , , , ) = order.createUpdatedPosition(price, ctx);
+        uint256 orderFees;
+        Position.Data memory oldPosition;
+        Position.Data memory newPosition;
+        (ctx, oldPosition, newPosition, , orderFees) = order.createUpdatedPosition(price, ctx);
+
+        // say no margin is required for shrinking position size
+        if (MathUtil.isSameSideReducing(oldPosition.size, newPosition.size)) {
+            return 0;
+        }
 
         (, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(
             PerpsPrice.Tolerance.DEFAULT
         );
 
-        (requiredMargin, , ) = PerpsAccount.getAccountRequiredMargins(
+        uint256 possibleLiquidationReward;
+        (requiredMargin, , possibleLiquidationReward) = PerpsAccount.getAccountRequiredMargins(
             ctx,
             totalCollateralValueWithoutDiscount
         );
+
+        return requiredMargin + possibleLiquidationReward + orderFees;
     }
 }
