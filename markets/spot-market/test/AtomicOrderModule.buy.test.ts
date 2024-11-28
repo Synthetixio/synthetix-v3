@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 import { STRICT_PRICE_TOLERANCE } from './common';
-import { formatBytes32String } from 'ethers/lib/utils';
+import { hexDataSlice, solidityPack } from 'ethers/lib/utils';
 
 describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
@@ -36,9 +36,13 @@ describe('Atomic Order Module buy()', () => {
   });
 
   it('reverts on trading enabled if the flag is disabled', async () => {
-    await systems().SpotMarket.removeFromFeatureFlagAllowlist(
-      formatBytes32String('tradingEnabled'),
-      await systems().SpotMarket.getSynth(marketId())
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      hexDataSlice(
+        solidityPack(['string', 'uint128'], ['tradingEnabledSynthId', marketId()]),
+        0,
+        32
+      ),
+      false
     );
 
     await assertRevert(
@@ -49,14 +53,27 @@ describe('Atomic Order Module buy()', () => {
 
   it('allows trading with flag enabled', async () => {
     await systems().SpotMarket.addToFeatureFlagAllowlist(
-      formatBytes32String('tradingEnabled'),
-      await systems().SpotMarket.getSynth(marketId())
+      hexDataSlice(
+        solidityPack(['string', 'uint128'], ['tradingEnabledSynthId', marketId()]),
+        0,
+        32
+      ),
+      await trader3.getAddress()
     );
 
     await systems().USD.connect(trader3).approve(systems().SpotMarket.address, bn(1000));
     await systems()
       .SpotMarket.connect(trader3)
       .buy(marketId(), bn(1000), bn(0.99), Ethers.constants.AddressZero);
+
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      hexDataSlice(
+        solidityPack(['string', 'uint128'], ['tradingEnabledSynthId', marketId()]),
+        0,
+        32
+      ),
+      true
+    );
   });
 
   describe('slippage', () => {

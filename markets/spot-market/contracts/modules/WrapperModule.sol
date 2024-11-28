@@ -69,9 +69,9 @@ contract WrapperModule is IWrapperModule {
         wrapperStore.validateWrapper();
 
         ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
+        FeatureFlag.ensureAccessToFeature(
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+        );
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
         uint256 wrapAmountD18 = Price
@@ -132,9 +132,9 @@ contract WrapperModule is IWrapperModule {
         wrapperStore.validateWrapper();
 
         ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
+        FeatureFlag.ensureAccessToFeature(
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+        );
 
         // burn from seller
         synth.burn(ERC2771Context._msgSender(), unwrapAmount);

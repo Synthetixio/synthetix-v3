@@ -35,9 +35,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
+        FeatureFlag.ensureAccessToFeature(
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+        );
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(
@@ -110,10 +110,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
-
+        FeatureFlag.ensureAccessToFeature(
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+        );
         // transfer usd funds
         spotMarketFactory.usdToken.transferFrom(
             ERC2771Context._msgSender(),
@@ -262,9 +261,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
+        FeatureFlag.ensureAccessToFeature(
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+        );
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(
@@ -324,9 +323,9 @@ contract AtomicOrderModule is IAtomicOrderModule {
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
-        if (!FeatureFlag.hasAccess(Flags.TRADING_ENABLED, address(synth))) {
-            revert FeatureFlag.FeatureUnavailable(Flags.TRADING_ENABLED);
-        }
+        FeatureFlag.ensureAccessToFeature(
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+        );
 
         MarketConfiguration.Data storage config;
         uint256 price = Price.getCurrentPrice(
