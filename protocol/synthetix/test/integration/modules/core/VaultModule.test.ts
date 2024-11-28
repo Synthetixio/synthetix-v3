@@ -532,6 +532,8 @@ describe('VaultModule', function () {
             await MockMarket.setMinDelegationTime(86400);
           });
 
+          const restoreMinDelegation = snapshotCheckpoint(provider);
+
           describe('without time passing', async () => {
             it('fails when min delegation timeout not elapsed', async () => {
               await assertRevert(
@@ -557,6 +559,40 @@ describe('VaultModule', function () {
                   depositAmount.mul(2),
                   ethers.utils.parseEther('1')
                 );
+            });
+
+            describe('if account has overridden timeout', () => {
+              before('set timeout', async () => {
+                await systems()
+                  .Core.connect(owner)
+                  .setConfig(
+                    ethers.utils.keccak256(
+                      ethers.utils.defaultAbiCoder.encode(
+                        ['bytes32', 'uint128', 'uint128'],
+                        [
+                          ethers.utils.formatBytes32String('accountOverrideMinDelegateTime'),
+                          user2AccountId,
+                          poolId,
+                        ]
+                      )
+                    ),
+                    ethers.utils.zeroPad(ethers.BigNumber.from(1).toHexString(), 32)
+                  );
+              });
+
+              it('should allow undelegate to occur', async () => {
+                await systems()
+                  .Core.connect(user2)
+                  .delegateCollateral(
+                    user2AccountId,
+                    poolId,
+                    collateralAddress(),
+                    depositAmount.div(2),
+                    ethers.utils.parseEther('1')
+                  );
+              });
+
+              after(restoreMinDelegation);
             });
 
             after(restore);
