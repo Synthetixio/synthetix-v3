@@ -625,4 +625,31 @@ describe('MarketManagerModule', function () {
       assertBn.equal(result.valuePerShareD27, bn(1000000000));
     });
   });
+
+  describe('getMarketPoolMaxDebtPerShare()', () => {
+    before(restore);
+
+    it('returns the correct pool max debt per share', async () => {
+      const result = await systems().Core.callStatic.getMarketPoolMaxDebtPerShare(
+        marketId(),
+        poolId
+      );
+
+      assertBn.equal(result, ethers.utils.parseEther('1'));
+    });
+  });
+
+  describe('getMarketCapacityContributionFromPool()', () => {
+    before(restore);
+
+    it('returns the correct pool max debt per share', async () => {
+      const result = await systems().Core.callStatic.getMarketCapacityContributionFromPool(
+        marketId(),
+        poolId
+      );
+
+      // there is only one pool so the credit capacity and that returned by the capacity contribution should be the same
+      assertBn.equal(result, await systems().Core.Market_get_creditCapacityD18(marketId()));
+    });
+  });
 });
