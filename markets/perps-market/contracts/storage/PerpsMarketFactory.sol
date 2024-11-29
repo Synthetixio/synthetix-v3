@@ -119,8 +119,7 @@ library PerpsMarketFactory {
         (synthValue, ) = PerpsCollateralConfiguration.load(collateralId).valueInUsd(
             amount,
             self.spotMarket,
-            PerpsPrice.Tolerance.DEFAULT,
-            false
+            PerpsPrice.Tolerance.DEFAULT
         );
 
         PerpsCollateralConfiguration.loadValidLam(collateralId).distributeCollateral(synth, amount);
