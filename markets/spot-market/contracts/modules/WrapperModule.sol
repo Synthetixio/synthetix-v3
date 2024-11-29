@@ -2,20 +2,21 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import "@synthetixio/core-contracts/contracts/utils/StringUtil.sol";
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
-import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {Flags} from "../utils/Flags.sol";
+import {IERC20} from "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {IWrapperModule} from "../interfaces/IWrapperModule.sol";
+import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
 import {OrderFees} from "../storage/OrderFees.sol";
+import {Price} from "../storage/Price.sol";
+import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
+import {SynthUtil} from "../utils/SynthUtil.sol";
 import {Transaction} from "../utils/TransactionUtil.sol";
 import {Wrapper} from "../storage/Wrapper.sol";
-import {Price} from "../storage/Price.sol";
-import {MarketConfiguration} from "../storage/MarketConfiguration.sol";
-import {SynthUtil} from "../utils/SynthUtil.sol";
-import {Flags} from "../utils/Flags.sol";
 
 /**
  * @title Module for wrapping and unwrapping collateral for synths.
@@ -70,7 +71,7 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
@@ -133,7 +134,7 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         // burn from seller

@@ -3,6 +3,7 @@ pragma solidity >=0.8.11 <0.9.0;
 
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import {StringUtil} from "@synthetixio/core-contracts/contracts/utils/StringUtil.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
@@ -36,7 +37,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         MarketConfiguration.Data storage config;
@@ -111,7 +112,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
         );
         // transfer usd funds
         spotMarketFactory.usdToken.transferFrom(
@@ -262,7 +263,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         MarketConfiguration.Data storage config;
@@ -324,7 +325,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, marketId))
+            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         MarketConfiguration.Data storage config;
