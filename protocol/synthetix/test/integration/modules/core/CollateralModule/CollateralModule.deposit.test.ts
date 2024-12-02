@@ -176,7 +176,7 @@ describe('CollateralModule', function () {
                 // make sure the account has an interaction
                 await systems()
                   .Core.connect(owner)
-                  .Account_set_lastInteraction(1, getTime(provider()));
+                  .Account_set_lastInteraction(1, await getTime(provider()));
 
                 await systems()
                   .Core.connect(owner)
@@ -185,6 +185,7 @@ describe('CollateralModule', function () {
                     ethers.utils.zeroPad(ethers.BigNumber.from(expireTime).toHexString(), 32)
                   );
               });
+              const restoreWithdrawTimeout = snapshotCheckpoint(provider);
 
               after(restore);
 
@@ -195,6 +196,28 @@ describe('CollateralModule', function () {
                   'AccountActivityTimeoutPending',
                   systems().Core
                 );
+              });
+
+              describe('when timeout is overridden', async () => {
+                before('set timeout', async () => {
+                  await systems()
+                    .Core.connect(owner)
+                    .setConfig(
+                      ethers.utils.keccak256(
+                        ethers.utils.defaultAbiCoder.encode(
+                          ['bytes32', 'uint128'],
+                          [ethers.utils.formatBytes32String('accountOverrideWithdrawTimeout'), 1]
+                        )
+                      ),
+                      ethers.utils.zeroPad(ethers.BigNumber.from(1).toHexString(), 32)
+                    );
+                });
+                after(restoreWithdrawTimeout);
+                it('if account is excluded, uses excluded value', async () => {
+                  await systems()
+                    .Core.connect(user1)
+                    .withdraw(1, Collateral.address, depositAmount);
+                });
               });
 
               describe('time passes', () => {
