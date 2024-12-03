@@ -5,7 +5,7 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
 import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { SynthRouter } from '../generated/typechain';
-import { solidityPack } from 'ethers/lib/utils';
+import { formatBytes32String } from 'ethers/lib/utils';
 
 export type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;
@@ -37,7 +37,7 @@ export function bootstrapSynthMarkets(
 
   before('set spotMarketEnabled flag', async () => {
     await contracts.SpotMarket.setFeatureFlagAllowAll(
-      ethers.utils.formatBytes32String('spotMarketEnabled'),
+      formatBytes32String('spotMarketEnabled'),
       true
     );
   });
@@ -85,11 +85,11 @@ export function bootstrapSynthMarkets(
       synth = contracts.Synth(synthAddress);
 
       await contracts.SpotMarket.setFeatureFlagAllowAll(
-        solidityPack(['string', 'string'], ['atomicOrdersEnabled', marketId.toString()]),
+        formatBytes32String('atomicOrdersEnabled' + marketId.toString()),
         true
       );
       await contracts.SpotMarket.setFeatureFlagAllowAll(
-        solidityPack(['string', 'string'], ['wrapperEnabled', marketId.toString()]),
+        formatBytes32String('wrapperEnabled' + marketId.toString()),
         true
       );
     });
