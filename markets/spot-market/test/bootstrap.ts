@@ -16,7 +16,7 @@ import { MockPythERC7412Wrapper } from '../typechain-types';
 import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
 import { STRICT_PRICE_TOLERANCE } from './common';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
-import { hexDataSlice, solidityPack } from 'ethers/lib/utils';
+import { solidityPack } from 'ethers/lib/utils';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -142,11 +142,11 @@ export function bootstrapWithSynth(name: string, token: string) {
     await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
 
     await contracts.SpotMarket.setFeatureFlagAllowAll(
-      hexDataSlice(solidityPack(['string', 'uint128'], ['atomicOrdersEnabled', marketId]), 0, 32),
+      solidityPack(['string', 'string'], ['atomicOrdersEnabled', marketId.toString()]),
       true
     );
     await contracts.SpotMarket.setFeatureFlagAllowAll(
-      hexDataSlice(solidityPack(['string', 'uint128'], ['wrapperEnabled', marketId]), 0, 32),
+      solidityPack(['string', 'string'], ['wrapperEnabled', marketId.toString()]),
       true
     );
   });

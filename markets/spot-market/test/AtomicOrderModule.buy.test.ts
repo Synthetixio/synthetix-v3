@@ -6,7 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 import { STRICT_PRICE_TOLERANCE } from './common';
-import { hexDataSlice, solidityPack } from 'ethers/lib/utils';
+import { solidityPack } from 'ethers/lib/utils';
 
 describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
@@ -37,7 +37,7 @@ describe('Atomic Order Module buy()', () => {
 
   it('reverts on trading enabled if the flag is disabled', async () => {
     await systems().SpotMarket.setFeatureFlagAllowAll(
-      hexDataSlice(solidityPack(['string', 'uint128'], ['atomicOrdersEnabled', marketId()]), 0, 32),
+      solidityPack(['string', 'string'], ['atomicOrdersEnabled', marketId().toString()]),
       false
     );
 
@@ -49,7 +49,7 @@ describe('Atomic Order Module buy()', () => {
 
   it('allows trading with flag enabled', async () => {
     await systems().SpotMarket.addToFeatureFlagAllowlist(
-      hexDataSlice(solidityPack(['string', 'uint128'], ['atomicOrdersEnabled', marketId()]), 0, 32),
+      solidityPack(['string', 'string'], ['atomicOrdersEnabled', marketId().toString()]),
       await trader3.getAddress()
     );
 
@@ -59,7 +59,7 @@ describe('Atomic Order Module buy()', () => {
       .buy(marketId(), bn(1000), bn(0.99), Ethers.constants.AddressZero);
 
     await systems().SpotMarket.setFeatureFlagAllowAll(
-      hexDataSlice(solidityPack(['string', 'uint128'], ['atomicOrdersEnabled', marketId()]), 0, 32),
+      solidityPack(['string', 'string'], ['atomicOrdersEnabled', marketId().toString()]),
       true
     );
   });
