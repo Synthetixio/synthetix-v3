@@ -64,6 +64,7 @@ contract WrapperModule is IWrapperModule {
         uint256 wrapAmount,
         uint256 minAmountReceived
     ) external override returns (uint256 amountToMint, OrderFees.Data memory fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
@@ -71,7 +72,7 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
+            bytes32(abi.encodePacked(Flags.WRAPPER_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.wrapCollateralType);
@@ -127,6 +128,7 @@ contract WrapperModule is IWrapperModule {
         uint256 unwrapAmount,
         uint256 minAmountReceived
     ) external override returns (uint256 returnCollateralAmount, OrderFees.Data memory fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         spotMarketFactory.validateMarket(marketId);
@@ -134,7 +136,7 @@ contract WrapperModule is IWrapperModule {
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
+            bytes32(abi.encodePacked(Flags.WRAPPER_ENABLED, StringUtil.uintToString(marketId)))
         );
 
         // burn from seller

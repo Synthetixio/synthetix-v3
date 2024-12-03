@@ -35,6 +35,13 @@ export function bootstrapSynthMarkets(
     [, , marketOwner] = r.signers();
   });
 
+  before('set spotMarketEnabled flag', async () => {
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      ethers.utils.formatBytes32String('spotMarketEnabled'),
+      true
+    );
+  });
+
   const synthMarkets: SynthMarkets = data.map(({ name, token, buyPrice, sellPrice, skewScale }) => {
     let marketId: ethers.BigNumber,
       buyNodeId: string,
@@ -78,11 +85,11 @@ export function bootstrapSynthMarkets(
       synth = contracts.Synth(synthAddress);
 
       await contracts.SpotMarket.setFeatureFlagAllowAll(
-        hexDataSlice(
-          solidityPack(['string', 'uint128'], ['tradingEnabledSynthId', marketId]),
-          0,
-          32
-        ),
+        hexDataSlice(solidityPack(['string', 'uint128'], ['atomicOrdersEnabled', marketId]), 0, 32),
+        true
+      );
+      await contracts.SpotMarket.setFeatureFlagAllowAll(
+        hexDataSlice(solidityPack(['string', 'uint128'], ['wrapperEnabled', marketId]), 0, 32),
         true
       );
     });

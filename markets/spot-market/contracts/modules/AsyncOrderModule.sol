@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import {DecimalMath} from "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import {ITokenModule} from "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {SpotMarketFactory} from "../storage/SpotMarketFactory.sol";
 import {AsyncOrderClaim} from "../storage/AsyncOrderClaim.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
@@ -12,10 +13,11 @@ import {AsyncOrderConfiguration} from "../storage/AsyncOrderConfiguration.sol";
 import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {Price} from "../storage/Price.sol";
 import {IAsyncOrderModule} from "../interfaces/IAsyncOrderModule.sol";
+import {Flags} from "../utils/Flags.sol";
 
 /**
- * @title Module to process asyncronous orders
- * @notice See README.md for an overview of asyncronous orders
+ * @title Module to process asynchronous orders
+ * @notice See README.md for an overview of asynchronous orders
  * @dev See IAsyncOrderModule.
  */
 contract AsyncOrderModule is IAsyncOrderModule {
@@ -36,6 +38,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 minimumSettlementAmount,
         address referrer
     ) external override returns (AsyncOrderClaim.Data memory asyncOrderClaim) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
+
         // validation checks
         Transaction.validateAsyncTransaction(orderType);
         SpotMarketFactory.load().validateMarket(marketId);

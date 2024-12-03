@@ -32,12 +32,15 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 maxUsdAmount,
         address referrer
     ) external override returns (uint256 usdAmountCharged, OrderFees.Data memory fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
+            bytes32(
+                abi.encodePacked(Flags.ATOMIC_ORDERS_ENABLED, StringUtil.uintToString(marketId))
+            )
         );
 
         MarketConfiguration.Data storage config;
@@ -107,12 +110,15 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 synthAmount, OrderFees.Data memory fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
+            bytes32(
+                abi.encodePacked(Flags.ATOMIC_ORDERS_ENABLED, StringUtil.uintToString(marketId))
+            )
         );
         // transfer usd funds
         spotMarketFactory.usdToken.transferFrom(
@@ -258,12 +264,15 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 minAmountReceived,
         address referrer
     ) public override returns (uint256 returnAmount, OrderFees.Data memory fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
+            bytes32(
+                abi.encodePacked(Flags.ATOMIC_ORDERS_ENABLED, StringUtil.uintToString(marketId))
+            )
         );
 
         MarketConfiguration.Data storage config;
@@ -320,12 +329,15 @@ contract AtomicOrderModule is IAtomicOrderModule {
         uint256 maxSynthAmount,
         address referrer
     ) external override returns (uint256 synthToBurn, OrderFees.Data memory fees) {
+        FeatureFlag.ensureAccessToFeature(Flags.SPOT_MARKET_ENABLED);
         SpotMarketFactory.Data storage spotMarketFactory = SpotMarketFactory.load();
         spotMarketFactory.validateMarket(marketId);
 
         ITokenModule synth = SynthUtil.getToken(marketId);
         FeatureFlag.ensureAccessToFeature(
-            bytes32(abi.encodePacked(Flags.TRADING_ENABLED, StringUtil.uintToString(marketId)))
+            bytes32(
+                abi.encodePacked(Flags.ATOMIC_ORDERS_ENABLED, StringUtil.uintToString(marketId))
+            )
         );
 
         MarketConfiguration.Data storage config;

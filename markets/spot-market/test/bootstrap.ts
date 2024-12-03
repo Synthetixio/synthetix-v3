@@ -102,6 +102,13 @@ export function bootstrap() {
     );
   });
 
+  before('set spotMarketEnabled flag', async () => {
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      ethers.utils.formatBytes32String('spotMarketEnabled'),
+      true
+    );
+  });
+
   return {
     provider: () => getProvider(),
     signers: () => [...getSigners(), ...signers],
@@ -135,7 +142,11 @@ export function bootstrapWithSynth(name: string, token: string) {
     await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
 
     await contracts.SpotMarket.setFeatureFlagAllowAll(
-      hexDataSlice(solidityPack(['string', 'uint128'], ['tradingEnabledSynthId', marketId]), 0, 32),
+      hexDataSlice(solidityPack(['string', 'uint128'], ['atomicOrdersEnabled', marketId]), 0, 32),
+      true
+    );
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      hexDataSlice(solidityPack(['string', 'uint128'], ['wrapperEnabled', marketId]), 0, 32),
       true
     );
   });
