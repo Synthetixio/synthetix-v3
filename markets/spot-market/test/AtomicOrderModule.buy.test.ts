@@ -35,10 +35,19 @@ describe('Atomic Order Module buy()', () => {
     );
   });
 
-  it('reverts on trading enabled if the flag is disabled', async () => {
-    const flag = formatBytes32String('atomicOrdersEnabled' + marketId().toString());
-    console.log('Feature flag encoded: ' + flag);
+  it('reverts on spot market enabled if the flag is disabled', async () => {
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('spotMarketEnabled'),
+      false
+    );
 
+    await assertRevert(
+      systems().SpotMarket.buyExactIn(marketId(), 10000, 10000, Ethers.constants.AddressZero),
+      'FeatureUnavailable'
+    );
+  });
+
+  it('reverts on atomic orders enabled if the flag is disabled', async () => {
     await systems().SpotMarket.setFeatureFlagAllowAll(
       formatBytes32String('atomicOrdersEnabled' + marketId().toString()),
       false
@@ -54,6 +63,11 @@ describe('Atomic Order Module buy()', () => {
     await systems().SpotMarket.addToFeatureFlagAllowlist(
       formatBytes32String('atomicOrdersEnabled' + marketId().toString()),
       await trader3.getAddress()
+    );
+
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('spotMarketEnabled'),
+      true
     );
 
     await systems().USD.connect(trader3).approve(systems().SpotMarket.address, bn(1000));
