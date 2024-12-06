@@ -66,7 +66,6 @@ export async function cannonBuild(options: BuildOptions) {
     projectDirectory: options.projectDirectory,
     wipe: options.wipe,
     registryPriority: 'local',
-    publicSourceCode: false,
   });
 
   // Include provider error parsing
