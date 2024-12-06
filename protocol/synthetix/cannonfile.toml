@@ -133,7 +133,7 @@ fromCall.func = "owner"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
-factory.CoreProxy.artifact = "Proxy"
+factory.CoreProxy.artifact = "contracts/Proxy.sol:Proxy"
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
 factory.CoreProxy.highlight = true
@@ -287,6 +287,3 @@ func = "configureCollateral"
 args = [
     { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true },
 ]
-
-[provision.trusted_multicall_forwarder]
-source = "trusted-multicall-forwarder"
