@@ -6,8 +6,31 @@ import "../contracts/PythERC7412Wrapper.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract MockPythApi {
+    uint256[] public updateDatas;
+    function updatePriceFeeds(bytes[] memory updateData) external payable {
+        for (uint256 i = 0; i < updateData.length; i++) {
+            updateDatas.push(abi.decode(updateData[i], (uint256)));
+        }
+    }
     function getPriceUnsafe(bytes32) external pure returns (PythStructs.Price memory price) {
         return PythStructs.Price(100, 0, -17, 0);
+    }
+
+    function parsePriceFeedUpdatesUnique(
+        bytes[] calldata updateData,
+        bytes32[] calldata /*priceIds*/,
+        uint64 /*minPublishTime*/,
+        uint64 /*maxPublishTime*/
+    ) external payable returns (PythStructs.PriceFeed[] memory /*priceFeeds*/) {
+        for (uint256 i = 0; i < updateData.length; i++) {
+            updateDatas.push(abi.decode(updateData[i], (uint256)));
+        }
+    }
+
+    function reset() external {
+        while (updateDatas.length > 0) {
+            updateDatas.pop();
+        }
     }
 }
 
@@ -63,6 +86,31 @@ contract PythERC7412WrapperTest is Test {
             )
         );
         wrapper.getBenchmarkPrice(testFeedId, 100);
+    }
+
+    function testFulfillLatest() external {
+        bytes[] memory updates = new bytes[](2);
+        updates[0] = abi.encode(100);
+        updates[1] = abi.encode(200);
+        wrapper.fulfillOracleQuery(abi.encode(1, 1, new bytes32[](0), updates));
+        assertEq(mockPyth.updateDatas(0), 100);
+        assertEq(mockPyth.updateDatas(1), 200);
+        //assertEq(mockPyth.updateDatas(2), 0);
+        mockPyth.reset();
+    }
+
+    function testFulfillBenchmark() external {
+        bytes[] memory updates = new bytes[](2);
+        updates[0] = abi.encode(100);
+        updates[1] = abi.encode(200);
+        bytes32[] memory updateIds = new bytes32[](2);
+        updateIds[0] = "abc";
+        updateIds[1] = "def";
+        wrapper.fulfillOracleQuery(abi.encode(1, 1, updateIds, updates));
+        assertEq(mockPyth.updateDatas(0), 100);
+        assertEq(mockPyth.updateDatas(1), 200);
+        //assertEq(mockPyth.updateDatas(2), 0);
+        mockPyth.reset();
     }
 
     function testGetBenchmarkPrice() external view {

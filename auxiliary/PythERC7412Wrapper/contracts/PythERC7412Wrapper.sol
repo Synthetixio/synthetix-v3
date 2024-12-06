@@ -123,28 +123,14 @@ contract PythERC7412Wrapper is IERC7412 {
         if (updateType == 1) {
             (
                 ,
+                ,
+                ,
                 /* uint8 _updateType */
-                uint64 stalenessTolerance,
-                bytes32[] memory priceIds,
-                bytes[] memory updateData
+                /*uint64 stalenessTolerance*/ /* bytes32[] memory priceIds */ bytes[]
+                    memory updateData
             ) = abi.decode(signedOffchainData, (uint8, uint64, bytes32[], bytes[]));
 
-            // solhint-disable-next-line numcast/safe-cast
-            uint64 minAcceptedPublishTime = uint64(block.timestamp) - stalenessTolerance;
-
-            uint64[] memory publishTimes = new uint64[](priceIds.length);
-
-            for (uint256 i = 0; i < priceIds.length; i++) {
-                publishTimes[i] = minAcceptedPublishTime;
-            }
-
-            try
-                pyth.updatePriceFeedsIfNecessary{value: msg.value}(
-                    updateData,
-                    priceIds,
-                    publishTimes
-                )
-            {} catch (bytes memory reason) {
+            try pyth.updatePriceFeeds{value: msg.value}(updateData) {} catch (bytes memory reason) {
                 if (_isFeeRequired(reason)) {
                     revert FeeRequired(pyth.getUpdateFee(updateData));
                 } else {
