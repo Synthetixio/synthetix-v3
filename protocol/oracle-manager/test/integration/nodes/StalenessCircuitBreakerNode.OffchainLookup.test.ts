@@ -76,6 +76,11 @@ describe('StalenessCircuitBreakerNode: Offchain Lookup orchestration', function 
     const parentOutput = await NodeModule.process(staleNodeId);
     const nodeOutput = await NodeModule.process(nodeId);
     assertBn.equal(parentOutput.price, nodeOutput.price);
+    assertBn.equal(parentOutput.timestamp, nodeOutput.timestamp);
+    await getProvider().send('hardhat_setCode', [
+      '0x1234123412341234123412341234123412341234',
+      ethers.utils.hexlify(ethers.utils.toUtf8Bytes('')),
+    ]);
   });
 
   it('reverts using revertNode from second parent if stale', async () => {
