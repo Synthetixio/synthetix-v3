@@ -884,7 +884,7 @@ describe('RewardsManagerModule', function () {
         await (
           await systems()
             .Core.connect(user1)
-            // NOTE: we use `collateralAddress` instead of `ethers.utils.AddressZero` here becuase here the claim function will look at the distributor address to determine if its pool level
+            // NOTE: we use `collateralAddress` instead of `ethers.utils.AddressZero` here because here the claim function will look at the distributor address to determine if its pool level
             .claimPoolRewards(
               accountId,
               poolId,
