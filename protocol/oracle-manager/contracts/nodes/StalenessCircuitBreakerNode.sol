@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {SafeCastBytes32} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import {ForkDetector} from "@synthetixio/core-contracts/contracts/utils/ForkDetector.sol";
 import {NodeDefinition} from "../storage/NodeDefinition.sol";
 import {NodeOutput} from "../storage/NodeOutput.sol";
 
@@ -34,7 +35,8 @@ library StalenessCircuitBreakerNode {
 
         if (
             possibleError.length > 0 ||
-            block.timestamp <= priceNodeOutput.timestamp + stalenessTolerance
+            block.timestamp <= priceNodeOutput.timestamp + stalenessTolerance ||
+            ForkDetector.isDevFork()
         ) {
             return (priceNodeOutput, possibleError);
         } else if (nodeDefinition.parents.length == 1) {
