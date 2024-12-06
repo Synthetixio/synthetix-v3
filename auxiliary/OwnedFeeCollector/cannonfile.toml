@@ -9,7 +9,7 @@ defaultValue = "0xD3DFa13CDc7c133b1700c243f03A8C6Df513A93b"
 defaultValue = "0x14E4f1DE5cA748Fb130711f41473f1d2bc80523a"
 
 [setting.fee_share]
-defaultValue = "500000000000000000"
+defaultValue = "400000000000000000"
 
 [setting.fee_token]
 defaultValue = "0xb2F30A7C980f052f02563fb518dcc39e6bf38175"
