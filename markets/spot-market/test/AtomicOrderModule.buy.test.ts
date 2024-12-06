@@ -6,17 +6,21 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { generateExternalNode } from '@synthetixio/oracle-manager/test/common';
 import { STRICT_PRICE_TOLERANCE } from './common';
+import { formatBytes32String } from 'ethers/lib/utils';
 
 describe('Atomic Order Module buy()', () => {
   const { systems, signers, marketId, restore } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   ); // creates traders with USD
 
-  let marketOwner: Ethers.Signer, trader1: Ethers.Signer, trader2: Ethers.Signer;
+  let marketOwner: Ethers.Signer,
+    trader1: Ethers.Signer,
+    trader2: Ethers.Signer,
+    trader3: Ethers.Signer;
   let synth: SynthRouter;
 
   before('identify actors', async () => {
-    [, , marketOwner, trader1, trader2] = signers();
+    [, , marketOwner, trader1, trader2, trader3] = signers();
   });
 
   before('identify synth', async () => {
@@ -28,6 +32,52 @@ describe('Atomic Order Module buy()', () => {
     await assertRevert(
       systems().SpotMarket.buyExactIn(25, 10000, 10000, Ethers.constants.AddressZero),
       'InvalidMarket'
+    );
+  });
+
+  it('reverts on spot market enabled if the flag is disabled', async () => {
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('spotMarketEnabled'),
+      false
+    );
+
+    await assertRevert(
+      systems().SpotMarket.buyExactIn(marketId(), 10000, 10000, Ethers.constants.AddressZero),
+      'FeatureUnavailable'
+    );
+  });
+
+  it('reverts on atomic orders enabled if the flag is disabled', async () => {
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('atomicOrdersEnabled' + marketId().toString()),
+      false
+    );
+
+    await assertRevert(
+      systems().SpotMarket.buyExactIn(marketId(), 10000, 10000, Ethers.constants.AddressZero),
+      'FeatureUnavailable'
+    );
+  });
+
+  it('allows trading with flag enabled', async () => {
+    await systems().SpotMarket.addToFeatureFlagAllowlist(
+      formatBytes32String('atomicOrdersEnabled' + marketId().toString()),
+      await trader3.getAddress()
+    );
+
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('spotMarketEnabled'),
+      true
+    );
+
+    await systems().USD.connect(trader3).approve(systems().SpotMarket.address, bn(1000));
+    await systems()
+      .SpotMarket.connect(trader3)
+      .buy(marketId(), bn(1000), bn(0.99), Ethers.constants.AddressZero);
+
+    await systems().SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('atomicOrdersEnabled' + marketId().toString()),
+      true
     );
   });
 

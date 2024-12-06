@@ -6,6 +6,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { bootstrapTraders, bootstrapWithSynth } from './bootstrap';
 import { SynthRouter } from './generated/typechain';
 import assert from 'assert';
+import { formatBytes32String } from 'ethers/lib/utils';
 
 const bn = (n: number) => wei(n).toBN();
 
@@ -14,11 +15,11 @@ describe('WrapperModule', () => {
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
 
-  let marketOwner: ethers.Signer, trader1: ethers.Signer;
+  let marketOwner: ethers.Signer, trader1: ethers.Signer, trader3: ethers.Signer;
   let synth: SynthRouter;
 
   before('identify actors', async () => {
-    [, , marketOwner, trader1] = signers();
+    [, , marketOwner, trader1, trader3] = signers();
   });
 
   before('identify synth', async () => {
@@ -317,6 +318,52 @@ describe('WrapperModule', () => {
       await assertRevert(
         systems().SpotMarket.connect(marketOwner).setWrapperFees(marketId(), bn(-0.1), bn(-0.1)),
         'InvalidWrapperFees'
+      );
+    });
+  });
+
+  describe('feature flags', () => {
+    it('reverts on spot market enabled if the flag is disabled', async () => {
+      await systems().SpotMarket.setFeatureFlagAllowAll(
+        formatBytes32String('spotMarketEnabled'),
+        false
+      );
+
+      await assertRevert(
+        systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1), 0),
+        'FeatureUnavailable'
+      );
+    });
+
+    it('reverts if the wrapperEnabled flag is disabled', async () => {
+      await systems().SpotMarket.setFeatureFlagAllowAll(
+        formatBytes32String('wrapperEnabled' + marketId().toString()),
+        false
+      );
+
+      await assertRevert(
+        systems().SpotMarket.connect(trader1).wrap(marketId(), bn(1), 0),
+        'FeatureUnavailable'
+      );
+    });
+
+    it('allows wrapping with flag enabled', async () => {
+      await systems().SpotMarket.addToFeatureFlagAllowlist(
+        formatBytes32String('wrapperEnabled' + marketId().toString()),
+        await trader3.getAddress()
+      );
+
+      await systems().SpotMarket.setFeatureFlagAllowAll(
+        formatBytes32String('spotMarketEnabled'),
+        true
+      );
+
+      await systems().CollateralMock.connect(trader3).approve(systems().SpotMarket.address, bn(1));
+      await systems().SpotMarket.connect(trader3).wrap(marketId(), bn(1), 0);
+
+      await systems().SpotMarket.setFeatureFlagAllowAll(
+        formatBytes32String('wrapperEnabled' + marketId().toString()),
+        true
       );
     });
   });
