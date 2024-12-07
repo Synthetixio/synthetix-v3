@@ -37,7 +37,7 @@ library Position {
     }
 
     function getPositionData(
-        Data storage self,
+        Data memory self,
         uint256 price
     )
         internal

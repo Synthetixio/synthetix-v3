@@ -104,6 +104,31 @@ interface IPerpsAccountModule {
         uint128 marketId
     ) external view returns (int128 positionSize);
 
+		/**
+		 * @notice Position with additional fields returned by the `getAccountFullPositionInfo` function
+		 */
+		struct DetailedPosition {
+			uint128 marketId;
+			int256 size;
+			int256 pnl;
+			int256 accruedFunding;
+			uint256 chargedInterest;
+			uint256 currentPrice;
+			uint256 entryPrice;
+			uint256 requiredInitialMargin;
+			uint256 requiredMaintenanceMargin;
+			string marketName;
+			string marketSymbol;
+		}
+
+		/**
+		 * @notice Returns detailed information about all the positions currently opened by an account.
+		 * @param accountId Id of account to get positions for
+		 */
+    function getAccountFullPositionInfo(
+        uint128 accountId
+    ) external view returns (DetailedPosition[] memory);
+
     /**
      * @notice Gets the available margin of an account. It can be negative due to pnl.
      * @param accountId Id of the account.

@@ -294,16 +294,20 @@ describe('ModifyCollateral Withdraw', () => {
         );
       });
       it('has correct pnl, given our position changed the skew', async () => {
-        const [btcPnl] = await systems().PerpsMarket.getOpenPosition(
-          trader1AccountId,
-          perpsMarkets()[0].marketId()
+        const openPositions =
+          await systems().PerpsMarket.getAccountFullPositionInfo(trader1AccountId);
+        assertBn.equal(
+          openPositions.find(
+            (p: any) => p.marketId.toNumber() === perpsMarkets()[0].marketId().toNumber()
+          )!.pnl,
+          bn(-600)
         );
-        assertBn.equal(btcPnl, bn(-600));
-        const [ethPnl] = await systems().PerpsMarket.getOpenPosition(
-          trader1AccountId,
-          perpsMarkets()[1].marketId()
+        assertBn.equal(
+          openPositions.find(
+            (p: any) => p.marketId.toNumber() === perpsMarkets()[1].marketId().toNumber()
+          )!.pnl,
+          bn(-400)
         );
-        assertBn.equal(ethPnl, bn(-400));
       });
       it('has correct available margin', async () => {
         assertBn.equal(
