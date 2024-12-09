@@ -64,6 +64,8 @@ library PythOffchainLookupNode {
                 priceIds
             )
         );
+
+        return (nodeOutput, possibleError);
     }
 
     function isValid(NodeDefinition.Data memory nodeDefinition) internal pure returns (bool valid) {

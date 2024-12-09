@@ -57,6 +57,32 @@ describe('StalenessCircuitBreakerNode: Offchain Lookup orchestration', function 
     assertBn.equal(parentOutput.timestamp, nodeOutput.timestamp);
   });
 
+  it('event if stale, provides the output of the first parent if fork mode is on', async () => {
+    // Register staleness circuit breaker node with stale parent and a fallback node
+    const NodeParameters = abi.encode(['uint'], [stalenessTolerance]);
+    await NodeModule.registerNode(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      staleNodeId,
+      revertNodeId,
+    ]);
+    const nodeId = await NodeModule.getNodeId(NodeTypes.STALENESS_CIRCUIT_BREAKER, NodeParameters, [
+      staleNodeId,
+      revertNodeId,
+    ]);
+    // enable fork mode
+    await getProvider().send('hardhat_setCode', [
+      '0x1234123412341234123412341234123412341234',
+      ethers.utils.hexlify(ethers.utils.toUtf8Bytes('FORK')),
+    ]);
+    const parentOutput = await NodeModule.process(staleNodeId);
+    const nodeOutput = await NodeModule.process(nodeId);
+    assertBn.equal(parentOutput.price, nodeOutput.price);
+    assertBn.equal(parentOutput.timestamp, nodeOutput.timestamp);
+    await getProvider().send('hardhat_setCode', [
+      '0x1234123412341234123412341234123412341234',
+      ethers.utils.hexlify(ethers.utils.toUtf8Bytes('')),
+    ]);
+  });
+
   it('reverts using revertNode from second parent if stale', async () => {
     // Register staleness circuit breaker node with stale parent and a fallback node
     const NodeParameters = abi.encode(['uint'], [stalenessTolerance]);
