@@ -111,6 +111,7 @@ contracts = [
     "SplitAccountConfigurationModule",
     "__TestHelperModule",
 ]
+includeDiamondCompatibility = false
 
 # --- Proxy post deployment --- #
 

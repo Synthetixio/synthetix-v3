@@ -246,10 +246,40 @@ interface IMarketManagerModule {
      */
     function getMinLiquidityRatio(uint128 marketId) external view returns (uint256 minRatioD18);
 
+    /**
+     * @notice Retrieves a list of pool ids supplying liquidity to the market. Additionally, returns a list of pool ids registered to the market, but not actively providing liquidity
+     * @param marketId the id of the market
+     */
     function getMarketPools(
         uint128 marketId
     ) external returns (uint128[] memory inRangePoolIds, uint128[] memory outRangePoolIds);
 
+    /**
+     * @notice Retrieves the maximum value per share tolerated by a pool before it will bumped out of the pool
+     */
+    function getMarketPoolMaxDebtPerShare(
+        uint128 marketId,
+        uint128 poolId
+    ) external view returns (int256);
+
+    /**
+     * @notice Retrieves the amount of credit capacity added to the total provided by a single pool attached the market
+     * @param marketId the id of the market
+     * @param poolId the id of the specific pool to retrieve capacity contribution for
+     */
+    function getMarketCapacityContributionFromPool(
+        uint128 marketId,
+        uint128 poolId
+    ) external view returns (uint256);
+
+    /**
+     * @notice Retrieves internal data about the debt distribution on the market
+     * @param marketId the id of the market
+     * @param poolId the id of the specific pool to retrieve sharesD18 for
+     * @return sharesD18 the number of shares (USD denominated) supplied by the supplied pool in the market
+     * @return totalSharesD18 the number of shares (USD denominated) supplied by all pools attached to the market
+     * @return valuePerShareD27 the current value per share of the debt distribution
+     */
     function getMarketPoolDebtDistribution(
         uint128 marketId,
         uint128 poolId

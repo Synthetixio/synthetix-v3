@@ -493,7 +493,6 @@ jobs:
             set -eo pipefail
             yarn workspace "<< parameters.workspace >>" exec \
               hardhat cannon:build \
-                --preset << parameters.cannonPreset >> \
                 --dry-run \
                 --network "<< parameters.hardhatNetwork >>" \
                 --upgrade-from << parameters.cannonPackage >>@<< parameters.cannonPreset >> \

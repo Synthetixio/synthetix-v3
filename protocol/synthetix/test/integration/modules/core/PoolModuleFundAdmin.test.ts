@@ -1,12 +1,13 @@
 /* eslint-disable no-unexpected-multiline */
-import assert from 'node:assert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
+import assert from 'node:assert';
+
 import { bn, bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 describe('PoolModule Admin', function () {
   const {
@@ -179,8 +180,16 @@ describe('PoolModule Admin', function () {
             systems()
               .Core.connect(owner)
               .setPoolConfiguration(poolId, [
-                { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
-                { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+                {
+                  marketId: marketId(),
+                  weightD18: 1,
+                  maxDebtShareValueD18: One,
+                },
+                {
+                  marketId: marketId2,
+                  weightD18: 3,
+                  maxDebtShareValueD18: One,
+                },
               ]),
             `MinDelegationTimeoutPending("${poolId}",`,
             systems().Core
@@ -197,7 +206,11 @@ describe('PoolModule Admin', function () {
             await systems()
               .Core.connect(owner)
               .setPoolConfiguration(poolId, [
-                { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+                {
+                  marketId: marketId(),
+                  weightD18: 1,
+                  maxDebtShareValueD18: One,
+                },
                 { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
               ]);
           });
@@ -211,8 +224,16 @@ describe('PoolModule Admin', function () {
           await systems()
             .Core.connect(owner)
             .setPoolConfiguration(poolId, [
-              { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
-              { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+              {
+                marketId: marketId(),
+                weightD18: 1,
+                maxDebtShareValueD18: One,
+              },
+              {
+                marketId: marketId2,
+                weightD18: 3,
+                maxDebtShareValueD18: One,
+              },
             ]);
         });
 
@@ -266,9 +287,18 @@ describe('PoolModule Admin', function () {
               systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
-                  { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
-                  // increase the weight of market2 to make the first market lower liquidity overall
-                  { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
+                  {
+                    marketId: marketId(),
+                    weightD18: 1,
+                    maxDebtShareValueD18: One,
+                  },
+                  // increase the weight of market2 to make the first
+                  // market lower liquidity overall
+                  {
+                    marketId: marketId2,
+                    weightD18: 9,
+                    maxDebtShareValueD18: One,
+                  },
                 ]),
               `CapacityLocked("${marketId()}")`,
               systems().Core
@@ -277,12 +307,21 @@ describe('PoolModule Admin', function () {
             // reduce market lock
             await MockMarket().setLocked(ethers.utils.parseEther('105'));
 
-            // now the call should work (call static to not modify the state)
+            // now the call should work (call static to not modify the
+            // state)
             await systems()
               .Core.connect(owner)
               .callStatic.setPoolConfiguration(poolId, [
-                { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
-                { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
+                {
+                  marketId: marketId(),
+                  weightD18: 1,
+                  maxDebtShareValueD18: One,
+                },
+                {
+                  marketId: marketId2,
+                  weightD18: 9,
+                  maxDebtShareValueD18: One,
+                },
               ]);
 
             // but a full pull-out shouldn't work
@@ -291,10 +330,14 @@ describe('PoolModule Admin', function () {
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
                   // completely remove the first market
-                  { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
+                  {
+                    marketId: marketId2,
+                    weightD18: 9,
+                    maxDebtShareValueD18: One,
+                  },
                 ]),
               `CapacityLocked("${marketId()}")`
-              //systems().Core
+              // systems().Core
             );
 
             // undo lock change
@@ -308,7 +351,11 @@ describe('PoolModule Admin', function () {
               await systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
-                  { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+                  {
+                    marketId: marketId2,
+                    weightD18: 3,
+                    maxDebtShareValueD18: One,
+                  },
                 ]);
             });
 
@@ -321,8 +368,8 @@ describe('PoolModule Admin', function () {
             });
 
             it('markets have same available liquidity', async () => {
-              // marketId() gets to keep its available liquidity because when
-              // the market exited when it did it "committed"
+              // marketId() gets to keep its available liquidity because
+              // when the market exited when it did it "committed"
               assertBn.equal(
                 await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                 debtAmount
@@ -344,7 +391,11 @@ describe('PoolModule Admin', function () {
               await systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
-                  { marketId: marketId(), weightD18: 2, maxDebtShareValueD18: One.mul(2) },
+                  {
+                    marketId: marketId(),
+                    weightD18: 2,
+                    maxDebtShareValueD18: One.mul(2),
+                  },
                 ]);
             });
 
@@ -357,7 +408,8 @@ describe('PoolModule Admin', function () {
             });
 
             it('available liquidity taken away from second market', async () => {
-              // marketId2 never reported an increased balance so its liquidity is 0 as ever
+              // marketId2 never reported an increased balance so its
+              // liquidity is 0 as ever
               assertBn.equal(await systems().Core.connect(owner).getMarketCollateral(marketId2), 0);
             });
 
@@ -381,14 +433,15 @@ describe('PoolModule Admin', function () {
             });
 
             it('markets have same available liquidity', async () => {
-              // marketId() gets to keep its available liquidity because when
-              // the market exited when it did it "committed"
+              // marketId() gets to keep its available liquidity because
+              // when the market exited when it did it "committed"
               assertBn.equal(
                 await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
                 debtAmount
               );
 
-              // marketId2 never reported an increased balance so its liquidity is 0 as ever
+              // marketId2 never reported an increased balance so its
+              // liquidity is 0 as ever
               assertBn.equal(await systems().Core.connect(owner).getMarketCollateral(marketId2), 0);
             });
           });
@@ -468,7 +521,8 @@ describe('PoolModule Admin', function () {
           await systems().USD.connect(user1).approve(MockMarket().address, Hundred);
           await MockMarket().connect(user1).buySynth(Hundred);
 
-          // "bump" the vault to get it to accept the position (in case there is a bug)
+          // "bump" the vault to get it to accept the position (in case
+          // there is a bug)
           await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
         });
 
@@ -497,8 +551,8 @@ describe('PoolModule Admin', function () {
 
           it('has accurate amount withdrawable usd', async () => {
             // should be exactly 102 (market2 2 + 100 deposit)
-            // (market1 assumes no new debt as a result of balance going down,
-            // but accounts/can pool can withdraw at a profit)
+            // (market1 assumes no new debt as a result of balance going
+            // down, but accounts/can pool can withdraw at a profit)
             assertBn.equal(
               await systems().Core.connect(owner).getWithdrawableMarketUsd(marketId()),
               Hundred.add(One.mul(2))
@@ -513,6 +567,10 @@ describe('PoolModule Admin', function () {
           });
 
           describe('and then the market reports 50 balance', () => {
+            let prePoolDebt: ethers.BigNumber;
+            before('save pre pool debt', async () => {
+              prePoolDebt = await systems().Core.callStatic.getPoolTotalDebt(poolId);
+            });
             before('', async () => {
               await MockMarket().connect(user1).setReportedDebt(Hundred.div(2));
             });
@@ -528,6 +586,18 @@ describe('PoolModule Admin', function () {
               assertBn.equal(
                 await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
                 One.mul(-49).div(2)
+              );
+            });
+
+            it('pool is debted', async () => {
+              assertBn.equal(
+                await systems().Core.callStatic.getPoolTotalDebt(poolId),
+                prePoolDebt.add(Hundred.div(4))
+              );
+
+              assertBn.equal(
+                await systems().Core.callStatic.getPoolDebtPerShare(poolId),
+                prePoolDebt.add(Hundred.div(4)).mul(ethers.utils.parseEther('1')).div(depositAmount)
               );
             });
 
@@ -555,8 +625,9 @@ describe('PoolModule Admin', function () {
               });
 
               it('vault 2 assumes expected amount of debt', async () => {
-                // vault 2 assumes the 1 dollar in debt that was not absorbed by the first pool
-                // still below limit though
+                // vault 2 assumes the 1 dollar in debt that was not
+                // absorbed by the first pool still below limit
+                // though
                 assertBn.equal(
                   await systems().Core.callStatic.getVaultDebt(secondPoolId, collateralAddress()),
                   One

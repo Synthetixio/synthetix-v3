@@ -30,7 +30,7 @@ type Proxies = {
   PerpsMarketProxy: PerpsMarketProxy;
   AccountProxy: AccountProxy;
   ['spotMarket.SynthRouter']: SynthRouter;
-  ['synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
+  ['synthetix.oracle_manager.trusted_multicall_forwarder.TrustedMulticallForwarder']: TrustedMulticallForwarder;
   ['MockPythERC7412Wrapper']: MockPythERC7412Wrapper;
   ['FeeCollectorMock']: FeeCollectorMock;
 };
@@ -67,7 +67,7 @@ export function bootstrap() {
       OracleManager: getContract('synthetix.oracle_manager.Proxy'),
       CollateralMock: getContract('synthetix.CollateralMock'),
       TrustedMulticallForwarder: getContract(
-        'synthetix.trusted_multicall_forwarder.TrustedMulticallForwarder'
+        'synthetix.oracle_manager.trusted_multicall_forwarder.TrustedMulticallForwarder'
       ),
       PerpsMarket: getContract('PerpsMarketProxy'),
       Account: getContract('AccountProxy'),

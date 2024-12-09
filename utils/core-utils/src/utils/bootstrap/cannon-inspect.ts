@@ -12,7 +12,6 @@ export async function cannonInspect(options: InspectOptions) {
     options.packageRef,
     cliSettings,
     options.chainId,
-    '',
     false,
     options.writeDeployments,
     true
