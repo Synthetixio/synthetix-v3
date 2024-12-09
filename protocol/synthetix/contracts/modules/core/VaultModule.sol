@@ -91,6 +91,7 @@ contract VaultModule is IVaultModule {
             // if decreasing delegation amount, ensure min time has elapsed
         } else {
             Pool.loadExisting(poolId).requireMinDelegationTimeElapsed(
+                accountId,
                 vault.currentEpoch().lastDelegationTime[accountId]
             );
         }
