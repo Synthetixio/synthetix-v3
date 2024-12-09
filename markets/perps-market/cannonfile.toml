@@ -88,7 +88,7 @@ contracts = [
     "PerpsAccountModule",
     "PerpsMarketModule",
     "AsyncOrderModule",
-		"BookOrderModule",
+    "BookOrderModule",
     "AsyncOrderSettlementPythModule",
     "AsyncOrderCancelModule",
     "FeatureFlagModule",

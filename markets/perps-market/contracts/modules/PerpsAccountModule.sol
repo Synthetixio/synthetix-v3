@@ -183,27 +183,41 @@ contract PerpsAccountModule is IPerpsAccountModule {
     function getAccountFullPositionInfo(
         uint128 accountId
     ) external view override returns (DetailedPosition[] memory detailedPositions) {
-        PerpsAccount.MemoryContext memory ctx = PerpsAccount.load(accountId).getOpenPositionsAndCurrentPrices(
-            PerpsPrice.Tolerance.DEFAULT
-        );
+        PerpsAccount.MemoryContext memory ctx = PerpsAccount
+            .load(accountId)
+            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
 
-				detailedPositions = new DetailedPosition[](ctx.positions.length);
-				for (uint256 i = 0;i < ctx.positions.length;i++) {
-					detailedPositions[i].size = ctx.positions[i].size;
-					detailedPositions[i].currentPrice = ctx.prices[i];
-					(, detailedPositions[i].pnl, , detailedPositions[i].chargedInterest, detailedPositions[i].accruedFunding, , ) = 
-						ctx.positions[i].getPositionData(ctx.prices[i]);
+        detailedPositions = new DetailedPosition[](ctx.positions.length);
+        for (uint256 i = 0; i < ctx.positions.length; i++) {
+            detailedPositions[i].size = ctx.positions[i].size;
+            detailedPositions[i].currentPrice = ctx.prices[i];
+            (
+                ,
+                detailedPositions[i].pnl,
+                ,
+                detailedPositions[i].chargedInterest,
+                detailedPositions[i].accruedFunding,
+                ,
 
-					// NOTE: we consider the position to be re-entered when it is interacted with
-					detailedPositions[i].entryPrice = ctx.positions[i].latestInteractionPrice;
+            ) = ctx.positions[i].getPositionData(ctx.prices[i]);
 
-          (, , detailedPositions[i].requiredInitialMargin, detailedPositions[i].requiredMaintenanceMargin) = PerpsMarketConfiguration.load(ctx.positions[i].marketId)
-                .calculateRequiredMargins(ctx.positions[i].size, ctx.prices[i]);
-					PerpsMarket.Data storage market = PerpsMarket.load(ctx.positions[i].marketId);
-					detailedPositions[i].marketId = ctx.positions[i].marketId;
-					detailedPositions[i].marketName = market.name;
-					detailedPositions[i].marketSymbol = market.symbol;
-				}
+            // NOTE: we consider the position to be re-entered when it is interacted with
+            detailedPositions[i].entryPrice = ctx.positions[i].latestInteractionPrice;
+
+            (
+                ,
+                ,
+                detailedPositions[i].requiredInitialMargin,
+                detailedPositions[i].requiredMaintenanceMargin
+            ) = PerpsMarketConfiguration.load(ctx.positions[i].marketId).calculateRequiredMargins(
+                ctx.positions[i].size,
+                ctx.prices[i]
+            );
+            PerpsMarket.Data storage market = PerpsMarket.load(ctx.positions[i].marketId);
+            detailedPositions[i].marketId = ctx.positions[i].marketId;
+            detailedPositions[i].marketName = market.name;
+            detailedPositions[i].marketSymbol = market.symbol;
+        }
     }
 
     /**

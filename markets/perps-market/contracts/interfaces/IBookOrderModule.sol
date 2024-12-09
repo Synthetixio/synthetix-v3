@@ -36,7 +36,11 @@ interface IBookOrderModule {
         bytes32 trackingCode;
     }
 
-		event BookOrderSettled(uint128 indexed marketId, BookOrder[] orders, uint256 totalCollectedFees);
+    event BookOrderSettled(
+        uint128 indexed marketId,
+        BookOrder[] orders,
+        uint256 totalCollectedFees
+    );
 
     /**
      * @notice Indicates a summary as to the operation state of a subbmitted order for settlement

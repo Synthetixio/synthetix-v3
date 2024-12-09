@@ -79,11 +79,11 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
         uint256 orderFee;
         int256 sizeDelta;
         uint256 orderCount;
-				uint256 price;
+        uint256 price;
     }
 
-		event DoneLoop(uint128 accountId);
-		event ItsGreater(uint128 accountId, uint128 cmpAccountId);
+    event DoneLoop(uint128 accountId);
+    event ItsGreater(uint128 accountId, uint128 cmpAccountId);
 
     /**
      * @inheritdoc IBookOrderModule
@@ -96,13 +96,13 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
         PerpsMarket.Data storage market = PerpsMarket.loadValid(marketId);
 
         // loop 1: figure out the big picture change on the market
-				uint256 marketSkewScale = PerpsMarketConfiguration.load(marketId).skewScale;
-				{
-					int256 newMarketSkew = market.skew;
-					for (uint256 i = 0; i < orders.length; i++) {
-							newMarketSkew += orders[i].sizeDelta;
-					}
-				}
+        uint256 marketSkewScale = PerpsMarketConfiguration.load(marketId).skewScale;
+        {
+            int256 newMarketSkew = market.skew;
+            for (uint256 i = 0; i < orders.length; i++) {
+                newMarketSkew += orders[i].sizeDelta;
+            }
+        }
 
         // TODO: verify total market size (?)
 
@@ -113,18 +113,23 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
         uint256 totalCollectedFees;
         for (uint256 i = 0; i < orders.length; i++) {
             if (orders[i].accountId > ctx.accountId) {
-								curPosition.latestInteractionPrice = accumOrderData.price.to128();
-								totalCollectedFees += _applyAggregatedAccountPosition(marketId, ctx, curPosition, accumOrderData);
+                curPosition.latestInteractionPrice = accumOrderData.price.to128();
+                totalCollectedFees += _applyAggregatedAccountPosition(
+                    marketId,
+                    ctx,
+                    curPosition,
+                    accumOrderData
+                );
 
                 // load the new account
                 GlobalPerpsMarket.load().checkLiquidation(orders[i].accountId);
                 ctx = PerpsAccount.load(orders[i].accountId).getOpenPositionsAndCurrentPrices(
                     PerpsPrice.Tolerance.DEFAULT
                 );
-								// todo: is the below line necessary? in the tests I have been finding it is
-								ctx.accountId = orders[i].accountId;
+                // todo: is the below line necessary? in the tests I have been finding it is
+                ctx.accountId = orders[i].accountId;
                 accumOrderData = AccumulatedOrderData(0, 0, 0, 0);
-								curPosition = market.positions[ctx.accountId];
+                curPosition = market.positions[ctx.accountId];
             } else if (orders[i].accountId < ctx.accountId) {
                 // order ids must be supplied in strictly ascending order
                 revert ParameterError.InvalidParameter(
@@ -135,14 +140,24 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
 
             curPosition.size += orders[i].sizeDelta;
             accumOrderData.sizeDelta += orders[i].sizeDelta;
-            accumOrderData.orderFee += market.calculateOrderFee(orders[i].sizeDelta, orders[i].orderPrice);
+            accumOrderData.orderFee += market.calculateOrderFee(
+                orders[i].sizeDelta,
+                orders[i].orderPrice
+            );
 
-						// the first received price for the orders for an account will be used as the settling price for the previous order. Least gamable that way.
-						accumOrderData.price = accumOrderData.price == 0 ? orders[i].orderPrice : accumOrderData.price;
+            // the first received price for the orders for an account will be used as the settling price for the previous order. Least gamable that way.
+            accumOrderData.price = accumOrderData.price == 0
+                ? orders[i].orderPrice
+                : accumOrderData.price;
         }
 
-				curPosition.latestInteractionPrice = accumOrderData.price.to128();
-				totalCollectedFees += _applyAggregatedAccountPosition(marketId, ctx, curPosition, accumOrderData);
+        curPosition.latestInteractionPrice = accumOrderData.price.to128();
+        totalCollectedFees += _applyAggregatedAccountPosition(
+            marketId,
+            ctx,
+            curPosition,
+            accumOrderData
+        );
 
         // send collected fees to the fee collector and etc.
         GlobalPerpsMarketConfiguration.load().collectFees(
@@ -151,58 +166,60 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
             PerpsMarketFactory.load()
         );
 
-				emit BookOrderSettled(marketId, orders, totalCollectedFees);
+        emit BookOrderSettled(marketId, orders, totalCollectedFees);
     }
 
-		function _applyAggregatedAccountPosition(uint128 marketId, PerpsAccount.MemoryContext memory ctx, Position.Data memory pos, AccumulatedOrderData memory accumOrderData) internal returns (uint256) {
-				if (ctx.accountId == 0) {
-					return 0;
-				}
-				Position.Data memory oldPosition = PerpsMarket.load(marketId).positions[ctx.accountId];
-				// charge the funding fee from the previously held position, the order fee, and whatever pnl has been accumulated from the last position.
-				(int256 pnl, , uint256 chargedInterest, int256 accruedFunding, , ) = 
-					oldPosition.getPnl(accumOrderData.price);
+    function _applyAggregatedAccountPosition(
+        uint128 marketId,
+        PerpsAccount.MemoryContext memory ctx,
+        Position.Data memory pos,
+        AccumulatedOrderData memory accumOrderData
+    ) internal returns (uint256) {
+        if (ctx.accountId == 0) {
+            return 0;
+        }
+        Position.Data memory oldPosition = PerpsMarket.load(marketId).positions[ctx.accountId];
+        // charge the funding fee from the previously held position, the order fee, and whatever pnl has been accumulated from the last position.
+        (int256 pnl, , uint256 chargedInterest, int256 accruedFunding, , ) = oldPosition.getPnl(
+            accumOrderData.price
+        );
 
-				PerpsAccount.load(ctx.accountId).charge(
-						pnl - accumOrderData.orderFee.toInt()
-				);
+        PerpsAccount.load(ctx.accountId).charge(pnl - accumOrderData.orderFee.toInt());
 
-        emit AccountCharged(ctx.accountId, pnl - accumOrderData.orderFee.toInt(), PerpsAccount.load(ctx.accountId).debt);
+        emit AccountCharged(
+            ctx.accountId,
+            pnl - accumOrderData.orderFee.toInt(),
+            PerpsAccount.load(ctx.accountId).debt
+        );
 
-				MarketUpdate.Data memory updateData;
-				{
-						PerpsMarket.Data storage market = PerpsMarket.load(marketId);
+        MarketUpdate.Data memory updateData;
+        {
+            PerpsMarket.Data storage market = PerpsMarket.load(marketId);
 
-						// we recompute to the price of the first order the user set. if they set multiple trades in te timeframe, its as if they fully close their order for a short period of time
-						// between the first order and the last order they place
-						market.recomputeFunding(accumOrderData.price);
+            // we recompute to the price of the first order the user set. if they set multiple trades in te timeframe, its as if they fully close their order for a short period of time
+            // between the first order and the last order they place
+            market.recomputeFunding(accumOrderData.price);
 
-						// skip verifications for the account having minimum collateral.
-						// this is because they are undertaken by the orderbook and cancelling them would be unnecessary complication
-						// commit order to the user's account
-						updateData = market.updatePositionData(
-								ctx.accountId,
-								pos
-						);
-				}
+            // skip verifications for the account having minimum collateral.
+            // this is because they are undertaken by the orderbook and cancelling them would be unnecessary complication
+            // commit order to the user's account
+            updateData = market.updatePositionData(ctx.accountId, pos);
+        }
 
-				PerpsAccount.load(ctx.accountId).updateOpenPositions(
-						marketId,
-						pos.size
-				);
+        PerpsAccount.load(ctx.accountId).updateOpenPositions(marketId, pos.size);
 
-				emit MarketUpdated(
-						updateData.marketId,
-						accumOrderData.price,
-						updateData.skew,
-						PerpsMarket.load(marketId).size,
-						pos.size - oldPosition.size,
-						updateData.currentFundingRate,
-						updateData.currentFundingVelocity,
-						updateData.interestRate
-				);
+        emit MarketUpdated(
+            updateData.marketId,
+            accumOrderData.price,
+            updateData.skew,
+            PerpsMarket.load(marketId).size,
+            pos.size - oldPosition.size,
+            updateData.currentFundingRate,
+            updateData.currentFundingVelocity,
+            updateData.interestRate
+        );
 
-				return accumOrderData.orderFee;
+        return accumOrderData.orderFee;
 
         emit InterestCharged(ctx.accountId, chargedInterest);
 
@@ -221,5 +238,5 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
             "", // TODO: tracking code, may not have ever
             ERC2771Context._msgSender()
         );
-		}
+    }
 }

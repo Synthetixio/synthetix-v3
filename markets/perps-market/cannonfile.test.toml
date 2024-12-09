@@ -14,11 +14,11 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = ""
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:<%= package.version %>-testable"
+defaultValue = "synthetix:3.9.1-testable"
 depends = []
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:<%= package.version %>-testable"
+defaultValue = "synthetix-spot-market:3.9.1-testable"
 depends = []
 
 [import.synthetix]
@@ -82,7 +82,7 @@ contracts = [
     "PerpsAccountModule",
     "PerpsMarketModule",
     "AsyncOrderModule",
-		"BookOrderModule",
+    "BookOrderModule",
     "AsyncOrderSettlementPythModule",
     "AsyncOrderCancelModule",
     "FeatureFlagModule",
