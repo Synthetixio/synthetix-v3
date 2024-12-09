@@ -54,6 +54,9 @@ library Account {
         uint256 totalLockedD18
     );
 
+    bytes32 private constant _CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT =
+        "accountOverrideWithdrawTimeout";
+
     struct Data {
         /**
          * @dev Numeric identifier for the account. Must be unique.
@@ -242,7 +245,16 @@ library Account {
         }
 
         uint256 endWaitingPeriod = account.lastInteraction + timeout;
-        if (block.timestamp < endWaitingPeriod) {
+        if (
+            block.timestamp < account.lastInteraction + timeout &&
+            block.timestamp <
+            account.lastInteraction +
+                Config.readUint(
+                    keccak256(abi.encode(_CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT, accountId)),
+                    86400 * 365 * 100
+                ) -
+                1
+        ) {
             revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
         }
     }
