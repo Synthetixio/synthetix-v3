@@ -78,7 +78,7 @@ contract WrapperModule is IWrapperModule {
         (amountToMint, fees, config) = MarketConfiguration.quoteWrap(
             marketId,
             wrapAmountD18,
-            Price.getCurrentPrice(marketId, Transaction.Type.WRAP, Price.Tolerance.STRICT)
+            Price.getCurrentPrice(marketId, Transaction.Type.WRAP, Price.Tolerance.ONE_MONTH)
         );
 
         if (amountToMint < minAmountReceived) {
@@ -134,7 +134,7 @@ contract WrapperModule is IWrapperModule {
         (returnCollateralAmountD18, fees, config) = MarketConfiguration.quoteUnwrap(
             marketId,
             unwrapAmount,
-            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP, Price.Tolerance.STRICT)
+            Price.getCurrentPrice(marketId, Transaction.Type.UNWRAP, Price.Tolerance.ONE_MONTH)
         );
 
         uint8 collateralDecimals = ITokenModule(wrapperStore.wrapCollateralType).decimals();
