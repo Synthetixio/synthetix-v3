@@ -66,6 +66,8 @@ library Pool {
     );
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME =
+        "accountOverrideMinDelegateTime";
 
     struct Data {
         /**
@@ -636,10 +638,27 @@ library Pool {
 
     function requireMinDelegationTimeElapsed(
         Data storage self,
+        uint128 accountId,
         uint64 lastDelegationTime
     ) internal view {
         uint32 requiredMinDelegationTime = getRequiredMinDelegationTime(self);
-        if (block.timestamp < lastDelegationTime + requiredMinDelegationTime) {
+        if (
+            block.timestamp < lastDelegationTime + requiredMinDelegationTime &&
+            // account can bypass the min delegation time if a configuration has been set by the pdao to override the account
+            block.timestamp <
+            lastDelegationTime +
+                Config.readUint(
+                    keccak256(
+                        abi.encode(
+                            _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME,
+                            accountId,
+                            self.id
+                        )
+                    ),
+                    86400 * 365 * 100
+                ) -
+                1
+        ) {
             revert MinDelegationTimeoutPending(
                 self.id,
                 // solhint-disable-next-line numcast/safe-cast

@@ -69,6 +69,7 @@ contracts = [
     "MarketConfigurationModule",
     "FeatureFlagModule",
 ]
+includeDiamondCompatibility = false
 
 [invoke.upgrade_spot_market_proxy]
 target = ["InitialSpotMarketProxy"]

@@ -42,6 +42,7 @@ contracts = [
     "TestableElectionStorage",
     "TestableEpochStorage",
 ]
+includeDiamondCompatibility = false
 
 [invoke.upgrade_core_proxy]
 target = ["InitialProxy"]
