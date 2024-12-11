@@ -101,6 +101,7 @@ contracts = [
     "TestableVaultEpochStorage",
     "TestableVaultStorage",
 ]
+includeDiamondCompatibility = false
 
 # Post stuff
 [contract.CollateralMock]
