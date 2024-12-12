@@ -16,6 +16,7 @@ import { MockPythERC7412Wrapper } from '../typechain-types';
 import { FeeCollectorMock, SpotMarketProxy, SynthRouter } from './generated/typechain';
 import { STRICT_PRICE_TOLERANCE } from './common';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
+import { formatBytes32String } from 'ethers/lib/utils';
 
 type Proxies = {
   ['synthetix.CoreProxy']: CoreProxy;
@@ -101,6 +102,13 @@ export function bootstrap() {
     );
   });
 
+  before('set spotMarketEnabled flag', async () => {
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      ethers.utils.formatBytes32String('spotMarketEnabled'),
+      true
+    );
+  });
+
   return {
     provider: () => getProvider(),
     signers: () => [...getSigners(), ...signers],
@@ -132,6 +140,15 @@ export function bootstrapWithSynth(name: string, token: string) {
       await marketOwner.getAddress()
     );
     await contracts.SpotMarket.createSynth(name, token, await marketOwner.getAddress());
+
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('atomicOrdersEnabled' + marketId.toString()),
+      true
+    );
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('wrapperEnabled' + marketId.toString()),
+      true
+    );
   });
 
   before('configure market collateral supply cap', async () => {
@@ -187,9 +204,9 @@ export function bootstrapWithSynth(name: string, token: string) {
 export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
   bootstrapStakers(r.systems, r.signers);
 
-  let trader1: ethers.Signer, trader2: ethers.Signer;
+  let trader1: ethers.Signer, trader2: ethers.Signer, trader3: ethers.Signer;
   before('identify traders', () => {
-    [, , , trader1, trader2] = r.signers();
+    [, , , trader1, trader2, trader3] = r.signers();
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -198,6 +215,7 @@ export function bootstrapTraders(r: ReturnType<typeof bootstrapWithSynth>) {
     ...r,
     trader1: () => trader1,
     trader2: () => trader2,
+    trader3: () => trader3,
     restore,
   };
 }

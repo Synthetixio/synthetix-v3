@@ -5,6 +5,7 @@ import { createStakedPool } from '@synthetixio/main/test/common';
 import { MockPythExternalNode } from '@synthetixio/oracle-manager/typechain-types';
 import { createPythNode } from '@synthetixio/oracle-manager/test/common';
 import { SynthRouter } from '../generated/typechain';
+import { formatBytes32String } from 'ethers/lib/utils';
 
 export type SynthMarkets = Array<{
   marketId: () => ethers.BigNumber;
@@ -32,6 +33,13 @@ export function bootstrapSynthMarkets(
   before('identify actors', () => {
     contracts = r.systems() as Systems;
     [, , marketOwner] = r.signers();
+  });
+
+  before('set spotMarketEnabled flag', async () => {
+    await contracts.SpotMarket.setFeatureFlagAllowAll(
+      formatBytes32String('spotMarketEnabled'),
+      true
+    );
   });
 
   const synthMarkets: SynthMarkets = data.map(({ name, token, buyPrice, sellPrice, skewScale }) => {
@@ -75,6 +83,15 @@ export function bootstrapSynthMarkets(
       );
       synthAddress = await contracts.SpotMarket.getSynth(marketId);
       synth = contracts.Synth(synthAddress);
+
+      await contracts.SpotMarket.setFeatureFlagAllowAll(
+        formatBytes32String('atomicOrdersEnabled' + marketId.toString()),
+        true
+      );
+      await contracts.SpotMarket.setFeatureFlagAllowAll(
+        formatBytes32String('wrapperEnabled' + marketId.toString()),
+        true
+      );
     });
 
     before('delegate collateral to market from pool', async () => {
