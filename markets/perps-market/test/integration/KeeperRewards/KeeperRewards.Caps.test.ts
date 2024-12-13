@@ -10,6 +10,7 @@ describe('Keeper Rewards - Caps', () => {
     settlementCost: 1111,
     flagCost: 3333,
     liquidateCost: 5555,
+    cancelCost: 2222,
   };
   const { systems, perpsMarkets, provider, trader1, keeperCostOracleNode, keeper, owner } =
     bootstrapMarkets({
@@ -66,7 +67,12 @@ describe('Keeper Rewards - Caps', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
+      .setCosts(
+        KeeperCosts.settlementCost,
+        KeeperCosts.flagCost,
+        KeeperCosts.liquidateCost,
+        KeeperCosts.cancelCost
+      );
   });
 
   const restoreToConfiguration = snapshotCheckpoint(provider);
@@ -76,6 +82,7 @@ describe('Keeper Rewards - Caps', () => {
     assertBn.equal(await keeperCostOracleNode().settlementCost(), KeeperCosts.settlementCost);
     assertBn.equal(await keeperCostOracleNode().flagCost(), KeeperCosts.flagCost);
     assertBn.equal(await keeperCostOracleNode().liquidateCost(), KeeperCosts.liquidateCost);
+    assertBn.equal(await keeperCostOracleNode().cancelCost(), KeeperCosts.liquidateCost);
   });
 
   const capTestCases = [

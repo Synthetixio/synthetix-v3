@@ -9,6 +9,7 @@ describe('Keeper Rewards - Multiple Positions', () => {
     settlementCost: 1111,
     flagCost: 3333,
     liquidateCost: 5555,
+    cancelCost: 2222,
   };
   const { systems, perpsMarkets, provider, trader1, keeperCostOracleNode, keeper, owner } =
     bootstrapMarkets({
@@ -77,7 +78,12 @@ describe('Keeper Rewards - Multiple Positions', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
+      .setCosts(
+        KeeperCosts.settlementCost,
+        KeeperCosts.flagCost,
+        KeeperCosts.liquidateCost,
+        KeeperCosts.cancelCost
+      );
   });
 
   before('set minLiquidationRewardUsd, maxLiquidationRewardUsd - uncapped', async () => {

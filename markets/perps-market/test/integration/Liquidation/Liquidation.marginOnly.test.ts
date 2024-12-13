@@ -65,6 +65,7 @@ const KeeperCosts = {
   settlementCost: bn(10),
   flagCost: bn(20),
   liquidateCost: bn(15),
+  cancelCost: bn(5),
 };
 
 const MIN_LIQ_REWARD = bn(10);
@@ -116,7 +117,12 @@ describe('liquidation margin only', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
+      .setCosts(
+        KeeperCosts.settlementCost,
+        KeeperCosts.flagCost,
+        KeeperCosts.liquidateCost,
+        KeeperCosts.cancelCost
+      );
   });
 
   before('add collateral to margin', async () => {

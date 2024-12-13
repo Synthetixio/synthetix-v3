@@ -9,17 +9,25 @@ contract MockGasPriceNode is IExternalNode {
     uint256 public constant KIND_SETTLEMENT = 0;
     uint256 public constant KIND_FLAG = 1;
     uint256 public constant KIND_LIQUIDATE = 2;
+    uint256 public constant KIND_CANCEL = 3;
 
     uint256 public settlementCost;
     uint256 public flagCost;
     uint256 public liquidateCost;
+    uint256 public cancelCost;
 
     constructor() {}
 
-    function setCosts(uint256 _settlementCost, uint256 _flagCost, uint256 _liquidateCost) external {
+    function setCosts(
+        uint256 _settlementCost,
+        uint256 _flagCost,
+        uint256 _liquidateCost,
+        uint256 _cancelCost
+    ) external {
         settlementCost = _settlementCost;
         flagCost = _flagCost;
         liquidateCost = _liquidateCost;
+        cancelCost = _cancelCost;
     }
 
     // solhint-disable numcast/safe-cast
@@ -49,6 +57,8 @@ contract MockGasPriceNode is IExternalNode {
             theOutput.price = int256(flagCost * numberOfUpdatedFeeds);
         } else if (executionKind == KIND_LIQUIDATE) {
             theOutput.price = int256(liquidateCost);
+        } else if (executionKind == KIND_CANCEL) {
+            theOutput.price = int256(cancelCost);
         } else {
             revert("Invalid execution kind");
         }

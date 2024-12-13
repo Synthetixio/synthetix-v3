@@ -22,6 +22,7 @@ contract OpGasPriceOracle is IExternalNode {
     uint256 public constant KIND_SETTLEMENT = 0;
     uint256 public constant KIND_FLAG = 1;
     uint256 public constant KIND_LIQUIDATE = 2;
+    uint256 public constant KIND_CANCEL = 3;
 
     struct RuntimeParams {
         // Set up params
@@ -41,6 +42,9 @@ contract OpGasPriceOracle is IExternalNode {
         // Call params
         uint256 numberOfUpdatedFeeds;
         uint256 executionKind;
+        // Cancel
+        uint256 l1CancelGasUnits;
+        uint256 l2CancelGasUnits;
     }
 
     constructor(address _ovmGasPriceOracleAddress) {
@@ -212,6 +216,10 @@ contract OpGasPriceOracle is IExternalNode {
             gasUnitsL1 = runtimeParams.l1LiquidateGasUnits;
             gasUnitsL2 = runtimeParams.l2LiquidateGasUnits;
             unsignedTxSize = runtimeParams.liquidateTxSize;
+        } else if (runtimeParams.executionKind == KIND_CANCEL) {
+            gasUnitsL1 = runtimeParams.l1CancelGasUnits;
+            gasUnitsL2 = runtimeParams.l2CancelGasUnits;
+            unsignedTxSize = 0;
         } else {
             revert("Invalid execution kind");
         }

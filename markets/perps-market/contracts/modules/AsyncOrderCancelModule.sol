@@ -60,7 +60,7 @@ contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAcco
         runtime.accountId = asyncOrder.request.accountId;
         runtime.marketId = asyncOrder.request.marketId;
         runtime.acceptablePrice = asyncOrder.request.acceptablePrice;
-        runtime.settlementReward = settlementStrategy.settlementReward;
+        runtime.settlementReward = AsyncOrder.cancellationRewardCost(settlementStrategy);
         runtime.sizeDelta = asyncOrder.request.sizeDelta;
 
         // check if account is flagged

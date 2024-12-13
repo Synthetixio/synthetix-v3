@@ -445,6 +445,15 @@ library AsyncOrder {
     }
 
     /**
+     * @notice Calculates the cancellation rewards.
+     */
+    function cancellationRewardCost(
+        SettlementStrategy.Data storage strategy
+    ) internal view returns (uint256) {
+        return KeeperCosts.load().getCancellationKeeperCosts() + strategy.settlementReward;
+    }
+
+    /**
      * @notice Calculates the order fees.
      */
     function calculateOrderFee(
