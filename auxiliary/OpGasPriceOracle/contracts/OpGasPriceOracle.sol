@@ -226,7 +226,7 @@ contract OpGasPriceOracle is IExternalNode {
             gasUnitsL2 = runtimeParams.l2CancelGasUnits;
             unsignedTxSize = 0;
         } else {
-            revert InvalidExecutionKind();
+            revert OpGasPriceOracleInvalidExecutionKind();
         }
     }
 
