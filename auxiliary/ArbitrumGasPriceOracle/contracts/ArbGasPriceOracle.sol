@@ -27,7 +27,7 @@ contract ArbGasPriceOracle is IExternalNode {
     /**
      * @notice identifies resources consumed via order cancellation
      */
-    uint public constant KIND_CANCEL = 3;
+    uint256 public constant KIND_CANCEL = 3;
 
     /**
      * @notice the ArbGasInfo precompile contract on Arbitrum

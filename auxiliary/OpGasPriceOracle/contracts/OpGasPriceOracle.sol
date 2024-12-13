@@ -47,6 +47,11 @@ contract OpGasPriceOracle is IExternalNode {
         uint256 l2CancelGasUnits;
     }
 
+    /**
+     * @notice thrown when the execution kind is invalid
+     */
+    error OpGasPriceOracleInvalidExecutionKind();
+
     constructor(address _ovmGasPriceOracleAddress) {
         // Addresses configuration
         ovmGasPriceOracleAddress = _ovmGasPriceOracleAddress;
@@ -221,7 +226,7 @@ contract OpGasPriceOracle is IExternalNode {
             gasUnitsL2 = runtimeParams.l2CancelGasUnits;
             unsignedTxSize = 0;
         } else {
-            revert("Invalid execution kind");
+            revert InvalidExecutionKind();
         }
     }
 
