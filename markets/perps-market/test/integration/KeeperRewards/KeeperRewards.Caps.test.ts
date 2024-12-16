@@ -82,7 +82,7 @@ describe('Keeper Rewards - Caps', () => {
     assertBn.equal(await keeperCostOracleNode().settlementCost(), KeeperCosts.settlementCost);
     assertBn.equal(await keeperCostOracleNode().flagCost(), KeeperCosts.flagCost);
     assertBn.equal(await keeperCostOracleNode().liquidateCost(), KeeperCosts.liquidateCost);
-    assertBn.equal(await keeperCostOracleNode().cancelCost(), KeeperCosts.liquidateCost);
+    assertBn.equal(await keeperCostOracleNode().cancelCost(), KeeperCosts.cancelCost);
   });
 
   const capTestCases = [
