@@ -1,2 +1,3 @@
 [profile.default]
+ast = true
 allow_paths = ["../../"]
