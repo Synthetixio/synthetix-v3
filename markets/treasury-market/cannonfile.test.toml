@@ -12,13 +12,16 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "1"
 
 [setting.collateral_token]
-defaultValue = "<%= imports.v3.contracts.USDProxy.address %>"
+defaultValue = "<%= imports.v3.contracts.CollateralMock.address %>"
 
 [setting.v3_package]
-defaultValue = "synthetix:latest"
+defaultValue = "synthetix:3.10.1-testable"
 
-[pull.v3]
+depends = []
+
+[clone.v3]
 source = "<%= settings.v3_package %>"
+target = "synthetix:treasury-test"
 
 [deploy.InitialModuleBundle]
 artifact = "InitialModuleBundle"

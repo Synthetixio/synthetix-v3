@@ -1,119 +1,255 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
-import "../contracts/PythERC7412Wrapper.sol";
+import "../contracts/TreasuryMarket.sol";
+
+import "@synthetixio/main/contracts/mocks/CollateralMock.sol";
+import "@synthetixio/main/contracts/mocks/MockMarket.sol";
 
 import {Test} from "forge-std/Test.sol";
 
-contract MockPythApi {
-    uint256[] public updateDatas;
-    function updatePriceFeeds(bytes[] memory updateData) external payable {
-        for (uint256 i = 0; i < updateData.length; i++) {
-            updateDatas.push(abi.decode(updateData[i], (uint256)));
-        }
-    }
-    function getPriceUnsafe(bytes32) external pure returns (PythStructs.Price memory price) {
-        return PythStructs.Price(100, 0, -17, 0);
-    }
+import {CannonDeploy} from "../script/Deploy.sol";
 
-    function parsePriceFeedUpdatesUnique(
-        bytes[] calldata updateData,
-        bytes32[] calldata /*priceIds*/,
-        uint64 /*minPublishTime*/,
-        uint64 /*maxPublishTime*/
-    ) external payable returns (PythStructs.PriceFeed[] memory /*priceFeeds*/) {
-        for (uint256 i = 0; i < updateData.length; i++) {
-            updateDatas.push(abi.decode(updateData[i], (uint256)));
-        }
-    }
+interface IV3TestCoreProxy is IV3CoreProxy {
 
-    function reset() external {
-        while (updateDatas.length > 0) {
-            updateDatas.pop();
-        }
-    }
 }
 
-contract PythERC7412WrapperTest is Test {
-    MockPythApi mockPyth;
-    PythERC7412Wrapper wrapper;
-    bytes32 testFeedId = keccak256("test");
+contract TreasuryMarketTest is Test, IERC721Receiver {
+    TreasuryMarket private market;
+    IV3TestCoreProxy private v3System;
+    CollateralMock private collateralToken;
+    MockMarket private sideMarket;
+    address private initialModuleBundleAddress;
+
+    uint128 constant accountId = 25;
+    uint128 constant poolId = 1;
 
     function setUp() external {
-        vm.etch(0x1234123412341234123412341234123412341234, "FORK");
-        mockPyth = new MockPythApi();
-        wrapper = new PythERC7412Wrapper(address(mockPyth));
+        CannonDeploy deployer = new CannonDeploy();
+        deployer.run();
+        market = TreasuryMarket(deployer.getAddress(keccak256("Proxy")));
+        v3System = IV3TestCoreProxy(deployer.getAddress(keccak256("CoreProxy")));
+        collateralToken = CollateralMock(deployer.getAddress(keccak256("CollateralMock")));
+        initialModuleBundleAddress = deployer.getAddress(keccak256("InitialModuleBundle"));
+        
+        sideMarket = new MockMarket();
+        uint128 sideMarketId = v3System.registerMarket(address(sideMarket));
+        sideMarket.initialize(address(v3System), sideMarketId, 1 ether);
+
+        vm.startPrank(v3System.owner());
+
+        // for purposes of coverage, override the source code
+        // TODO: need to find a better way to do this
+        TreasuryMarket treasuryMarketCode = new TreasuryMarket(v3System, market.treasury(), poolId, address(collateralToken));
+        vm.etch(deployer.getAddress(keccak256("MarketImpl")), address(treasuryMarketCode).code);
+
+        // create v3 stuff
+        v3System.createPool(poolId, v3System.owner());
+        MarketConfiguration.Data[] memory marketConfig = new MarketConfiguration.Data[](2);
+        marketConfig[0] = MarketConfiguration.Data(market.marketId(), 1, type(int128).max);
+        marketConfig[1] = MarketConfiguration.Data(sideMarketId, 1, type(int128).max);
+        v3System.setPoolConfiguration(poolId, marketConfig);
+
+        v3System.configureCollateral(CollateralConfiguration.Data({
+            depositingEnabled: true,
+            issuanceRatioD18: 5 ether,
+            liquidationRatioD18: 1.01 ether,
+            liquidationRewardD18: 0,
+            // const one oracle id (later replace with a better source for the constant)
+            oracleNodeId: 0x066ef68c9d9ca51eee861aeb5bce51a12e61f06f10bf62243c563671ae3a9733,
+            tokenAddress: address(collateralToken),
+            minDelegationD18: 0
+        }));
+
+        vm.stopPrank();
+
+        // stake
+        collateralToken.mint(address(this), 100 ether);
+        collateralToken.approve(address(v3System), 100 ether);
+
+        for (uint128 i = 0;i < 2;i++) {
+            v3System.createAccount(accountId + i);
+            v3System.deposit(accountId + i, address(collateralToken), 10 ether);
+        }
+
+        v3System.delegateCollateral(accountId, poolId, address(collateralToken), 5 ether, 1 ether);
     }
 
-    function testSetLatestPriceOutsideOfForkFails() external {
-        vm.etch(0x1234123412341234123412341234123412341234, "notf");
-
-        vm.expectRevert(ForkDetector.OnlyOnDevFork.selector);
-        wrapper.setLatestPrice(testFeedId, 500);
+    function testMarketFunctions() external {
+        assertEq(market.name(market.marketId()), "Treasury Market");
+        assertEq(market.reportedDebt(market.marketId()), 0);
+        assertEq(market.minimumCredit(market.marketId()), 0);
     }
 
-    function testSetLatestPrice() external {
-        wrapper.setLatestPrice(testFeedId, 500);
-
-        assertEq(wrapper.getLatestPrice(testFeedId, 0), 500);
+    function testFailMarketAlreadyRegistered() external {
+        vm.prank(market.owner());
+        market.registerMarket();
     }
 
-    function testGetLatestPrice() external view {
-        assertEq(wrapper.getLatestPrice(testFeedId, 0), 1000);
+    function testNewMarketRegistration() external {
+        TreasuryMarket newMarket = new TreasuryMarket(v3System, market.treasury(), poolId, address(collateralToken));
+        newMarket.registerMarket();
+
+        assertTrue(newMarket.marketId() != 0);
+        assertEq(IERC20(v3System.getUsdToken()).allowance(address(newMarket), address(v3System)), type(uint256).max);
     }
 
-    function testSetBenchmarkPriceOutsideOfForkFails() external {
-        vm.etch(0x1234123412341234123412341234123412341234, "notf");
+    function testFailSaddleInsufficientCRatio() external {
+        sideMarket.setReportedDebt(4 ether);
 
-        vm.expectRevert(ForkDetector.OnlyOnDevFork.selector);
-        wrapper.setLatestPrice(testFeedId, 500);
+        // delegate another account to cause the avg c-ratio to shoot way up
+        v3System.delegateCollateral(accountId + 1, poolId, address(collateralToken), 5 ether, 1 ether);
+        market.saddle(accountId);
+        sideMarket.setReportedDebt(0);
     }
 
-    function testSetBenchmarkPrice() external {
-        wrapper.setBenchmarkPrice(testFeedId, 100, 1234, -18);
-
-        assertEq(wrapper.getBenchmarkPrice(testFeedId, 100), 1234);
+    function testSaddle() external {
+        // add a little bit of debt to the account so we can verify saddle
+        // works with debt in the account to start
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
     }
 
-    function testGetBenchmarkPriceWithSkip() external {
-        wrapper.setBenchmarkPrice(testFeedId, 100, -1, -18);
+    function testSaddleSecondAccount() external {
+        // saddle the first account
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IERC7412.OracleDataRequired.selector,
-                address(wrapper),
-                hex"000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000649c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658"
-            )
-        );
-        wrapper.getBenchmarkPrice(testFeedId, 100);
+        // saddle the second account
+        v3System.delegateCollateral(accountId + 1, poolId, address(collateralToken), 5 ether, 1 ether);
+        market.saddle(accountId + 1);
     }
 
-    function testFulfillLatest() external {
-        bytes[] memory updates = new bytes[](2);
-        updates[0] = abi.encode(100);
-        updates[1] = abi.encode(200);
-        wrapper.fulfillOracleQuery(abi.encode(1, 1, new bytes32[](0), updates));
-        assertEq(mockPyth.updateDatas(0), 100);
-        assertEq(mockPyth.updateDatas(1), 200);
-        //assertEq(mockPyth.updateDatas(2), 0);
-        mockPyth.reset();
+    function testSaddleAgain() external {
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        // saddle the second account
+        v3System.delegateCollateral(accountId + 1, poolId, address(collateralToken), 5 ether, 1 ether);
+        market.saddle(accountId + 1);
+        // add some more debt from the side market
+        sideMarket.setReportedDebt(3 ether);
+
+        // delegate more collateral on the first account
+        v3System.delegateCollateral(accountId, poolId, address(collateralToken), 10 ether, 1 ether);
+        market.saddle(accountId);
     }
 
-    function testFulfillBenchmark() external {
-        bytes[] memory updates = new bytes[](2);
-        updates[0] = abi.encode(100);
-        updates[1] = abi.encode(200);
-        bytes32[] memory updateIds = new bytes32[](2);
-        updateIds[0] = "abc";
-        updateIds[1] = "def";
-        wrapper.fulfillOracleQuery(abi.encode(1, 1, updateIds, updates));
-        assertEq(mockPyth.updateDatas(0), 100);
-        assertEq(mockPyth.updateDatas(1), 200);
-        //assertEq(mockPyth.updateDatas(2), 0);
-        mockPyth.reset();
+    function testFailTakeLoanUnauthorized() external {
+        vm.prank(address(1000));
+        market.adjustLoan(accountId, 1 ether);
     }
 
-    function testGetBenchmarkPrice() external view {
-        assertEq(wrapper.getBenchmarkPrice(testFeedId, 100), 1000);
+    function testFailTakeLoanInsufficientCRatio() external {
+        market.saddle(accountId);
+        market.adjustLoan(accountId, 10 ether);
+    }
+
+    function testTakeLoan() external {
+        market.saddle(accountId);
+        market.adjustLoan(accountId, 1 ether);
+    }
+
+    function testFailTakeLoanNoChange() external {
+        market.saddle(accountId);
+        market.adjustLoan(accountId, 1 ether);
+        market.adjustLoan(accountId, 1 ether);
+    }
+
+
+    function testFailUnsaddleOutstandingLoan() external {
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+        market.unsaddle(accountId);
+    }
+
+    function testFailUnsaddleNotSaddled() external {
+        market.unsaddle(accountId);
+    }
+
+    function testRepayLoan() external {
+        market.saddle(accountId);
+        market.adjustLoan(accountId, 1 ether);
+        IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+        market.adjustLoan(accountId, 0);
+    }
+
+    function testFailTreasuryMintUnauthorized() external {
+        market.mintTreasury(1 ether);
+    }
+
+    function testTreasuryMint() external {
+        vm.prank(market.owner());
+        market.mintTreasury(1 ether);
+    }
+
+    function testFailTreasuryBurnUnauthorized() external {
+        vm.startPrank(market.treasury());
+        IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+        vm.stopPrank();
+        market.burnTreasury(1 ether);
+    }
+
+    function testTreasuryBurn() external {
+        vm.prank(market.owner());
+        market.mintTreasury(1 ether);
+
+        vm.startPrank(market.treasury());
+        IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+        vm.stopPrank();
+        vm.prank(market.owner());
+        market.burnTreasury(1 ether);
+    }
+
+    function testFailUnsaddleUnauthorized() external {
+        market.saddle(accountId);
+        vm.prank(address(1000));
+        market.unsaddle(accountId);
+    }
+
+    function testUnsaddle() external {
+        market.saddle(accountId);
+        sideMarket.setReportedDebt(1 ether);
+
+        // we need a second account to go ahead and repay the first account
+        // (sort of means that this market can never be fully emptied without an actual repay by stakers at some point)
+        v3System.delegateCollateral(accountId + 1, poolId, address(collateralToken), 10 ether, 1 ether);
+        market.saddle(accountId + 1);
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+        market.unsaddle(accountId);
+    }
+
+    function testFailUpgradeToUnauthorized() external {
+        market.upgradeTo(initialModuleBundleAddress);
+    }
+
+    function testUpgradeTo() external {
+        vm.prank(market.owner());
+        market.upgradeTo(initialModuleBundleAddress);
+    }
+
+    function testFailSetTargetCRatioUnauthorized() external {
+        market.setTargetCRatio(3 ether);
+    }
+
+    function testSetTargetCRatio() external {
+        vm.prank(market.owner());
+        market.setTargetCRatio(3 ether);
+    }
+
+    function testSupportsInterface() external view {
+        assertTrue(market.supportsInterface(type(IMarket).interfaceId));
+        assertTrue(market.supportsInterface(market.supportsInterface.selector));
+    }
+
+    function onERC721Received(
+        address,
+        /*operator*/ address,
+        /*from*/ uint256,
+        /*tokenId*/ bytes memory /*data*/
+    ) external pure override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
     }
 }

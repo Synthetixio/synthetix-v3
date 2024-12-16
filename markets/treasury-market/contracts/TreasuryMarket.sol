@@ -46,7 +46,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint128 v3PoolId,
         address collateralTokenAddress
     ) Ownable(ERC2771Context._msgSender()) {
-        treasuryAddress = treasuryAddress;
+        treasury = treasuryAddress;
         v3System = v3SystemAddress;
         poolId = v3PoolId;
         collateralToken = collateralTokenAddress;
@@ -63,6 +63,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         newMarketId = v3System.registerMarket(address(this));
         //v3System.setMarketMinDelegateTime(newMarketId, MIN_DELEGATION_TIME);
         marketId = newMarketId;
+
+        // while we are here, also set the approval that we need for the core sysetm to pull USD from us
+        IERC20(v3System.getUsdToken()).approve(address(v3System), type(uint256).max);
     }
 
     /**
@@ -145,6 +148,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function unsaddle(uint128 accountId) external {
+        if (saddledCollateral[accountId] == 0) {
+            revert ParameterError.InvalidParameter("accountId", "not saddled");
+        }
+
         address sender = ERC2771Context._msgSender();
         IERC721 accountToken = IERC721(v3System.getAccountTokenAddress());
         if (sender != accountToken.ownerOf(accountId)) {
@@ -166,15 +173,21 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         );
 
         if (accountDebt > 0) {
-            v3System.withdrawMarketUsd(marketId, address(this), uint256(accountDebt));
-            v3System.deposit(accountId, v3System.getUsdToken(), uint256(accountDebt));
-            v3System.burnUsd(accountId, poolId, collateralToken, uint256(accountDebt));
+            (uint256 vaultCollateral, ) = v3System.getVaultCollateral(poolId, collateralToken);
 
-            emit AccountUnsaddled(accountId, accountCollateral, accountDebt.toUint());
+            // geometric series function solution to calculate the total amount of debt required for a repay
+            int256 neededToRepay = 1 ether * accountDebt / int256(1 ether - accountCollateral * 1 ether / vaultCollateral) + 1;
+            v3System.withdrawMarketUsd(marketId, address(this), uint256(neededToRepay));
+            v3System.deposit(accountId, v3System.getUsdToken(), uint256(neededToRepay));
+            v3System.burnUsd(accountId, poolId, collateralToken, uint256(neededToRepay));
+
+            saddledCollateral[accountId] = 0;
+
+            emit AccountUnsaddled(accountId, accountCollateral, neededToRepay.toUint());
         }
 
         // undelegate collateral automatically for the user because they should no longer be part of this pool anyway now that they have been unsaddled
-        v3System.delegateCollateral(accountId, poolId, collateralToken, 0, 0);
+        v3System.delegateCollateral(accountId, poolId, collateralToken, 0, 1 ether);
 
         // return the account token to the user
         accountToken.safeTransferFrom(address(this), sender, accountId);
@@ -189,9 +202,15 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint256 loanedAmount = loans[accountId];
 
         if (amount > loans[accountId]) {
-            v3System.withdrawMarketUsd(marketId, sender, amount);
+            uint256 maxLoan = saddledCollateral[accountId].divDecimal(v3System.getCollateralConfiguration(address(collateralToken)).issuanceRatioD18);
+            if (amount > maxLoan) {
+                revert InsufficientCRatio(accountId, amount, maxLoan);
+            }
+
+
+            v3System.withdrawMarketUsd(marketId, sender, amount - loanedAmount);
         } else if (amount < loans[accountId]) {
-            v3System.depositMarketUsd(marketId, sender, amount);
+            v3System.depositMarketUsd(marketId, sender, loanedAmount - amount);
         } else {
             revert ParameterError.InvalidParameter("amount", "unchanged");
         }
