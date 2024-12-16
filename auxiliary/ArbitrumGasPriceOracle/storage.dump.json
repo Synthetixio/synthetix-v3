@@ -59,6 +59,20 @@
           "size": 32,
           "slot": "7",
           "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l1CancelGasUnits",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "l2CancelGasUnits",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
         }
       ]
     }
