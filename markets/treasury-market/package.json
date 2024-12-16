@@ -1,0 +1,39 @@
+{
+  "name": "@synthetixio/treasury-market",
+  "version": "3.10.1",
+  "description": "V3 Market to allow a trusted entity to manage excess liquidity on behalf of stakers",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "contracts",
+    "!contracts/generated",
+    "hardhat.config.ts",
+    "storage.dump.json",
+    "*.toml"
+  ],
+  "scripts": {
+    "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "storage:dump": "hardhat storage:dump --output storage.new.dump.json",
+    "build": "yarn build:contracts",
+    "storage:verify": " hardhat storage:verify",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
+    "clean": "hardhat clean",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat compile && hardhat size-contracts",
+    "docgen": "hardhat docgen"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/docgen": "workspace:*",
+    "@synthetixio/wei": "^2.74.4",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.19.5",
+    "solidity-docgen": "^0.6.0-beta.36"
+  }
+}
