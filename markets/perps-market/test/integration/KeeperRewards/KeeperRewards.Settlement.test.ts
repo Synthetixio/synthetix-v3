@@ -72,12 +72,7 @@ describe('Keeper Rewards - Settlement', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(
-        KeeperCosts.settlementCost,
-        KeeperCosts.flagCost,
-        KeeperCosts.liquidateCost,
-        KeeperCosts.cancelCost
-      );
+      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
   });
 
   before('add collateral', async () => {

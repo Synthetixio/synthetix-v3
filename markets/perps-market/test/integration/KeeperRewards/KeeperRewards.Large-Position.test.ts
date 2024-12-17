@@ -64,12 +64,7 @@ describe('Keeper Rewards - Multiple Liquidation steps', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(
-        KeeperCosts.settlementCost,
-        KeeperCosts.flagCost,
-        KeeperCosts.liquidateCost,
-        KeeperCosts.cancelCost
-      );
+      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
   });
 
   const rewardGuards = {

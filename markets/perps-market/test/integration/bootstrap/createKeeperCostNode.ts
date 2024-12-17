@@ -8,7 +8,7 @@ export const createKeeperCostNode = async (owner: ethers.Signer, OracleManager: 
   const factory = await hre.ethers.getContractFactory('MockGasPriceNode');
   const keeperCostNode = await factory.connect(owner).deploy();
 
-  await keeperCostNode.setCosts(0, 0, 0, 0);
+  await keeperCostNode.setCosts(0, 0, 0);
 
   const params1 = abi.encode(['address'], [keeperCostNode.address]);
   await OracleManager.connect(owner).registerNode(NodeTypes.EXTERNAL, params1, []);

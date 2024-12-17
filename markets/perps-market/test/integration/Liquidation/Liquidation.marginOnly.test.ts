@@ -116,12 +116,7 @@ describe('liquidation margin only', () => {
   before('set keeper costs', async () => {
     await keeperCostOracleNode()
       .connect(owner())
-      .setCosts(
-        KeeperCosts.settlementCost,
-        KeeperCosts.flagCost,
-        KeeperCosts.liquidateCost,
-        KeeperCosts.cancelCost
-      );
+      .setCosts(KeeperCosts.settlementCost, KeeperCosts.flagCost, KeeperCosts.liquidateCost);
   });
 
   before('add collateral to margin', async () => {
