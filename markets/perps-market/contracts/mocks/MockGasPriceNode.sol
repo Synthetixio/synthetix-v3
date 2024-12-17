@@ -14,7 +14,7 @@ contract MockGasPriceNode is IExternalNode {
     uint256 public flagCost;
     uint256 public liquidateCost;
 
-    constructor() {}
+    error InvalidExecutionKind();
 
     function setCosts(uint256 _settlementCost, uint256 _flagCost, uint256 _liquidateCost) external {
         settlementCost = _settlementCost;
@@ -50,7 +50,7 @@ contract MockGasPriceNode is IExternalNode {
         } else if (executionKind == KIND_LIQUIDATE) {
             theOutput.price = int256(liquidateCost);
         } else {
-            revert("Invalid execution kind");
+            revert InvalidExecutionKind();
         }
 
         return theOutput;
