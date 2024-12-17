@@ -14,7 +14,6 @@ describe('Keeper Rewards - Settlement', () => {
     settlementCost: 1111,
     flagCost: 3333,
     liquidateCost: 5555,
-    cancelCost: 2222,
   };
   const { systems, perpsMarkets, provider, trader1, keeperCostOracleNode, keeper, owner } =
     bootstrapMarkets({

@@ -22,7 +22,6 @@ library KeeperCosts {
     uint256 private constant KIND_SETTLEMENT = 0;
     uint256 private constant KIND_FLAG = 1;
     uint256 private constant KIND_LIQUIDATE = 2;
-    uint256 private constant KIND_CANCEL = 3;
 
     struct Data {
         bytes32 keeperCostNodeId;
@@ -43,14 +42,6 @@ library KeeperCosts {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
 
         sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_SETTLEMENT);
-    }
-
-    function getCancellationKeeperCosts(
-        Data storage self
-    ) internal view returns (uint256 sUSDCost) {
-        PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-
-        sUSDCost = _processWithRuntime(self.keeperCostNodeId, factory, 0, KIND_CANCEL);
     }
 
     function getFlagKeeperCosts(

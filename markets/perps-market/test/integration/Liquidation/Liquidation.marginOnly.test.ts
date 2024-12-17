@@ -65,7 +65,6 @@ const KeeperCosts = {
   settlementCost: bn(10),
   flagCost: bn(20),
   liquidateCost: bn(15),
-  cancelCost: bn(5),
 };
 
 const MIN_LIQ_REWARD = bn(10);

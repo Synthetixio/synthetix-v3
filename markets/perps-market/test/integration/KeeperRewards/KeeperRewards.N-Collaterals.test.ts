@@ -10,7 +10,6 @@ describe('Keeper Rewards - Multiple Collaterals', () => {
     settlementCost: 1111,
     flagCost: 3333,
     liquidateCost: 5555,
-    cancelCost: 2222,
   };
   const {
     systems,

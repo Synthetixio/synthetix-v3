@@ -25,11 +25,6 @@ contract ArbGasPriceOracle is IExternalNode {
     uint256 public constant KIND_LIQUIDATE = 2;
 
     /**
-     * @notice identifies resources consumed via order cancellation
-     */
-    uint256 public constant KIND_CANCEL = 3;
-
-    /**
      * @notice the ArbGasInfo precompile contract on Arbitrum
      */
     ArbGasInfo public immutable PRECOMPILE;
@@ -51,9 +46,6 @@ contract ArbGasPriceOracle is IExternalNode {
         // Call params
         uint256 numberOfUpdatedFeeds;
         uint256 executionKind;
-        // Cancel
-        uint256 l1CancelGasUnits;
-        uint256 l2CancelGasUnits;
     }
 
     /**
@@ -231,9 +223,6 @@ contract ArbGasPriceOracle is IExternalNode {
             // Iterations is fixed to 1 for liquidations
             gasUnitsL1 = runtimeParams.l1LiquidateGasUnits;
             gasUnitsL2 = runtimeParams.l2LiquidateGasUnits;
-        } else if (runtimeParams.executionKind == KIND_CANCEL) {
-            gasUnitsL1 = runtimeParams.l1CancelGasUnits;
-            gasUnitsL2 = runtimeParams.l2CancelGasUnits;
         } else {
             revert ArbGasPriceOracleInvalidExecutionKind();
         }
