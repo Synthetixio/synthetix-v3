@@ -16,12 +16,7 @@ contract MockGasPriceNode is IExternalNode {
 
     error InvalidExecutionKind();
 
-    function setCosts(
-        uint256 _settlementCost,
-        uint256 _flagCost,
-        uint256 _liquidateCost,
-        uint256 _cancelCost
-    ) external {
+    function setCosts(uint256 _settlementCost, uint256 _flagCost, uint256 _liquidateCost) external {
         settlementCost = _settlementCost;
         flagCost = _flagCost;
         liquidateCost = _liquidateCost;
