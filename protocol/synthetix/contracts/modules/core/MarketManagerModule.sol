@@ -175,6 +175,43 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
+    function getMarketPoolMaxDebtPerShare(
+        uint128 marketId,
+        uint128 poolId
+    ) external view override returns (int256) {
+        Market.Data storage market = Market.load(marketId);
+        return market.getPoolMaxDebtPerShare(poolId);
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
+    function getMarketCapacityContributionFromPool(
+        uint128 marketId,
+        uint128 poolId
+    ) external view override returns (uint256) {
+        Market.Data storage market = Market.load(marketId);
+
+        int256 currentValuePerShare = market.poolsDebtDistribution.getValuePerShare();
+        int256 poolMaxValuePerShare = market.getPoolMaxDebtPerShare(poolId);
+
+        // the getCreditCapacityContribution function could throw a confusing error if the max value per share is less than value per share
+        if (currentValuePerShare > poolMaxValuePerShare) {
+            return 0;
+        }
+
+        return
+            market
+                .getCreditCapacityContribution(
+                    market.getPoolCreditCapacity(poolId),
+                    poolMaxValuePerShare
+                )
+                .toUint();
+    }
+
+    /**
+     * @inheritdoc IMarketManagerModule
+     */
     function getMarketPoolDebtDistribution(
         uint128 marketId,
         uint128 poolId

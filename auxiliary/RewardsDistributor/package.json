@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/rewards-distributor",
-  "version": "3.9.1",
+  "version": "3.10.1",
   "publishConfig": {
     "access": "public"
   },
@@ -21,7 +21,7 @@
     "forge-coverage": "forge coverage --report lcov"
   },
   "devDependencies": {
-    "@usecannon/cli": "2.18.2",
+    "@usecannon/cli": "2.20.1",
     "forge-std": "github:foundry-rs/forge-std#master"
   },
   "depcheck": {

@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market-oracle",
-  "version": "3.9.1",
+  "version": "3.10.1",
   "description": "Spot market quoting oracle (used in synthetix core contracts",
   "publishConfig": {
     "access": "public"

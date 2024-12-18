@@ -148,7 +148,7 @@ contract PoolModule is IPoolModule {
     ) external override {
         Pool.Data storage pool = Pool.loadExisting(poolId);
         Pool.onlyPoolOwner(poolId, ERC2771Context._msgSender());
-        pool.requireMinDelegationTimeElapsed(pool.lastConfigurationTime);
+        pool.requireMinDelegationTimeElapsed(0, pool.lastConfigurationTime);
 
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
@@ -303,6 +303,26 @@ contract PoolModule is IPoolModule {
      */
     function getPoolName(uint128 poolId) external view override returns (string memory poolName) {
         return Pool.load(poolId).name;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function getPoolTotalDebt(uint128 poolId) external override returns (int256 totalDebtD18) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        pool.distributeDebtToVaults(address(0));
+        return pool.totalVaultDebtsD18;
+    }
+
+    /**
+     * @inheritdoc IPoolModule
+     */
+    function getPoolDebtPerShare(
+        uint128 poolId
+    ) external override returns (int256 debtPerShareD18) {
+        Pool.Data storage pool = Pool.loadExisting(poolId);
+        pool.distributeDebtToVaults(address(0));
+        (, debtPerShareD18) = pool.getCurrentCreditCapacityAndDebtPerShare();
     }
 
     /**

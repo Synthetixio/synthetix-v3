@@ -91,6 +91,7 @@ contracts = [
     "CollateralConfigurationModule",
     "GlobalPerpsMarketModule",
 ]
+includeDiamondCompatibility = false
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]

@@ -66,6 +66,8 @@ library Pool {
     );
 
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
+    bytes32 private constant _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME =
+        "accountOverrideMinDelegateTime";
 
     struct Data {
         /**
@@ -194,11 +196,10 @@ library Pool {
 
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
-        uint256 totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
-        int128 debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
-            ? int256(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
-            : int128(0);
-
+        (
+            uint256 totalCreditCapacityD18,
+            int128 debtPerShareD18
+        ) = getCurrentCreditCapacityAndDebtPerShare(self);
         uint256 systemMinLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
@@ -243,6 +244,15 @@ library Pool {
                 marketCreditCapacityD18
             );
         }
+    }
+
+    function getCurrentCreditCapacityAndDebtPerShare(
+        Data storage self
+    ) internal view returns (uint256 totalCreditCapacityD18, int128 debtPerShareD18) {
+        totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
+        debtPerShareD18 = totalCreditCapacityD18 > 0 // solhint-disable-next-line numcast/safe-cast
+            ? int256(self.totalVaultDebtsD18).divDecimal(totalCreditCapacityD18.toInt()).to128() // solhint-disable-next-line numcast/safe-cast
+            : int128(0);
     }
 
     /**
@@ -628,10 +638,27 @@ library Pool {
 
     function requireMinDelegationTimeElapsed(
         Data storage self,
+        uint128 accountId,
         uint64 lastDelegationTime
     ) internal view {
         uint32 requiredMinDelegationTime = getRequiredMinDelegationTime(self);
-        if (block.timestamp < lastDelegationTime + requiredMinDelegationTime) {
+        if (
+            block.timestamp < lastDelegationTime + requiredMinDelegationTime &&
+            // account can bypass the min delegation time if a configuration has been set by the pdao to override the account
+            block.timestamp <
+            lastDelegationTime +
+                Config.readUint(
+                    keccak256(
+                        abi.encode(
+                            _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME,
+                            accountId,
+                            self.id
+                        )
+                    ),
+                    86400 * 365 * 100
+                ) -
+                1
+        ) {
             revert MinDelegationTimeoutPending(
                 self.id,
                 // solhint-disable-next-line numcast/safe-cast

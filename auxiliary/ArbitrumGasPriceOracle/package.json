@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/arbitrum-gas-price-oracle",
-  "version": "3.9.1",
+  "version": "3.10.1",
   "description": "Arbitrum Gas Price Oracle Node",
   "publishConfig": {
     "access": "public"
