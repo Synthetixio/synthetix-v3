@@ -118,6 +118,28 @@ contract PerpsAccountModule is IPerpsAccountModule {
         );
     }
 
+    function rebalanceDebt(uint128 accountId, uint256 amount) external override {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+        Account.exists(accountId);
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_MODIFY_COLLATERAL_PERMISSION
+        );
+        AsyncOrder.checkPendingOrder(accountId);
+
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        uint256 debtPaid = account.rebalanceDebt(amount);
+
+        emit DebtPaid(accountId, debtPaid, ERC2771Context._msgSender());
+
+        // update interest rate after debt paid since credit capacity for market has increased
+        (uint128 interestRate, ) = InterestRate.update(PerpsPrice.Tolerance.DEFAULT);
+        emit IGlobalPerpsMarketModule.InterestRateUpdated(
+            PerpsMarketFactory.load().perpsMarketId,
+            interestRate
+        );
+    }
+
     /**
      * @inheritdoc IPerpsAccountModule
      */

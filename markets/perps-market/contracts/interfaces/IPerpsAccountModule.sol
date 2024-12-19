@@ -11,7 +11,7 @@ interface IPerpsAccountModule {
     error InvalidDistributor(uint128 collateralId);
 
     /**
-     * @notice Gets fired when an account colateral is modified.
+     * @notice Gets fired when an account collateral is modified.
      * @param accountId Id of the account.
      * @param collateralId Id of the synth market used as collateral. Synth market id, 0 for snxUSD.
      * @param amountDelta requested change in amount of collateral delegated to the account.
@@ -145,6 +145,13 @@ interface IPerpsAccountModule {
      * @param amount debt amount to pay off
      */
     function payDebt(uint128 accountId, uint256 amount) external;
+
+    /**
+     * @notice Allows the account owner to pay debt using it's margin
+     * @param accountId Id of the account.
+     * @param amount debt amount to pay off
+     */
+    function rebalanceDebt(uint128 accountId, uint256 amount) external;
 
     /**
      * @notice Returns account's debt
