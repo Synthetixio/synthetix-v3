@@ -417,6 +417,7 @@ library PerpsAccount {
         PerpsPrice.Tolerance stalenessTolerance
     ) internal view returns (MemoryContext memory ctx) {
         uint256[] memory marketIds = self.openPositionMarketIds.values();
+        uint128 accountId = self.id;
         ctx = MemoryContext(
             self.id,
             stalenessTolerance,
@@ -424,7 +425,7 @@ library PerpsAccount {
             PerpsPrice.getCurrentPrices(marketIds, stalenessTolerance)
         );
         for (uint256 i = 0; i < ctx.positions.length; i++) {
-            ctx.positions[i] = PerpsMarket.load(marketIds[i].to128()).positions[self.id];
+            ctx.positions[i] = PerpsMarket.load(marketIds[i].to128()).positions[accountId];
         }
     }
 

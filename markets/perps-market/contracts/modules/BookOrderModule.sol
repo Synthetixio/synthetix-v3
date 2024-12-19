@@ -121,8 +121,15 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
                     accumOrderData
                 );
 
-                // load the new account
                 GlobalPerpsMarket.load().checkLiquidation(orders[i].accountId);
+
+                // load and verify existance of the new account
+                if (PerpsAccount.load(orders[i].accountId).id == 0) {
+                    // TODO: what to do if account doesnt exist
+                    // for now to make debugging easy accounts can be created out of thin air
+                    PerpsAccount.load(orders[i].accountId).id = orders[i].accountId;
+                }
+
                 ctx = PerpsAccount.load(orders[i].accountId).getOpenPositionsAndCurrentPrices(
                     PerpsPrice.Tolerance.DEFAULT
                 );
@@ -219,8 +226,6 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
             updateData.interestRate
         );
 
-        return accumOrderData.orderFee;
-
         emit InterestCharged(ctx.accountId, chargedInterest);
 
         emit OrderSettled(
@@ -238,5 +243,7 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
             "", // TODO: tracking code, may not have ever
             ERC2771Context._msgSender()
         );
+        
+        return accumOrderData.orderFee;
     }
 }
