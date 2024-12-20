@@ -253,12 +253,12 @@ describe('Account - payDebt()', () => {
       const payoffAmount = wei(10_000);
       let tx: ethers.providers.TransactionResponse;
       before(async () => {
-        reportedDebt = wei(await systems().PerpsMarket.reportedDebt(superMarketId()));
-        traderUSDBalance = wei(await systems().USD.balanceOf(await trader1().getAddress()));
-
         await systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountId, sUSDSynthId, wei(20_000).toBN());
+
+        reportedDebt = wei(await systems().PerpsMarket.reportedDebt(superMarketId()));
+        traderUSDBalance = wei(await systems().USD.balanceOf(await trader1().getAddress()));
 
         tx = await systems()
           .PerpsMarket.connect(trader1())
@@ -297,13 +297,13 @@ describe('Account - payDebt()', () => {
       let traderUSDBalance: Wei, withdrawableMargin: Wei, reportedDebt: Wei;
 
       before(async () => {
-        reportedDebt = wei(await systems().PerpsMarket.reportedDebt(superMarketId()));
-        traderUSDBalance = wei(await systems().USD.balanceOf(await trader1().getAddress()));
-        withdrawableMargin = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
-
         await systems()
           .PerpsMarket.connect(trader1())
           .modifyCollateral(accountId, sUSDSynthId, wei(10_000).toBN());
+
+        reportedDebt = wei(await systems().PerpsMarket.reportedDebt(superMarketId()));
+        traderUSDBalance = wei(await systems().USD.balanceOf(await trader1().getAddress()));
+        withdrawableMargin = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
 
         await systems()
           .PerpsMarket.connect(trader1())

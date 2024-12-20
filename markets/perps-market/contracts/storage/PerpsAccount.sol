@@ -310,8 +310,6 @@ library PerpsAccount {
         }
 
         updateAccountDebt(self, -debtPaid.toInt());
-        // charge user account the repaid debt amount
-        charge(self, -debtPaid.toInt());
     }
 
     /**
