@@ -18,8 +18,11 @@ library Price {
 
     enum Tolerance {
         DEFAULT,
-        STRICT
+        STRICT,
+        ONE_MONTH
     }
+
+    uint256 private constant ONE_MONTH = 2592000;
 
     struct Data {
         /**
@@ -55,18 +58,18 @@ library Price {
 
         NodeOutput.Data memory output;
 
-        if (priceTolerance == Tolerance.STRICT) {
+        if (priceTolerance == Tolerance.DEFAULT) {
+            output = INodeModule(factory.oracle).process(feedId);
+        } else {
             bytes32[] memory runtimeKeys = new bytes32[](1);
             bytes32[] memory runtimeValues = new bytes32[](1);
             runtimeKeys[0] = bytes32("stalenessTolerance");
-            runtimeValues[0] = bytes32(self.strictStalenessTolerance);
+            runtimeValues[0] = toleranceBytes(self, priceTolerance);
             output = INodeModule(factory.oracle).processWithRuntime(
                 feedId,
                 runtimeKeys,
                 runtimeValues
             );
-        } else {
-            output = INodeModule(factory.oracle).process(feedId);
         }
 
         price = output.price.toUint();
@@ -100,5 +103,18 @@ library Price {
      */
     function scaleTo(int256 amount, uint256 decimals) internal pure returns (int256 scaledAmount) {
         return (decimals > 18 ? amount.upscale(decimals - 18) : amount.downscale(18 - decimals));
+    }
+
+    function toleranceBytes(
+        Data storage self,
+        Tolerance tolerance
+    ) internal view returns (bytes32) {
+        if (tolerance == Tolerance.STRICT) {
+            return bytes32(self.strictStalenessTolerance);
+        } else if (tolerance == Tolerance.ONE_MONTH) {
+            return bytes32(ONE_MONTH);
+        } else {
+            return bytes32(0);
+        }
     }
 }
