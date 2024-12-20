@@ -64,7 +64,7 @@ library GlobalPerpsMarketConfiguration {
          */
         uint128 maxCollateralsPerAccount;
         /**
-         * @dev used together with minKeeperRewardUsd to get the minumum keeper reward for the sender who settles, or liquidates the account
+         * @dev used together with minKeeperRewardUsd to get the minimum keeper reward for the sender who settles, or liquidates the account
          */
         uint256 minKeeperProfitRatioD18;
         /**

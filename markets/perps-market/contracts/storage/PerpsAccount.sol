@@ -299,6 +299,7 @@ library PerpsAccount {
             3. excess amount is ignored
         */
 
+        GlobalPerpsMarketConfiguration.Data storage config = GlobalPerpsMarketConfiguration.load();
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
         debtPaid = MathUtil.min(self.debt, amount);
@@ -310,6 +311,12 @@ library PerpsAccount {
         }
 
         updateAccountDebt(self, -debtPaid.toInt());
+
+        perpsMarketFactory.synthetix.withdrawMarketUsd(
+            perpsMarketFactory.perpsMarketId,
+            address(config.feeCollector),
+            debtPaid
+        );
     }
 
     /**
