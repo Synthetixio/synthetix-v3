@@ -84,7 +84,7 @@ The following actions are involved with asyncronous orders:
 #### Fees
 
 The `asyncFixedFee` is applied to async orders instead of the `atomicFixedFee`.  
-**Note**: if a custom fee is set for a given transactor, the custom fee takes precendence over all fixed fees.
+**Note**: if a custom fee is set for a given transactor, the custom fee takes precedence over all fixed fees.
 
 ### Wrapping
 
