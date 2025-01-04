@@ -228,7 +228,7 @@ Do **NOT** manually update `package.json` of any package.
     ```sh
     git reset --hard
     ```
-    And ensure workign tree is clean again
+    And ensure working tree is clean again
     ```sh
     git diff --exit-code
     ```
