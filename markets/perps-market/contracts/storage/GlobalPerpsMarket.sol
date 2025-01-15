@@ -178,8 +178,7 @@ library GlobalPerpsMarket {
                     .valueInUsd(
                         self.collateralAmounts[collateralId],
                         spotMarket,
-                        PerpsPrice.Tolerance.DEFAULT,
-                        false
+                        PerpsPrice.Tolerance.DEFAULT
                     );
                 total += collateralValue;
             }
