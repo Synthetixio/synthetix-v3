@@ -3551,6 +3551,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/treasury-market@workspace:markets/treasury-market":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/treasury-market@workspace:markets/treasury-market"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/wei": "npm:^2.74.4"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/wei@npm:^2.74.4":
   version: 2.74.4
   resolution: "@synthetixio/wei@npm:2.74.4"
@@ -8306,6 +8320,12 @@ __metadata:
   checksum: 10/72a93362fbe440f8a1c95f1f85c42ab9b5403b6142219d88412aef697ebf18f1898224e9c2dd3158ef1c8e8926d8a69f9b1375d131ab2fd3aae684687b2b2822
   languageName: node
   linkType: hard
+
+"forge-std@workspace:markets/treasury-market/lib/forge-std":
+  version: 0.0.0-use.local
+  resolution: "forge-std@workspace:markets/treasury-market/lib/forge-std"
+  languageName: unknown
+  linkType: soft
 
 "form-data-encoder@npm:^2.1.2":
   version: 2.1.4

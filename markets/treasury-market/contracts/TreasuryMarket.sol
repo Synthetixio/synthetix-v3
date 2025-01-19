@@ -20,6 +20,13 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 /* solhint-disable numcast/safe-cast */
 
+/**
+ * @notice A Synthetix V3 market to allocate delegated collateral towards a treasury. The treasury can then freely allocate and spend the USD tokens
+ * mintable via the market.
+ * The market effectively takes control of ownership of the debt of the pool, and becomes responsible for ensuring its success.
+ * A loan mechanism is included which allows for existing users to migrate onto this pool without having to repay their debt.
+ * This debt can be decayed over time via polynomial function.
+ */
 contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket, IERC721Receiver {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
@@ -36,8 +43,20 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     uint256 public targetCratio;
 
-    mapping(uint128 => uint256) saddledCollateral;
-    mapping(uint128 => uint256) loans;
+    uint32 public debtDecayPower;
+    uint32 public debtDecayTime;
+
+    uint256 public artificialDebt;
+
+    mapping(uint128 => uint256) public saddledCollateral;
+    mapping(uint128 => LoanInfo) public loans;
+
+    struct LoanInfo {
+        uint64 startTime;
+        uint32 power;
+        uint32 duration;
+        uint128 loanAmount;
+    }
 
     // solhint-disable-next-line no-empty-blocks
     constructor(
@@ -49,6 +68,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         treasury = treasuryAddress;
         v3System = v3SystemAddress;
         poolId = v3PoolId;
+
         collateralToken = collateralTokenAddress;
     }
 
@@ -66,13 +86,16 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         // while we are here, also set the approval that we need for the core sysetm to pull USD from us
         IERC20(v3System.getUsdToken()).approve(address(v3System), type(uint256).max);
+
+        // by default we set target c-ratio to 200%
+        targetCratio = 2 ether;
     }
 
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128 /*requestedMarketId*/) public pure returns (uint256 debt) {
-        return 0;
+    function reportedDebt(uint128 /*requestedMarketId*/) public view returns (uint256 debt) {
+        return artificialDebt;
 
         // TODO: I would really like for the pool to display exactly ex. 200% c-ratio by reporting higher debt here,
         // but calling `getVaultDebt` effectively calls this function, which calls `getVaultDebt` again
@@ -118,8 +141,17 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         int256 vaultDebtValue = v3System.getVaultDebt(poolId, collateralToken);
 
         // we want this newly added user to match the current collateralization status of the pool
-        int256 targetDebt = (accountCollateralValue.toInt() * vaultDebtValue) /
-            vaultCollateralValue.toInt();
+        int256 targetDebt = vaultDebtValue;
+        if (artificialDebt == 0) {
+            // if there is no artificial debt, it means that this is the first user and we should create a bunch
+            // to bring to low cratio
+            targetDebt = vaultCollateralValue.divDecimal(targetCratio).toInt();
+        } else if (vaultCollateralValue > accountCollateralValue) {
+            targetDebt =
+                (accountCollateralValue.toInt() * vaultDebtValue) /
+                (vaultCollateralValue + saddledCollateral[accountId] - accountCollateralValue)
+                    .toInt();
+        }
 
         // cannot saddle account if its c-ratio is too low
         // if an account has added additional collateral and their c-ratio is still too low to saddle, then its not harmful because they
@@ -128,6 +160,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert InsufficientCRatio(accountId, accountDebt.toUint(), targetDebt.toUint());
         }
 
+        artificialDebt += (targetDebt - accountDebt).toUint();
         v3System.associateDebt(
             marketId,
             poolId,
@@ -138,7 +171,12 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         // if a user has not been saddled before, any existing account debt becomes a loan on the user
         if (accountDebt > 0 && saddledCollateral[accountId] == 0) {
-            loans[accountId] = accountDebt.toUint();
+            loans[accountId] = LoanInfo(
+                uint64(block.timestamp),
+                debtDecayPower,
+                debtDecayTime,
+                accountDebt.toUint().to128()
+            );
             emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
         }
 
@@ -158,8 +196,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        if (loans[accountId] > 0) {
-            revert OutstandingLoan(accountId, loans[accountId]);
+        if (
+            loans[accountId].loanAmount > 0 &&
+            block.timestamp < loans[accountId].startTime + debtDecayTime
+        ) {
+            revert OutstandingLoan(accountId, _loanedAmount(accountId, block.timestamp));
         }
 
         // transfer the account token from the user so that we can undelegate them and repay their debt
@@ -176,7 +217,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             (uint256 vaultCollateral, ) = v3System.getVaultCollateral(poolId, collateralToken);
 
             // geometric series function solution to calculate the total amount of debt required for a repay
-            int256 neededToRepay = 1 ether * accountDebt / int256(1 ether - accountCollateral * 1 ether / vaultCollateral) + 1;
+            // the function may lose some precision so we -1 in the division
+            // there might be a better way to do this which loses a bit less precision but we do our best
+            int256 neededToRepay = (1 ether * accountDebt) /
+                int256(1 ether - (accountCollateral * 1 ether) / vaultCollateral - 1);
             v3System.withdrawMarketUsd(marketId, address(this), uint256(neededToRepay));
             v3System.deposit(accountId, v3System.getUsdToken(), uint256(neededToRepay));
             v3System.burnUsd(accountId, poolId, collateralToken, uint256(neededToRepay));
@@ -199,25 +243,33 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        uint256 loanedAmount = loans[accountId];
+        uint256 currentLoan = _loanedAmount(accountId, block.timestamp);
 
-        if (amount > loans[accountId]) {
-            uint256 maxLoan = saddledCollateral[accountId].divDecimal(v3System.getCollateralConfiguration(address(collateralToken)).issuanceRatioD18);
-            if (amount > maxLoan) {
-                revert InsufficientCRatio(accountId, amount, maxLoan);
-            }
-
-
-            v3System.withdrawMarketUsd(marketId, sender, amount - loanedAmount);
-        } else if (amount < loans[accountId]) {
-            v3System.depositMarketUsd(marketId, sender, loanedAmount - amount);
+        if (amount > currentLoan) {
+            revert ParameterError.InvalidParameter("amount", "must be less than current loan");
+        } else if (amount < currentLoan) {
+            v3System.depositMarketUsd(marketId, sender, currentLoan - amount);
         } else {
-            revert ParameterError.InvalidParameter("amount", "unchanged");
+            return; // nothing to do
         }
 
-        loans[accountId] = amount;
+        // fractionally modify the original loan amount--this will continue the repayment schedule where the user left off without resetting it
+        loans[accountId].loanAmount = ((loans[accountId].loanAmount * amount) / currentLoan)
+            .to128();
 
-        emit LoanAdjusted(accountId, amount, loanedAmount);
+        emit LoanAdjusted(accountId, amount, currentLoan);
+    }
+
+    function loanedAmount(uint128 accountId) external view returns (uint256) {
+        return _loanedAmount(accountId, block.timestamp);
+    }
+
+    function setDebtDecayFunction(uint32 power, uint32 time) external onlyOwner {
+        if (debtDecayPower > 100) {
+            revert ParameterError.InvalidParameter("debtDecayPower", "too high");
+        }
+        debtDecayPower = power;
+        debtDecayTime = time;
     }
 
     function mintTreasury(uint256 amount) external onlyOwner {
@@ -251,10 +303,41 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      */
     function onERC721Received(
         address,
-        /*operator*/ address,
-        /*from*/ uint256,
-        /*tokenId*/ bytes memory /*data*/
+        /*operator*/
+        address,
+        /*from*/
+        uint256,
+        /*tokenId*/
+        bytes memory /*data*/
     ) external pure override returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function _decimalPow(uint256 base, uint256 exp) internal pure returns (uint256) {
+        uint256 cur = 1e18;
+        for (uint256 i = 0; i < exp; i++) {
+            cur = cur.mulDecimal(base);
+        }
+
+        return cur;
+    }
+
+    function _loanedAmount(uint128 accountId, uint256 timestamp) internal view returns (uint256) {
+        if (loans[accountId].power == 0 || timestamp <= loans[accountId].startTime) {
+            return loans[accountId].loanAmount;
+        } else if (timestamp >= loans[accountId].startTime + loans[accountId].duration) {
+            return 0;
+        }
+
+        // this function is a polynomial decay
+        // model if `power` is 2 and `duration` is 365 https://www.wolframalpha.com/input?i=graph+1-%28x%2F365%29%5E2+from+0+to+365
+        return
+            loans[accountId].loanAmount -
+            uint256(loans[accountId].loanAmount).mulDecimal(
+                _decimalPow(
+                    (timestamp - loans[accountId].startTime).divDecimal(loans[accountId].duration),
+                    loans[accountId].power
+                )
+            );
     }
 }
