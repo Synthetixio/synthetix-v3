@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/treasury-market",
-  "version": "3.10.1",
+  "version": "3.10.2",
   "description": "V3 Market to allow a trusted entity to manage excess liquidity on behalf of stakers",
   "publishConfig": {
     "access": "public"
@@ -30,10 +30,7 @@
   "license": "MIT",
   "devDependencies": {
     "@synthetixio/common-config": "workspace:*",
-    "@synthetixio/core-utils": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
-    "@synthetixio/wei": "^2.74.4",
-    "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36"
   }
