@@ -6,4 +6,3 @@ include = ["./cannonfile.common.toml"]
 
 [import.oracle_manager]
 source = "<%= settings.oracle_manager_package %>"
-
