@@ -3556,10 +3556,7 @@ __metadata:
   resolution: "@synthetixio/treasury-market@workspace:markets/treasury-market"
   dependencies:
     "@synthetixio/common-config": "workspace:*"
-    "@synthetixio/core-utils": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
-    "@synthetixio/wei": "npm:^2.74.4"
-    ethers: "npm:^5.7.2"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
   languageName: unknown
