@@ -53,6 +53,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         );
         vm.etch(deployer.getAddress(keccak256("MarketImpl")), address(treasuryMarketCode).code);
 
+        market.setTargetCRatio(2 ether);
+
         // create v3 stuff
         v3System.createPool(poolId, v3System.owner());
         MarketConfiguration.Data[] memory marketConfig = new MarketConfiguration.Data[](2);
@@ -296,10 +298,17 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     }
 
     function testTreasuryMint() external {
+        market.saddle(accountId);
+
         assertEq(usdToken.balanceOf(market.treasury()), 0);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.Rebalanced(3.5 ether, 2.5 ether);
         vm.prank(market.owner());
         market.mintTreasury(1 ether);
+
         assertEq(usdToken.balanceOf(market.treasury()), 1 ether);
+        assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
     }
 
     function testFailTreasuryBurnUnauthorized() external {
@@ -310,6 +319,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     }
 
     function testTreasuryBurn() external {
+        market.saddle(accountId);
+
         vm.prank(market.owner());
         market.mintTreasury(1 ether);
 
@@ -317,9 +328,14 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
         vm.stopPrank();
         assertEq(usdToken.balanceOf(market.treasury()), 1 ether);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.Rebalanced(1.5 ether, 2.5 ether);
+
         vm.prank(market.owner());
         market.burnTreasury(1 ether);
         assertEq(usdToken.balanceOf(market.treasury()), 0);
+        assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
     }
 
     function testFailUnsaddleUnauthorized() external {
@@ -352,6 +368,30 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
     function testFailUpgradeToUnauthorized() external {
         market.upgradeTo(initialModuleBundleAddress);
+    }
+
+    function testFailRebalanceNoSaddle() external {
+        vm.expectEmit();
+        emit ITreasuryMarket.Rebalanced(0, 0);
+        market.rebalance();
+    }
+
+    function testRebalanceAfterSaddle() external {
+        sideMarket.setReportedDebt(1 ether);
+        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 1 ether);
+        market.saddle(accountId);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.Rebalanced(2.5 ether, 2.5 ether);
+
+        market.rebalance();
+
+        sideMarket.setReportedDebt(0.5 ether);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.Rebalanced(2 ether, 2.5 ether);
+
+        market.rebalance();
     }
 
     function testUpgradeTo() external {

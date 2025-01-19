@@ -20,6 +20,11 @@ interface ITreasuryMarket {
     event AccountSaddled(uint128 indexed accountId, uint256 collateralAmount, uint256 debtAssigned);
 
     /**
+     * @notice Emitted when the artificial debt of the vault is modified to match the current c-ratio
+     */
+    event Rebalanced(int256 previousVaultDebt, int256 newVaultDebt);
+
+    /**
      * @notice Emitted if an account was migrated but its c-ratioi was insufficient for assigning debt in v3
      */
     event AccountUnsaddled(
