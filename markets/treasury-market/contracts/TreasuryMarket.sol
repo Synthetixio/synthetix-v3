@@ -46,7 +46,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     uint32 public debtDecayPower;
     uint32 public debtDecayTime;
 
-    uint256 public artificialDebt;
+    int256 public artificialDebt;
 
     mapping(uint128 => uint256) public saddledCollateral;
     mapping(uint128 => LoanInfo) public loans;
@@ -95,7 +95,12 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      * @inheritdoc IMarket
      */
     function reportedDebt(uint128 /*requestedMarketId*/) public view returns (uint256 debt) {
-        return artificialDebt;
+        if (artificialDebt < 0) {
+            // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
+            return 0;
+        }
+
+        return uint256(artificialDebt);
 
         // TODO: I would really like for the pool to display exactly ex. 200% c-ratio by reporting higher debt here,
         // but calling `getVaultDebt` effectively calls this function, which calls `getVaultDebt` again
@@ -129,6 +134,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     function setTargetCRatio(uint256 ratio) external onlyOwner {
         targetCratio = ratio;
         emit TargetCRatioSet(ratio);
+
+        _rebalance();
     }
 
     function saddle(uint128 accountId) external {
@@ -160,7 +167,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert InsufficientCRatio(accountId, accountDebt.toUint(), targetDebt.toUint());
         }
 
-        artificialDebt += (targetDebt - accountDebt).toUint();
+        artificialDebt += targetDebt - accountDebt;
         v3System.associateDebt(
             marketId,
             poolId,
@@ -272,14 +279,20 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         debtDecayTime = time;
     }
 
+    function rebalance() external {
+        _rebalance();
+    }
+
     function mintTreasury(uint256 amount) external onlyOwner {
         v3System.withdrawMarketUsd(marketId, treasury, amount);
         emit TreasuryMinted(amount);
+        _rebalance();
     }
 
     function burnTreasury(uint256 amount) external onlyOwner {
         v3System.depositMarketUsd(marketId, treasury, amount);
         emit TreasuryBurned(amount);
+        _rebalance();
     }
 
     /**
@@ -311,6 +324,25 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         bytes memory /*data*/
     ) external pure override returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function _rebalance() internal {
+        if (artificialDebt == 0) {
+            return;
+        }
+
+        (, uint256 vaultCollateralValue) = v3System.getVaultCollateral(poolId, collateralToken);
+        int256 vaultDebtValue = v3System.getVaultDebt(poolId, collateralToken);
+
+        int256 targetDebt = vaultCollateralValue.divDecimal(targetCratio).toInt();
+
+        if (artificialDebt > vaultDebtValue - targetDebt) {
+            artificialDebt += targetDebt - vaultDebtValue;
+        } else {
+            return;
+        }
+
+        emit Rebalanced(vaultDebtValue, targetDebt);
     }
 
     function _decimalPow(uint256 base, uint256 exp) internal pure returns (uint256) {
