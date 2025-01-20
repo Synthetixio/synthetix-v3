@@ -96,6 +96,13 @@ describe('VaultModule', function () {
       });
   });
 
+  const migratePoolId = 8582;
+  before('create migrate pool', async () => {
+    await systems()
+      .Core.connect(owner)
+      .createPool(migratePoolId, await owner.getAddress());
+  });
+
   const restore = snapshotCheckpoint(provider);
 
   function getExpectedCollateralizationRatio(
@@ -929,6 +936,119 @@ describe('VaultModule', function () {
         assertBn.equal(
           await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
           0
+        );
+      });
+    });
+  });
+
+  describe('migrateDelegation()', () => {
+    beforeEach(restore);
+
+    it('verifies permission for account', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .migrateDelegation(accountId, poolId, collateralAddress(), migratePoolId),
+        `PermissionDenied("1", "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('fails when specifying a nonexistant pool from', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, poolId + 12341234, collateralAddress(), migratePoolId),
+        `InvalidParameter("1")`,
+        systems().Core
+      );
+    });
+    it('fails when specifying a nonexistant pool to', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, poolId, collateralAddress(), migratePoolId + 12341234),
+        `InvalidParameter("1")`,
+        systems().Core
+      );
+    });
+    it('fails when specifying a pool which has not been delegated to', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, migratePoolId, collateralAddress(), migratePoolId + 1),
+        `InvalidParameter("1")`,
+        systems().Core
+      );
+    });
+    it('fails when new pool is already delegated', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, migratePoolId, collateralAddress(), poolId),
+        `InvalidParameter("1")`,
+        systems().Core
+      );
+    });
+    it('fails when in liquidation cratio', async () => {
+      // go into debt
+      await MockMarket.connect(user1).setReportedDebt(depositAmount);
+
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, poolId, collateralAddress(), migratePoolId),
+        `InsufficientCollateralRatio`,
+        systems().Core
+      );
+    });
+    it('fails when delegation period has not been met', async () => {
+      await MockMarket.setMinDelegationTime(86400);
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, poolId, collateralAddress(), migratePoolId),
+        `MinDelegationTimeoutPending`,
+        systems().Core
+      );
+      await MockMarket.setMinDelegationTime(0);
+    });
+
+    describe('successful migrate', () => {
+      beforeEach(restore);
+      //let tx: ethers.providers.TransactionReceipt;
+      beforeEach('migrate', async () => {
+        // assign some debt so that we have some way to verify the debt is migrated
+        await MockMarket.connect(user1).setReportedDebt(depositAmount.div(10));
+
+        const preTx = await systems()
+          .Core.connect(user1)
+          .migrateDelegation(accountId, poolId, collateralAddress(), migratePoolId);
+        /*tx = */ await preTx.wait();
+      });
+
+      it('collateral has been undelegated from old and delegated to new', async () => {
+        assertBn.equal(
+          await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress()),
+          0
+        );
+        assertBn.equal(
+          await systems().Core.getPositionCollateral(accountId, migratePoolId, collateralAddress()),
+          depositAmount
+        );
+      });
+      it('debt has been removed from old and delegated to new', async () => {
+        assertBn.equal(
+          await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
+          0
+        );
+        assertBn.equal(
+          await systems().Core.callStatic.getPositionDebt(
+            accountId,
+            migratePoolId,
+            collateralAddress()
+          ),
+          depositAmount.div(10)
         );
       });
     });

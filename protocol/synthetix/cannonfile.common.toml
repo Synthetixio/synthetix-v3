@@ -264,6 +264,12 @@ fromCall.func = "owner"
 func = "setFeatureFlagAllowAll"
 args = ["<%= formatBytes32String('delegateCollateral') %>", true]
 
+[invoke.enable_feature_migrateDelegation]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('migrateDelegation') %>", true]
+
 [invoke.register_const_one_oracle]
 target = ["oracle_manager.Proxy"]
 func = "registerNode"
