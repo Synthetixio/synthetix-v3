@@ -34,5 +34,10 @@
     "@synthetixio/main": "workspace:*",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@synthetixio/main"
+    ]
   }
 }
