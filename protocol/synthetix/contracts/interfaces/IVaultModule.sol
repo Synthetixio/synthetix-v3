@@ -70,6 +70,26 @@ interface IVaultModule {
     ) external;
 
     /**
+     * @notice Allows a user to move their delegation to a new pool without repaying debt
+     * @param accountId The id of the account associated with the position that will be updated.
+     * @param oldPoolId The id of the pool associated with the position that should be moved from.
+     * @param collateralType The address of the collateral used in the position.
+     * @param newPoolId The new pool Id of the position.
+     *
+     * Requirements:
+     *
+     * - `ERC2771Context._msgSender()` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+     *
+     * Emits a {DelegationUpdated} event for both affected pools.
+     */
+    function migrateDelegation(
+        uint128 accountId,
+        uint128 oldPoolId,
+        address collateralType,
+        uint128 newPoolId
+    ) external;
+
+    /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.
      * @dev Call this function using `callStatic` to treat it as a view function.
      * @dev The return value is a percentage with 18 decimals places.
@@ -123,7 +143,8 @@ interface IVaultModule {
      * @return collateralValueD18 The value of the collateral used in the position, denominated with 18 decimals of precision.
      * @return debtD18 The amount of debt held in the position, denominated with 18 decimals of precision.
      * @return collateralizationRatioD18 The collateralization ratio of the position (collateral / debt), denominated with 18 decimals of precision.
-     **/
+     *
+     */
     function getPosition(
         uint128 accountId,
         uint128 poolId,
@@ -144,7 +165,8 @@ interface IVaultModule {
      * @param poolId The id of the pool that owns the vault whose debt is being queried.
      * @param collateralType The address of the collateral of the associated vault.
      * @return debtD18 The overall debt of the vault, denominated with 18 decimals of precision.
-     **/
+     *
+     */
     function getVaultDebt(uint128 poolId, address collateralType) external returns (int256 debtD18);
 
     /**
