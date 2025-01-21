@@ -39,14 +39,14 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     address public immutable collateralToken;
     IV3CoreProxy public immutable v3System;
 
+    int256 public artificialDebt;
+
     uint128 public marketId;
 
     uint256 public targetCratio;
 
     uint32 public debtDecayPower;
     uint32 public debtDecayTime;
-
-    int256 public artificialDebt;
 
     mapping(uint128 => uint256) public saddledCollateral;
     mapping(uint128 => LoanInfo) public loans;
@@ -147,6 +147,14 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         (, uint256 vaultCollateralValue) = v3System.getVaultCollateral(poolId, collateralToken);
         int256 vaultDebtValue = v3System.getVaultDebt(poolId, collateralToken);
 
+        //
+        uint256 newlySaddledValue = accountCollateralValue -
+            (saddledCollateral[accountId] * accountCollateralValue) /
+            accountCollateral;
+
+        // debt can only be added once an account joins the pool for the first time
+        int256 newlySaddledDebt = saddledCollateral[accountId] > 0 ? int256(0) : accountDebt;
+
         // we want this newly added user to match the current collateralization status of the pool
         int256 targetDebt = vaultDebtValue;
         if (artificialDebt == 0) {
@@ -154,10 +162,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             // to bring to low cratio
             targetDebt = vaultCollateralValue.divDecimal(targetCratio).toInt();
         } else if (vaultCollateralValue > accountCollateralValue) {
+            // we calculate what the c-ratio of the pool should have been prior to when the account added onto the pool
+            // this will allow for the correct debt to be set on this account to "equalize" with the other accounts
             targetDebt =
-                (accountCollateralValue.toInt() * vaultDebtValue) /
-                (vaultCollateralValue + saddledCollateral[accountId] - accountCollateralValue)
-                    .toInt();
+                (accountCollateralValue.toInt() * (vaultDebtValue - newlySaddledDebt)) /
+                (vaultCollateralValue - newlySaddledValue).toInt();
         }
 
         // cannot saddle account if its c-ratio is too low
@@ -203,10 +212,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        if (
-            loans[accountId].loanAmount > 0 &&
-            block.timestamp < loans[accountId].startTime + debtDecayTime
-        ) {
+        uint256 currentLoan = _loanedAmount(accountId, block.timestamp);
+        if (currentLoan > 0) {
             revert OutstandingLoan(accountId, _loanedAmount(accountId, block.timestamp));
         }
 
@@ -222,6 +229,13 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         if (accountDebt > 0) {
             (uint256 vaultCollateral, ) = v3System.getVaultCollateral(poolId, collateralToken);
+
+            if (accountCollateral == vaultCollateral) {
+                revert ParameterError.InvalidParameter(
+                    "accountCollateral",
+                    "no surplus collateral to fund exit"
+                );
+            }
 
             // geometric series function solution to calculate the total amount of debt required for a repay
             // the function may lose some precision so we -1 in the division
@@ -256,6 +270,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert ParameterError.InvalidParameter("amount", "must be less than current loan");
         } else if (amount < currentLoan) {
             v3System.depositMarketUsd(marketId, sender, currentLoan - amount);
+            _rebalance();
         } else {
             return; // nothing to do
         }
@@ -272,7 +287,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function setDebtDecayFunction(uint32 power, uint32 time) external onlyOwner {
-        if (debtDecayPower > 100) {
+        if (power > 100) {
             revert ParameterError.InvalidParameter("debtDecayPower", "too high");
         }
         debtDecayPower = power;
@@ -339,7 +354,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         if (artificialDebt > vaultDebtValue - targetDebt) {
             artificialDebt += targetDebt - vaultDebtValue;
         } else {
-            return;
+            // set the artificial debt to the lowest valid value
+            targetDebt = vaultDebtValue - artificialDebt;
+            artificialDebt = 0;
         }
 
         emit Rebalanced(vaultDebtValue, targetDebt);

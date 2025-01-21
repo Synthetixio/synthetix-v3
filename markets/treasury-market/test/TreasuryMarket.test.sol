@@ -12,6 +12,8 @@ import {CannonDeploy} from "../script/Deploy.sol";
 
 interface IV3TestCoreProxy is IV3CoreProxy {}
 
+/* solhint-disable numcast/safe-cast */
+
 contract TreasuryMarketTest is Test, IERC721Receiver {
     TreasuryMarket private market;
     IV3TestCoreProxy private v3System;
@@ -86,22 +88,29 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             v3System.deposit(accountId + i, address(collateralToken), 10 ether);
         }
 
-        v3System.delegateCollateral(accountId, poolId, address(collateralToken), 5 ether, 1 ether);
+        v3System.delegateCollateral(accountId, poolId, address(collateralToken), 4 ether, 1 ether);
+
+        vm.prank(v3System.owner());
+        v3System.setFeatureFlagAllowAll("associateDebt", true);
     }
 
-    function testMarketFunctions() external {
+    function test_MarketFunctions() external {
         assertEq(market.name(market.marketId()), "Treasury Market");
         assertEq(market.reportedDebt(market.marketId()), 0);
         assertEq(market.minimumCredit(market.marketId()), 0);
         assertEq(market.loanedAmount(42), 0);
+        assertTrue(market.marketId() != 0);
     }
 
-    function testFailMarketAlreadyRegistered() external {
+    function test_RevertIf_MarketAlreadyRegistered() external {
         vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(ITreasuryMarket.MarketAlreadyRegistered.selector, 1)
+        );
         market.registerMarket();
     }
 
-    function testNewMarketRegistration() external {
+    function test_NewMarketRegistration() external {
         TreasuryMarket newMarket = new TreasuryMarket(
             v3System,
             market.treasury(),
@@ -117,22 +126,33 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         );
     }
 
-    function testFailSaddleInsufficientCRatio() external {
-        sideMarket.setReportedDebt(4 ether);
-
-        // delegate another account to cause the avg c-ratio to shoot way up
+    function test_RevertIf_SaddleInsufficientCRatio() external {
+        market.saddle(accountId);
+        // delegate another account to cause the avg c-ratio to shoot way up5000000000000000000
         v3System.delegateCollateral(
             accountId + 1,
             poolId,
             address(collateralToken),
-            5 ether,
+            4 ether,
             1 ether
         );
-        market.saddle(accountId);
-        sideMarket.setReportedDebt(0);
+
+        // associate a lot of debt to this other account such that it has a really low c-ratio
+        sideMarket.setReportedDebt(3 ether);
+        sideMarket.callAssociateDebt(poolId, address(collateralToken), accountId + 1, 3 ether);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ITreasuryMarket.InsufficientCRatio.selector,
+                accountId + 1,
+                3 ether,
+                2 ether
+            )
+        );
+        market.saddle(accountId + 1);
     }
 
-    function testSaddle() external {
+    function test_Saddle() external {
         // add a little bit of debt to the account so we can verify saddle
         // works with debt in the account to start
         sideMarket.setReportedDebt(1 ether);
@@ -141,36 +161,42 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         // this user is the first to saddle, so the debt should now be at 200% c-ratio and the debt increased on the current account
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
-        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 2.5 ether);
+        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 2 ether);
     }
 
-    function testSaddleSecondAccount() external {
+    function test_SaddleSecondAccount() external {
         // saddle the first account
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
-        // saddle the second account
+        // introduce second account joining the pool
         v3System.delegateCollateral(
             accountId + 1,
             poolId,
             address(collateralToken),
-            5 ether,
+            1 ether,
             1 ether
         );
+
+        // the second account comes into pool with some (0.25) debt
+        sideMarket.setReportedDebt(1.25 ether);
+        sideMarket.callAssociateDebt(poolId, address(collateralToken), accountId + 1, 0.25 ether);
+
+        // saddle the second account
         market.saddle(accountId + 1);
 
-        // since both accounts have the same amount of collateral, they should have the same amount of debt
+        // the new account has 1/4 the amount of collateral, so it should have 1/4 the amount of debt
+        assertEq(
+            v3System.getPositionDebt(accountId + 1, poolId, address(collateralToken)) * 4,
+            v3System.getPositionDebt(accountId, poolId, address(collateralToken))
+        );
         assertEq(
             v3System.getPositionCollateralRatio(accountId + 1, poolId, address(collateralToken)),
             v3System.getPositionCollateralRatio(accountId, poolId, address(collateralToken))
         );
-        assertEq(
-            v3System.getPositionDebt(accountId + 1, poolId, address(collateralToken)),
-            v3System.getPositionDebt(accountId, poolId, address(collateralToken))
-        );
     }
 
-    function testSaddleAgain() external {
+    function test_SaddleAgain() external {
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
@@ -179,7 +205,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             accountId + 1,
             poolId,
             address(collateralToken),
-            5 ether,
+            2 ether,
             1 ether
         );
         market.saddle(accountId + 1);
@@ -187,47 +213,87 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         //sideMarket.setReportedDebt(2 ether);
 
         // delegate more collateral on the first account
-        v3System.delegateCollateral(accountId, poolId, address(collateralToken), 10 ether, 1 ether);
+        v3System.delegateCollateral(accountId, poolId, address(collateralToken), 8 ether, 1 ether);
         market.saddle(accountId);
         assertEq(
             v3System.getPositionDebt(accountId, poolId, address(collateralToken)),
-            v3System.getPositionDebt(accountId + 1, poolId, address(collateralToken)) * 2
+            v3System.getPositionDebt(accountId + 1, poolId, address(collateralToken)) * 4
         );
     }
 
-    function testFailTakeLoanUnauthorized() external {
+    function test_RevertIf_TakeLoanUnauthorized() external {
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(1000)));
         vm.prank(address(1000));
         market.adjustLoan(accountId, 1 ether);
     }
 
-    function testFailTakeLoanInsufficientCRatio() external {
+    function test_RevertIf_TakeLoan() external {
         market.saddle(accountId);
-        market.adjustLoan(accountId, 10 ether);
-    }
 
-    function testFailTakeLoan() external {
-        market.saddle(accountId);
+        vm.expectRevert();
         market.adjustLoan(accountId, 1 ether);
     }
 
-    function testTakeLoanNoChange() external {
+    function test_TakeLoanNoChange() external {
         market.saddle(accountId);
         market.adjustLoan(accountId, 0);
         assertEq(market.loanedAmount(accountId), 0);
     }
 
-    function testFailUnsaddleOutstandingLoan() external {
+    function test_RevertIf_OutstandingLoan() external {
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
         IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ITreasuryMarket.OutstandingLoan.selector, accountId, 1 ether)
+        );
         market.unsaddle(accountId);
     }
 
-    function testFailUnsaddleNotSaddled() external {
+    function test_RevertIf_UnrepayableDebt() external {
+        market.saddle(accountId);
+
+        // mint some treasury money so the debt becomes fundamentally unrepayable
+        vm.prank(market.owner());
+        market.mintTreasury(1 ether);
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "accountCollateral",
+                "no surplus collateral to fund exit"
+            )
+        );
         market.unsaddle(accountId);
     }
 
-    function testLoanDecayNoConfig() external {
+    function test_UnsaddleNotSaddled() external {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "accountId",
+                "not saddled"
+            )
+        );
+        market.unsaddle(accountId);
+    }
+
+    function test_RevertIf_SetDebtDecayPowerHigh() external {
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "debtDecayPower",
+                "too high"
+            )
+        );
+        market.setDebtDecayFunction(101, 86400);
+    }
+
+    function test_LoanDecayNoConfig() external {
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
@@ -238,7 +304,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.loanedAmount(accountId), 1 ether);
     }
 
-    function testLoanDecayLinearConfig() external {
+    function test_LoanDecayLinearConfig() external {
         vm.warp(100000000);
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 1000000);
@@ -259,7 +325,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.loanedAmount(accountId), 1 ether);
     }
 
-    function testLoanDecayCubicConfig() external {
+    function test_LoanDecayCubicConfig() external {
         vm.warp(100000000);
         vm.prank(market.owner());
         market.setDebtDecayFunction(3, 1000000);
@@ -280,7 +346,38 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.loanedAmount(accountId), 1 ether);
     }
 
-    function testRepayLoan() external {
+    function test_RepayLoanMidScheduleCubic() external {
+        vm.warp(100000000);
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(3, 1000000);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        // change the debt decay function just in case (calculations should still follow original debt decay params)
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 2000000);
+
+        (uint64 startTime, , , ) = market.loans(accountId);
+
+        assertEq(market.loanedAmount(accountId), 1 ether);
+        vm.warp(startTime + 500000);
+
+        // take 1 ether of debt from the side market, which will allow us to repay potentially the full loan (but will actually be less)
+        sideMarket.withdrawUsd(1 ether);
+        IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+        market.adjustLoan(accountId, 0.4375 ether);
+        assertEq(market.loanedAmount(accountId), 0.4375 ether);
+
+        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount) = market.loans(
+            accountId
+        );
+        assertEq(newStartTime, startTime);
+        assertEq(duration, 1000000);
+        assertEq(power, 3);
+        assertEq(loanAmount, 0.5 ether);
+    }
+
+    function test_RepayLoan() external {
         sideMarket.setReportedDebt(1 ether);
 
         market.saddle(accountId);
@@ -293,17 +390,18 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.loanedAmount(accountId), 0);
     }
 
-    function testFailTreasuryMintUnauthorized() external {
+    function test_TreasuryMintUnauthorized() external {
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
         market.mintTreasury(1 ether);
     }
 
-    function testTreasuryMint() external {
+    function test_TreasuryMint() external {
         market.saddle(accountId);
 
         assertEq(usdToken.balanceOf(market.treasury()), 0);
 
         vm.expectEmit();
-        emit ITreasuryMarket.Rebalanced(3.5 ether, 2.5 ether);
+        emit ITreasuryMarket.Rebalanced(3 ether, 2 ether);
         vm.prank(market.owner());
         market.mintTreasury(1 ether);
 
@@ -311,14 +409,16 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
     }
 
-    function testFailTreasuryBurnUnauthorized() external {
+    function test_RevertIf_TreasuryBurnUnauthorized() external {
         vm.startPrank(market.treasury());
         IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
         vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
         market.burnTreasury(1 ether);
     }
 
-    function testTreasuryBurn() external {
+    function test_TreasuryBurn() external {
         market.saddle(accountId);
 
         vm.prank(market.owner());
@@ -330,7 +430,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(usdToken.balanceOf(market.treasury()), 1 ether);
 
         vm.expectEmit();
-        emit ITreasuryMarket.Rebalanced(1.5 ether, 2.5 ether);
+        emit ITreasuryMarket.Rebalanced(1 ether, 2 ether);
 
         vm.prank(market.owner());
         market.burnTreasury(1 ether);
@@ -338,13 +438,15 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
     }
 
-    function testFailUnsaddleUnauthorized() external {
+    function test_RevertIf_UnsaddleUnauthorized() external {
         market.saddle(accountId);
+
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(1000)));
         vm.prank(address(1000));
         market.unsaddle(accountId);
     }
 
-    function testUnsaddle() external {
+    function test_Unsaddle() external {
         market.saddle(accountId);
         sideMarket.setReportedDebt(1 ether);
 
@@ -366,49 +468,69 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 0);
     }
 
-    function testFailUpgradeToUnauthorized() external {
+    function test_RevertIf_UpgradeToUnauthorized() external {
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
         market.upgradeTo(initialModuleBundleAddress);
     }
 
-    function testFailRebalanceNoSaddle() external {
-        vm.expectEmit();
-        emit ITreasuryMarket.Rebalanced(0, 0);
+    function test_RebalanceNoSaddle() external {
+        // will not emit anything
         market.rebalance();
     }
 
-    function testRebalanceAfterSaddle() external {
+    function test_RebalanceAfterSaddle() external {
         sideMarket.setReportedDebt(1 ether);
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 1 ether);
         market.saddle(accountId);
 
         vm.expectEmit();
-        emit ITreasuryMarket.Rebalanced(2.5 ether, 2.5 ether);
+        emit ITreasuryMarket.Rebalanced(2 ether, 2 ether);
 
         market.rebalance();
 
         sideMarket.setReportedDebt(0.5 ether);
 
         vm.expectEmit();
-        emit ITreasuryMarket.Rebalanced(2 ether, 2.5 ether);
+        emit ITreasuryMarket.Rebalanced(1.5 ether, 2 ether);
 
         market.rebalance();
     }
 
-    function testUpgradeTo() external {
+    function test_RebalanceInsufficientCollateral() external {
+        sideMarket.setReportedDebt(1 ether);
+        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 1 ether);
+        market.saddle(accountId);
+
+        sideMarket.setReportedDebt(3 ether);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.Rebalanced(3.5 ether, 2.5 ether);
+
+        market.rebalance();
+    }
+
+    function test_ReportedDebtInvalidArtificialDebt() external {
+        vm.store(address(market), bytes32(uint256(0)), bytes32(uint256(int256(-31337))));
+
+        assertEq(market.reportedDebt(market.marketId()), 0);
+    }
+
+    function test_UpgradeTo() external {
         vm.prank(market.owner());
         market.upgradeTo(initialModuleBundleAddress);
     }
 
-    function testFailSetTargetCRatioUnauthorized() external {
+    function test_RevertIf_SetTargetCRatioUnauthorized() external {
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
         market.setTargetCRatio(3 ether);
     }
 
-    function testSetTargetCRatio() external {
+    function test_SetTargetCRatio() external {
         vm.prank(market.owner());
         market.setTargetCRatio(3 ether);
     }
 
-    function testSupportsInterface() external view {
+    function test_SupportsInterface() external view {
         assertTrue(market.supportsInterface(type(IMarket).interfaceId));
         assertTrue(market.supportsInterface(market.supportsInterface.selector));
     }
