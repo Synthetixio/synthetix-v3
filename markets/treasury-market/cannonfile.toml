@@ -59,18 +59,18 @@ factory.Proxy.highlight = true
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
-    "0x72656769737465724d61726b6574000000000000000000000000000000000000",
+    "<%= formatBytes32String('registerMarket') %>",
     "<%= contracts.Proxy.address %>",
-] # formatBytes32String("registerMarket")
+]
 fromCall.func = "owner"
 
 [invoke.setFeatureFlagAssociateDebt]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 args = [
-    "0x6173736f63696174654465627400000000000000000000000000000000000000",
+    "<%= formatBytes32String('associateDebt') %>",
     "<%= contracts.Proxy.address %>",
-] # formatBytes32String("associateDebt")
+]
 fromCall.func = "owner"
 
 [invoke.registerMarket]
