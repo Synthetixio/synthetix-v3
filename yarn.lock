@@ -3558,6 +3558,7 @@ __metadata:
     "@synthetixio/common-config": "workspace:*"
     "@synthetixio/docgen": "workspace:*"
     "@synthetixio/main": "workspace:*"
+    forge-std: "github:foundry-rs/forge-std#master"
     hardhat: "npm:^2.19.5"
     solidity-docgen: "npm:^0.6.0-beta.36"
   languageName: unknown

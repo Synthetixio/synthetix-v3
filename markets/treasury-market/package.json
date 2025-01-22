@@ -15,10 +15,10 @@
   "scripts": {
     "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
     "storage:dump": "hardhat storage:dump --output storage.new.dump.json",
-    "build": "rm -rf lib && forge install foundry-rs/forge-std --no-git && yarn build:contracts",
-    "build-testable": "rm -rf lib && forge install foundry-rs/forge-std --no-git && cannon build cannonfile.test.toml --write-script script/Deploy.sol --write-script-format foundry --wipe",
+    "build": "yarn build:contracts",
+    "build-testable": "cannon build cannonfile.test.toml --write-script script/Deploy.sol --write-script-format foundry --wipe",
     "storage:verify": " hardhat storage:verify",
-    "test": "rm -rf lib && forge install foundry-rs/forge-std --no-git && forge test",
+    "test": "forge test",
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",
@@ -32,11 +32,13 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
+    "forge-std": "github:foundry-rs/forge-std#master",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36"
   },
   "depcheck": {
     "ignoreMatches": [
+      "forge-std",
       "@synthetixio/main"
     ]
   }
