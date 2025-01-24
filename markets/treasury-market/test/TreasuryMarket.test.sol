@@ -290,7 +290,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
                 "too high"
             )
         );
-        market.setDebtDecayFunction(101, 86400);
+        market.setDebtDecayFunction(101, 86400, 0, 0);
     }
 
     function test_LoanDecayNoConfig() external {
@@ -307,7 +307,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_LoanDecayLinearConfig() external {
         vm.warp(100000000);
         vm.prank(market.owner());
-        market.setDebtDecayFunction(1, 1000000);
+        market.setDebtDecayFunction(1, 1000000, 0, 0);
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
@@ -328,7 +328,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_LoanDecayCubicConfig() external {
         vm.warp(100000000);
         vm.prank(market.owner());
-        market.setDebtDecayFunction(3, 1000000);
+        market.setDebtDecayFunction(3, 1000000, 0, 0);
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
@@ -346,16 +346,90 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.loanedAmount(accountId), 1 ether);
     }
 
-    function test_RepayLoanMidScheduleCubic() external {
+    function test_RepayLoanMidScheduleLinearWithPenalty() external {
         vm.warp(100000000);
         vm.prank(market.owner());
-        market.setDebtDecayFunction(3, 1000000);
+        market.setDebtDecayFunction(1, 1000000, 1 ether, 0.5 ether);
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
         // change the debt decay function just in case (calculations should still follow original debt decay params)
         vm.prank(market.owner());
-        market.setDebtDecayFunction(1, 2000000);
+        market.setDebtDecayFunction(1, 2000000, 1 ether, 0.5 ether);
+
+        (uint64 startTime, , , ) = market.loans(accountId);
+
+        assertEq(market.loanedAmount(accountId), 1 ether);
+        vm.warp(startTime + 500000);
+
+        // take 1 ether of debt from the side market, which will allow us to repay potentially the full loan (but will actually be less)
+        sideMarket.withdrawUsd(1 ether);
+        IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+        // first, try repaying theloan in full
+        market.adjustLoan(accountId, 0);
+        assertEq(market.loanedAmount(accountId), 0 ether);
+
+        // the amount actually paid from the user's wallet is higher than the current amount of the loan (50% of 75% (avg of the two penalties) is the amount that didnt actually get repaid)
+        assertEq(usdToken.balanceOf(address(this)), 0.125 ether);
+
+        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount) = market.loans(
+            accountId
+        );
+        assertEq(newStartTime, startTime);
+        assertEq(duration, 1000000);
+        assertEq(power, 1);
+        assertEq(loanAmount, 0 ether);
+    }
+
+    function test_RepayLoanMidScheduleLinearWithPenaltyHalf() external {
+        vm.warp(100000000);
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1000000, 1 ether, 0.5 ether);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        // change the debt decay function just in case (calculations should still follow original debt decay params)
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 2000000, 1 ether, 0.5 ether);
+
+        (uint64 startTime, , , ) = market.loans(accountId);
+
+        assertEq(market.loanedAmount(accountId), 1 ether);
+        vm.warp(startTime + 500000);
+
+        // take 1 ether of debt from the side market, which will allow us to repay potentially the full loan (but will actually be less)
+        sideMarket.withdrawUsd(1 ether);
+        IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+        // repay the loan in half
+        market.adjustLoan(accountId, 0.25 ether);
+        assertEq(market.loanedAmount(accountId), 0.25 ether);
+
+        // the amount actually paid from the user's wallet is higher than the current amount of the loan (50% of 75% (avg of the two penalties) is the amount that didnt actually get repaid)
+        assertEq(usdToken.balanceOf(address(this)), 0.5625 ether);
+
+        // pay off the rest
+        market.adjustLoan(accountId, 0);
+        assertEq(usdToken.balanceOf(address(this)), 0.125 ether);
+
+        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount) = market.loans(
+            accountId
+        );
+        assertEq(newStartTime, startTime);
+        assertEq(duration, 1000000);
+        assertEq(power, 1);
+        assertEq(loanAmount, 0 ether);
+    }
+
+    function test_RepayLoanMidScheduleCubic() external {
+        vm.warp(100000000);
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(3, 1000000, 0, 0);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        // change the debt decay function just in case (calculations should still follow original debt decay params)
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 2000000, 0, 0);
 
         (uint64 startTime, , , ) = market.loans(accountId);
 

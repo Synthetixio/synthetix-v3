@@ -48,6 +48,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     uint32 public debtDecayPower;
     uint32 public debtDecayTime;
 
+    uint128 public debtDecayPenaltyStart;
+    uint128 public debtDecayPenaltyEnd;
+
     mapping(uint128 => uint256) public saddledCollateral;
     mapping(uint128 => LoanInfo) public loans;
 
@@ -269,7 +272,27 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         if (amount > currentLoan) {
             revert ParameterError.InvalidParameter("amount", "must be less than current loan");
         } else if (amount < currentLoan) {
-            v3System.depositMarketUsd(marketId, sender, currentLoan - amount);
+            // apply a penalty on whatever is repaid
+            // the penalty subtracts a certain percentage from what is . for example:
+            uint256 repaidBeforePenalty = currentLoan - amount;
+
+            uint256 loanCompletionPercentage = loans[accountId].duration > 0
+                ? (block.timestamp - loans[accountId].startTime).divDecimal(
+                    loans[accountId].duration
+                )
+                : 0;
+            if (loanCompletionPercentage < 1 ether && debtDecayPenaltyStart > 0) {
+                uint256 currentPenalty = uint256(debtDecayPenaltyStart).mulDecimal(
+                    1 ether - loanCompletionPercentage
+                ) + uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);
+                uint256 repaidAmount = (loans[accountId].loanAmount - currentLoan)
+                    .mulDecimal(currentPenalty)
+                    .mulDecimal(1 ether - amount.divDecimal(currentLoan)) + repaidBeforePenalty;
+
+                v3System.depositMarketUsd(marketId, sender, repaidAmount);
+            } else {
+                v3System.depositMarketUsd(marketId, sender, repaidBeforePenalty);
+            }
             _rebalance();
         } else {
             return; // nothing to do
@@ -286,12 +309,25 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return _loanedAmount(accountId, block.timestamp);
     }
 
-    function setDebtDecayFunction(uint32 power, uint32 time) external onlyOwner {
+    function setDebtDecayFunction(
+        uint32 power,
+        uint32 time,
+        uint128 startPenalty,
+        uint128 endPenalty
+    ) external onlyOwner {
         if (power > 100) {
             revert ParameterError.InvalidParameter("debtDecayPower", "too high");
         }
+        if (startPenalty > 1 ether) {
+            revert ParameterError.InvalidParameter("startPenalty", "must be less than 1 ether");
+        }
+        if (endPenalty > startPenalty) {
+            revert ParameterError.InvalidParameter("endPenalty", "must be lte startPenalty");
+        }
         debtDecayPower = power;
         debtDecayTime = time;
+        debtDecayPenaltyStart = startPenalty;
+        debtDecayPenaltyEnd = endPenalty;
     }
 
     function rebalance() external {
