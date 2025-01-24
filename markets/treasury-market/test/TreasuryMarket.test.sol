@@ -365,6 +365,10 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // take 1 ether of debt from the side market, which will allow us to repay potentially the full loan (but will actually be less)
         sideMarket.withdrawUsd(1 ether);
         IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
+
+        // verify that the reader function returns as expected
+        assertEq(market.repaymentPenalty(accountId, 0), 0.375 ether);
+
         // first, try repaying theloan in full
         market.adjustLoan(accountId, 0);
         assertEq(market.loanedAmount(accountId), 0 ether);
@@ -401,6 +405,9 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         sideMarket.withdrawUsd(1 ether);
         IERC20(v3System.getUsdToken()).approve(address(market), 1 ether);
         // repay the loan in half
+        // verify that the reader function returns as expected
+        assertEq(market.repaymentPenalty(accountId, 0.25 ether), 0.375 ether / 2);
+
         market.adjustLoan(accountId, 0.25 ether);
         assertEq(market.loanedAmount(accountId), 0.25 ether);
 

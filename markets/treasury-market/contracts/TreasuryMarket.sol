@@ -261,6 +261,32 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         accountToken.safeTransferFrom(address(this), sender, accountId);
     }
 
+    function repaymentPenalty(
+        uint128 accountId,
+        uint256 targetDebt
+    ) external view returns (uint256) {
+        uint256 currentLoan = _loanedAmount(accountId, block.timestamp);
+        if (targetDebt > currentLoan || debtDecayPenaltyStart == 0) {
+            return 0;
+        }
+
+        uint256 loanCompletionPercentage = loans[accountId].duration > 0
+            ? (block.timestamp - loans[accountId].startTime).divDecimal(loans[accountId].duration)
+            : 0;
+
+        if (loanCompletionPercentage < 1 ether && debtDecayPenaltyStart > 0) {
+            uint256 currentPenalty = uint256(debtDecayPenaltyStart).mulDecimal(
+                1 ether - loanCompletionPercentage
+            ) + uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);
+            return
+                (loans[accountId].loanAmount - currentLoan).mulDecimal(currentPenalty).mulDecimal(
+                    1 ether - targetDebt.divDecimal(currentLoan)
+                );
+        }
+
+        return 0;
+    }
+
     function adjustLoan(uint128 accountId, uint256 amount) external {
         address sender = ERC2771Context._msgSender();
         if (sender != IERC721(v3System.getAccountTokenAddress()).ownerOf(accountId)) {
