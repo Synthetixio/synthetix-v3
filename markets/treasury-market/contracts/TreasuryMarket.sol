@@ -274,7 +274,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             ? (block.timestamp - loans[accountId].startTime).divDecimal(loans[accountId].duration)
             : 0;
 
-        if (loanCompletionPercentage < 1 ether && debtDecayPenaltyStart > 0) {
+        if (loanCompletionPercentage < 1 ether) {
             uint256 currentPenalty = uint256(debtDecayPenaltyStart).mulDecimal(
                 1 ether - loanCompletionPercentage
             ) + uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);

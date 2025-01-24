@@ -281,8 +281,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.unsaddle(accountId);
     }
 
-    function test_RevertIf_SetDebtDecayPowerHigh() external {
-        vm.prank(market.owner());
+    function test_RevertIf_SetDebtDecayInvalidCases() external {
+        vm.startPrank(market.owner());
         vm.expectRevert(
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
@@ -291,6 +291,27 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             )
         );
         market.setDebtDecayFunction(101, 86400, 0, 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "startPenalty",
+                "must be less than 1 ether"
+            )
+        );
+        market.setDebtDecayFunction(100, 86400, 1.01 ether, 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "endPenalty",
+                "must be lte startPenalty"
+            )
+        );
+        market.setDebtDecayFunction(100, 86400, 0.5 ether, 0.75 ether);
+
+        // setting penalties to same values is ok though
+        market.setDebtDecayFunction(100, 86400, 0.5 ether, 0.5 ether);
+
+        vm.stopPrank();
     }
 
     function test_LoanDecayNoConfig() external {
@@ -344,6 +365,20 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         vm.warp(startTime - 500000);
         assertEq(market.loanedAmount(accountId), 1 ether);
+    }
+
+    function test_RepaymentPenaltyEdges() external {
+        assertEq(market.repaymentPenalty(accountId, 0), 0);
+        assertEq(market.repaymentPenalty(accountId, 0), 0);
+
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1000000, 1 ether, 0.5 ether);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        vm.warp(1000000000000);
+
+        assertEq(market.repaymentPenalty(accountId, 0), 0);
     }
 
     function test_RepayLoanMidScheduleLinearWithPenalty() external {
