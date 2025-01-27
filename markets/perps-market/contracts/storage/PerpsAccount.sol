@@ -54,6 +54,9 @@ library PerpsAccount {
         // @dev account's debt accrued from previous positions
         // @dev please use updateAccountDebt() to update this value which will update global debt also
         uint256 debt;
+        // @dev indicates the types of orders that this account can make
+        bytes16 orderMode;
+        uint128 orderModeChangeTime;
     }
 
     struct MemoryContext {
@@ -86,6 +89,8 @@ library PerpsAccount {
 
     error NonexistentDebt(uint128 accountId);
 
+    uint256 constant ORDER_MODE_CHANGE_GRACE_PERIOD = 180; // 3 minutes
+
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
 
@@ -95,7 +100,7 @@ library PerpsAccount {
     }
 
     /**
-        @notice allows us to update the account id in case it needs to be
+     * @notice allows us to update the account id in case it needs to be
      */
     function create(uint128 id) internal returns (Data storage account) {
         account = load(id);
@@ -682,6 +687,25 @@ library PerpsAccount {
         marketUpdateData = perpsMarket.updatePositionData(self.id, newPosition);
 
         return (amountToLiquidate, newPositionSize, marketUpdateData);
+    }
+
+    function setOrderMode(
+        Data storage self,
+        bytes16 mode
+    ) internal returns (bytes16 previousOrderMode) {
+        previousOrderMode = self.orderMode;
+        self.orderMode = mode;
+
+        // solhint-disable-next-line numcast/safe-cast
+        self.orderModeChangeTime = uint128(block.timestamp);
+    }
+
+    function getOrderMode(Data storage self) internal view returns (bytes16 orderMode) {
+        if (block.timestamp - self.orderModeChangeTime < ORDER_MODE_CHANGE_GRACE_PERIOD) {
+            return "RECENTLY_CHANGED";
+        }
+
+        return self.orderMode;
     }
 
     function hasOpenPositions(Data storage self) internal view returns (bool) {

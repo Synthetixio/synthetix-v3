@@ -26,6 +26,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using PerpsAccount for PerpsAccount.Data;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
 
+    error IncorrectAccountMode(uint128 accountId, bytes16 mode);
+
     /**
      * @inheritdoc IAsyncOrderModule
      */
@@ -43,6 +45,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
             commitment.accountId,
             AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
         );
+
+        if (
+            PerpsAccount.load(commitment.accountId).getOrderMode() != "ONCHAIN" &&
+            PerpsAccount.load(commitment.accountId).getOrderMode() != ""
+        ) {
+            revert IncorrectAccountMode(
+                commitment.accountId,
+                PerpsAccount.load(commitment.accountId).getOrderMode()
+            );
+        }
 
         GlobalPerpsMarket.load().checkLiquidation(commitment.accountId);
 

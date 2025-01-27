@@ -293,18 +293,26 @@ describe('ModifyCollateral Withdraw', () => {
           bn(expectedOi)
         );
       });
+      it('has correct collateral amount', async () => {
+        const [collateralIds, collateralAmounts, debt] =
+          await systems().PerpsMarket.getAccountAllCollateralAmounts(trader1AccountId);
+
+        expect(collateralIds).toHaveLength(1);
+        expect(collateralAmounts).toEqual([]);
+        expect(debt).toEqual(0);
+      });
       it('has correct pnl, given our position changed the skew', async () => {
         const openPositions =
           await systems().PerpsMarket.getAccountFullPositionInfo(trader1AccountId);
         assertBn.equal(
           openPositions.find(
-            (p: any) => p.marketId.toNumber() === perpsMarkets()[0].marketId().toNumber()
+            (p) => p.marketId.toNumber() === perpsMarkets()[0].marketId().toNumber()
           )!.pnl,
           bn(-600)
         );
         assertBn.equal(
           openPositions.find(
-            (p: any) => p.marketId.toNumber() === perpsMarkets()[1].marketId().toNumber()
+            (p) => p.marketId.toNumber() === perpsMarkets()[1].marketId().toNumber()
           )!.pnl,
           bn(-400)
         );

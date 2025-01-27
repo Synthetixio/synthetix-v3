@@ -1,56 +1,45 @@
 import { ethers } from 'ethers';
-import { DEFAULT_SETTLEMENT_STRATEGY, bn, bootstrapMarkets } from '../bootstrap';
-import { fastForwardTo } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { bn, bootstrapMarkets } from '../bootstrap';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { SynthMarkets } from '@synthetixio/spot-market/test/common';
-import { DepositCollateralData, depositCollateral } from '../helpers';
+import { depositCollateral } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { getTxTime } from '@synthetixio/core-utils/src/utils/hardhat/rpc';
-import { calculateFillPrice, calculatePricePnl } from '../helpers/fillPrice';
 import { wei } from '@synthetixio/wei';
-import { calcCurrentFundingVelocity } from '../helpers/funding-calcs';
-import { deepEqual } from 'assert/strict';
 
-describe.only('Settle Orderbook order', () => {
+describe('Settle Orderbook order', () => {
   const orderFees = {
     makerFee: wei(0.0003), // 3bps
     takerFee: wei(0.0008), // 8bps
   };
-  const { systems, owner, perpsMarkets, synthMarkets, provider, trader1, keeper } =
-    bootstrapMarkets({
-      synthMarkets: [
-        {
-          name: 'Bitcoin',
-          token: 'snxBTC',
-          buyPrice: bn(10_000),
-          sellPrice: bn(10_000),
+  const { systems, owner, perpsMarkets, provider, trader1, trader2, keeper } = bootstrapMarkets({
+    synthMarkets: [
+      {
+        name: 'Bitcoin',
+        token: 'snxBTC',
+        buyPrice: bn(10_000),
+        sellPrice: bn(10_000),
+      },
+    ],
+    perpsMarkets: [
+      {
+        requestedMarketId: 25,
+        name: 'Ether',
+        token: 'snxETH',
+        price: bn(1000),
+        fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
+        orderFees: {
+          makerFee: orderFees.makerFee.toBN(),
+          takerFee: orderFees.takerFee.toBN(),
         },
-      ],
-      perpsMarkets: [
-        {
-          requestedMarketId: 25,
-          name: 'Ether',
-          token: 'snxETH',
-          price: bn(1000),
-          fundingParams: { skewScale: bn(100_000), maxFundingVelocity: bn(10) },
-          orderFees: {
-            makerFee: orderFees.makerFee.toBN(),
-            takerFee: orderFees.takerFee.toBN(),
-          },
-        },
-      ],
-      traderAccountIds: [2, 3],
-    });
+      },
+    ],
+    traderAccountIds: [2, 3],
+  });
   let ethMarketId: ethers.BigNumber;
-  let ethSettlementStrategyId: ethers.BigNumber;
-  let btcSynth: SynthMarkets[number];
 
   before('identify actors', async () => {
     ethMarketId = perpsMarkets()[0].marketId();
-    ethSettlementStrategyId = perpsMarkets()[0].strategyId();
-    btcSynth = synthMarkets()[0];
   });
 
   before('set Pyth Benchmark Price data', async () => {
@@ -61,7 +50,8 @@ describe.only('Settle Orderbook order', () => {
   });
 
   before('deposit collateral', async () => {
-    depositCollateral({
+    //await systems().PerpsMarket.connect(trader1())['createAccount(uint128)'](3);
+    await depositCollateral({
       systems,
       trader: trader1,
       accountId: () => 2,
@@ -72,7 +62,7 @@ describe.only('Settle Orderbook order', () => {
       ],
     });
 
-    depositCollateral({
+    await depositCollateral({
       systems,
       trader: trader1,
       accountId: () => 3,
@@ -82,6 +72,9 @@ describe.only('Settle Orderbook order', () => {
         },
       ],
     });
+
+    await systems().PerpsMarket.connect(trader1()).setBookMode(2, true);
+    await systems().PerpsMarket.connect(trader2()).setBookMode(3, true);
   });
 
   before('set fee collector and referral', async () => {

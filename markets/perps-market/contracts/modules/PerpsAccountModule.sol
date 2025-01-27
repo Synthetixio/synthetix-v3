@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
@@ -60,6 +61,17 @@ contract PerpsAccountModule is IPerpsAccountModule {
         );
 
         if (amountDelta == 0) revert InvalidAmountDelta(amountDelta);
+
+        if (
+            amountDelta < 0 &&
+            PerpsAccount.load(accountId).getOrderMode() == "BOOK" &&
+            PerpsAccount.load(accountId).getOrderMode() == "RECENTLY_CHANGED"
+        ) {
+            revert ParameterError.InvalidParameter(
+                "amountDelta",
+                "cannot remove collateral while BOOK order mode"
+            );
+        }
 
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
@@ -308,6 +320,29 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (uint256[] memory) {
         return PerpsAccount.load(accountId).activeCollateralTypes.values();
+    }
+
+    function getAccountAllCollateralAmounts(
+        uint128 accountId
+    )
+        external
+        view
+        override
+        returns (
+            uint256[] memory collateralIds,
+            uint256[] memory collateralAmounts,
+            uint256 accountDebt
+        )
+    {
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        collateralIds = account.activeCollateralTypes.values();
+        collateralAmounts = new uint256[](collateralIds.length);
+        for (uint256 i = 0; i < collateralIds.length; i++) {
+            // solhint-disable-next-line numcast/safe-cast
+            collateralAmounts[i] = account.collateralAmounts[uint128(collateralIds[i])];
+        }
+
+        accountDebt = account.debt;
     }
 
     /**

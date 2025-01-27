@@ -75,6 +75,8 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
      */
     event InterestCharged(uint128 indexed accountId, uint256 interest);
 
+    event AccountOrderModeChanged(uint128 accountId, bytes16 newMode);
+
     struct AccumulatedOrderData {
         uint256 orderFee;
         int256 sizeDelta;
@@ -84,6 +86,26 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
 
     event DoneLoop(uint128 accountId);
     event ItsGreater(uint128 accountId, uint128 cmpAccountId);
+
+    error IncorrectAccountMode(uint128 accountId, bytes16 mode);
+
+    function setBookMode(uint128 accountId, bool useBook) external {
+        FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
+
+        Account.exists(accountId);
+
+        // Check ERC2771Context._msgSender() can commit order for commitment.accountId
+        Account.loadAccountAndValidatePermission(
+            accountId,
+            AccountRBAC._PERPS_COMMIT_ASYNC_ORDER_PERMISSION
+        );
+
+        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
+
+        perpsAccount.setOrderMode(useBook ? bytes16("BOOK") : bytes16("ONCHAIN"));
+
+        emit AccountOrderModeChanged(accountId, "BOOK");
+    }
 
     /**
      * @inheritdoc IBookOrderModule
@@ -128,6 +150,16 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
                     // TODO: what to do if account doesnt exist
                     // for now to make debugging easy accounts can be created out of thin air
                     PerpsAccount.load(orders[i].accountId).id = orders[i].accountId;
+                }
+
+                if (
+                    PerpsAccount.load(orders[i].accountId).getOrderMode() != "BOOK" &&
+                    PerpsAccount.load(orders[i].accountId).getOrderMode() != "RECENTLY_CHANGED"
+                ) {
+                    revert IncorrectAccountMode(
+                        orders[i].accountId,
+                        PerpsAccount.load(orders[i].accountId).getOrderMode()
+                    );
                 }
 
                 ctx = PerpsAccount.load(orders[i].accountId).getOpenPositionsAndCurrentPrices(
@@ -243,7 +275,7 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
             "", // TODO: tracking code, may not have ever
             ERC2771Context._msgSender()
         );
-        
+
         return accumOrderData.orderFee;
     }
 }
