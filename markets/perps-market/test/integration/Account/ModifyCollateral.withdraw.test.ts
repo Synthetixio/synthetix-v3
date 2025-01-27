@@ -297,9 +297,12 @@ describe('ModifyCollateral Withdraw', () => {
         const [collateralIds, collateralAmounts, debt] =
           await systems().PerpsMarket.getAccountAllCollateralAmounts(trader1AccountId);
 
-        expect(collateralIds).toHaveLength(1);
-        expect(collateralAmounts).toEqual([]);
-        expect(debt).toEqual(0);
+        assertBn.equal(collateralIds.length, 2);
+        assertBn.equal(collateralIds[0], 0);
+        assertBn.equal(collateralIds[1], 2);
+        assertBn.equal(collateralAmounts[0], '18000000000000000000000');
+        assertBn.equal(collateralAmounts[1], '1000000000000000000');
+        assertBn.equal(debt, 0);
       });
       it('has correct pnl, given our position changed the skew', async () => {
         const openPositions =

@@ -64,7 +64,7 @@ describe('Settle Orderbook order', () => {
 
     await depositCollateral({
       systems,
-      trader: trader1,
+      trader: trader2,
       accountId: () => 3,
       collaterals: [
         {
