@@ -5,6 +5,8 @@ import "../contracts/TreasuryMarket.sol";
 
 import "@synthetixio/main/contracts/mocks/CollateralMock.sol";
 import "@synthetixio/main/contracts/mocks/MockMarket.sol";
+import "@synthetixio/oracle-manager/contracts/mocks/MockV3Aggregator.sol";
+import "@synthetixio/oracle-manager/contracts/modules/NodeModule.sol";
 
 import {Test} from "forge-std/Test.sol";
 
@@ -24,6 +26,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     address treasuryAddress = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 
     IERC20 private usdToken;
+
+    MockV3Aggregator mockAggregator;
 
     uint128 constant accountId = 25;
     uint128 constant poolId = 1;
@@ -64,6 +68,10 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         marketConfig[1] = MarketConfiguration.Data(sideMarketId, 1, type(int128).max);
         v3System.setPoolConfiguration(poolId, marketConfig);
 
+        mockAggregator = new MockV3Aggregator();
+        mockAggregator.mockSetCurrentPrice(1 ether, 18);
+        bytes32[] memory parents = new bytes32[](0);
+
         v3System.configureCollateral(
             CollateralConfiguration.Data({
                 depositingEnabled: true,
@@ -71,7 +79,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
                 liquidationRatioD18: 1.01 ether,
                 liquidationRewardD18: 0,
                 // const one oracle id (later replace with a better source for the constant)
-                oracleNodeId: 0x066ef68c9d9ca51eee861aeb5bce51a12e61f06f10bf62243c563671ae3a9733,
+                oracleNodeId: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                    NodeDefinition.NodeType.CHAINLINK,
+                    abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                    parents
+                ),
                 tokenAddress: address(collateralToken),
                 minDelegationD18: 0
             })
@@ -80,12 +92,12 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.stopPrank();
 
         // stake
-        collateralToken.mint(address(this), 100 ether);
-        collateralToken.approve(address(v3System), 100 ether);
+        collateralToken.mint(address(this), 1000 ether);
+        collateralToken.approve(address(v3System), 1000 ether);
 
         for (uint128 i = 0; i < 2; i++) {
             v3System.createAccount(accountId + i);
-            v3System.deposit(accountId + i, address(collateralToken), 10 ether);
+            v3System.deposit(accountId + i, address(collateralToken), 50 ether);
         }
 
         v3System.delegateCollateral(accountId, poolId, address(collateralToken), 4 ether, 1 ether);
@@ -97,7 +109,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_MarketFunctions() external {
         assertEq(market.name(market.marketId()), "Treasury Market");
         assertEq(market.reportedDebt(market.marketId()), 0);
-        assertEq(market.minimumCredit(market.marketId()), 0);
+        assertEq(market.minimumCredit(market.marketId()), uint256(type(int256).max));
         assertEq(market.loanedAmount(42), 0);
         assertTrue(market.marketId() != 0);
     }
@@ -649,6 +661,174 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_SupportsInterface() external view {
         assertTrue(market.supportsInterface(type(IMarket).interfaceId));
         assertTrue(market.supportsInterface(market.supportsInterface.selector));
+    }
+
+    function test_SaddleFlashLoanExploitDone() public {
+        //v3System.delegateCollateral(accountId, poolId, address(collateralToken), 4 ether, 1 ether);
+        market.saddle(accountId);
+
+        v3System.delegateCollateral(
+            accountId + 1,
+            poolId,
+            address(collateralToken),
+            40 ether,
+            1 ether
+        );
+        market.saddle(accountId + 1);
+
+        // market.rebalance(); // doesn't change the result
+
+        /// Some time in the future (sandwich attack an SNX price update)
+        {
+            // flash loan SNX
+            collateralToken.mint(address(this), 43 ether);
+            collateralToken.approve(address(v3System), 43 ether);
+
+            v3System.createAccount(1337);
+            v3System.deposit(1337, address(collateralToken), 43 ether);
+
+            v3System.delegateCollateral(1337, poolId, address(collateralToken), 43 ether, 1 ether);
+
+            market.saddle(1337);
+
+            market.rebalance();
+
+            IERC721(v3System.getAccountTokenAddress()).approve(address(market), 1337);
+            market.unsaddle(1337); // No delegation timeout
+
+            mockAggregator.mockSetCurrentPrice(0.995 ether, 18); // Price update that we MEV
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    IV3CoreProxy.IneligibleForLiquidation.selector,
+                    39800000000000000000,
+                    20000000000000000000,
+                    1990000000000000000,
+                    1010000000000000000
+                )
+            );
+            v3System.liquidate(accountId + 1, poolId, address(collateralToken), 1337);
+        }
+    }
+
+    function test_UnsaddleBypassLoans() public {
+        usdToken.approve(address(v3System), type(uint256).max);
+        collateralToken.approve(address(v3System), type(uint256).max);
+        collateralToken.approve(address(market), type(uint256).max);
+
+        // Legitimate stakers
+        {
+            collateralToken.mint(address(this), 10000 ether);
+            v3System.deposit(accountId, address(collateralToken), 10000 ether);
+            v3System.delegateCollateral(
+                accountId,
+                poolId,
+                address(collateralToken),
+                10000 ether,
+                1 ether
+            );
+            market.saddle(accountId);
+        }
+
+        vm.prank(treasuryAddress);
+        market.mintTreasury(1 ether);
+
+        uint128 otherPoolId = 2;
+        v3System.createPool(otherPoolId, address(this));
+
+        v3System.createAccount(1337);
+        collateralToken.mint(address(this), 104 ether);
+        v3System.deposit(1337, address(collateralToken), 104 ether);
+        v3System.delegateCollateral(
+            1337,
+            otherPoolId,
+            address(collateralToken),
+            100 ether,
+            1 ether
+        );
+        v3System.mintUsd(1337, otherPoolId, address(collateralToken), 20 ether);
+
+        v3System.delegateCollateral(1337, poolId, address(collateralToken), 4 ether, 1 ether);
+        market.saddle(1337);
+
+        int256 debt = v3System.getPositionDebt(1337, poolId, address(collateralToken));
+        v3System.burnUsd(1337, poolId, address(collateralToken), uint256(debt));
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), 1337);
+        market.unsaddle(1337);
+
+        v3System.migrateDelegation(1337, otherPoolId, address(collateralToken), poolId);
+        market.saddle(1337);
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), 1337);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ITreasuryMarket.OutstandingLoan.selector, 1337, 20 ether)
+        );
+        market.unsaddle(1337);
+    }
+
+    function test_MigrateBypassLoans() public {
+        usdToken.approve(address(v3System), type(uint256).max);
+        collateralToken.approve(address(v3System), type(uint256).max);
+        collateralToken.approve(address(market), type(uint256).max);
+
+        uint128 otherPoolId = 2;
+        v3System.createPool(otherPoolId, address(this));
+
+        // Legitimate stakers
+        {
+            collateralToken.mint(address(this), 10000 ether);
+            v3System.deposit(accountId, address(collateralToken), 10000 ether);
+            v3System.delegateCollateral(
+                accountId,
+                poolId,
+                address(collateralToken),
+                10000 ether,
+                1 ether
+            );
+            market.saddle(accountId);
+        }
+
+        vm.prank(treasuryAddress);
+        market.mintTreasury(1 ether);
+
+        // malicious account buys / flash loans 1 USD on the open market and 100 SNX
+        vm.prank(treasuryAddress);
+        usdToken.transfer(address(this), 1 ether);
+        v3System.createAccount(1337);
+        collateralToken.mint(address(this), 100 ether);
+
+        v3System.deposit(1337, address(collateralToken), 2 ether);
+
+        v3System.delegateCollateral(1337, poolId, address(collateralToken), 2 ether, 1 ether);
+        market.saddle(1337);
+
+        v3System.deposit(1337, address(usdToken), 1 ether);
+        v3System.burnUsd(1337, poolId, address(collateralToken), 1 ether); // burn USD to get below issuance ratio of other pool
+
+        // this should not be possible because of capacity locked
+        vm.expectRevert(
+            abi.encodeWithSelector(IV3CoreProxy.CapacityLocked.selector, market.marketId())
+        );
+        v3System.migrateDelegation(1337, poolId, address(collateralToken), otherPoolId);
+
+        /*
+        v3System.deposit(1337, address(collateralToken), 98 ether);
+        v3System.delegateCollateral(1337, otherPoolId, address(collateralToken), 100 ether, 1 ether);
+        v3System.mintUsd(1337, otherPoolId, address(collateralToken), 20 ether);
+
+        market.rebalance();
+        v3System.migrateDelegation(1337, otherPoolId, address(collateralToken), poolId);
+        market.saddle(1337);
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), 1337);
+        market.unsaddle(1337);
+
+        // Withdraw our collateral and an additional 20 USD
+        // repay flash loan, so profit is 20 USD - 1 USD = 19 USD
+        v3System.withdraw(1337, address(collateralToken), 100 ether);
+        v3System.withdraw(1337, address(usdToken), 20 ether);*/
     }
 
     function onERC721Received(

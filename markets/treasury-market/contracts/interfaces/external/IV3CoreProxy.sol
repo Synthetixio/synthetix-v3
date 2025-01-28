@@ -640,6 +640,13 @@ interface IV3CoreProxy {
         uint256 leverage
     ) external;
 
+    function migrateDelegation(
+        uint128 accountId,
+        uint128 oldPoolId,
+        address collateralType,
+        uint128 newPoolId
+    ) external;
+
     function getPosition(
         uint128 accountId,
         uint128 poolId,

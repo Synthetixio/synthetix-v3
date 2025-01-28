@@ -51,6 +51,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     uint128 public debtDecayPenaltyStart;
     uint128 public debtDecayPenaltyEnd;
 
+    uint256 lockedCollateral;
+
     mapping(uint128 => uint256) public saddledCollateral;
     mapping(uint128 => LoanInfo) public loans;
 
@@ -92,6 +94,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         // by default we set target c-ratio to 200%
         targetCratio = 2 ether;
+
+        lockedCollateral = uint256(type(int256).max);
     }
 
     /**
@@ -129,9 +133,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      */
     function minimumCredit(
         uint128 /* requestedMarketId*/
-    ) external pure returns (uint256 lockedAmount) {
-        // no need to lock collateral because the market locks any users that connect to it immediately
-        return 0;
+    ) external view returns (uint256 lockedAmount) {
+        // we lock collateral here because
+        return lockedCollateral;
     }
 
     function setTargetCRatio(uint256 ratio) external onlyOwner {
@@ -240,25 +244,27 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 );
             }
 
-            // geometric series function solution to calculate the total amount of debt required for a repay
-            // the function may lose some precision so we -1 in the division
-            // there might be a better way to do this which loses a bit less precision but we do our best
-            int256 neededToRepay = (1 ether * accountDebt) /
-                int256(1 ether - (accountCollateral * 1 ether) / vaultCollateral - 1);
-            v3System.withdrawMarketUsd(marketId, address(this), uint256(neededToRepay));
-            v3System.deposit(accountId, v3System.getUsdToken(), uint256(neededToRepay));
-            v3System.burnUsd(accountId, poolId, collateralToken, uint256(neededToRepay));
+            uint256 neededToRepay = uint256(accountDebt);
+            artificialDebt -= int256(neededToRepay);
+            v3System.withdrawMarketUsd(marketId, address(this), neededToRepay);
+            v3System.deposit(accountId, v3System.getUsdToken(), neededToRepay);
+            v3System.burnUsd(accountId, poolId, collateralToken, neededToRepay);
 
-            saddledCollateral[accountId] = 0;
-
-            emit AccountUnsaddled(accountId, accountCollateral, neededToRepay.toUint());
+            emit AccountUnsaddled(accountId, accountCollateral, neededToRepay);
         }
 
+        saddledCollateral[accountId] = 0;
+
         // undelegate collateral automatically for the user because they should no longer be part of this pool anyway now that they have been unsaddled
+        // before undelegating the collateral we have to unlock the minimumCredit because this is the only time undelegation should be possible.
+        lockedCollateral = 0;
         v3System.delegateCollateral(accountId, poolId, collateralToken, 0, 1 ether);
+        lockedCollateral = uint256(type(int256).max);
 
         // return the account token to the user
         accountToken.safeTransferFrom(address(this), sender, accountId);
+
+        _rebalance();
     }
 
     function repaymentPenalty(
