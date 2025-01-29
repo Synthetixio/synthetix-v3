@@ -22,6 +22,8 @@
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",
+    "publish-contracts": "cannon publish synthetix-treasury-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "docgen": "hardhat docgen"
   },
