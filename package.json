@@ -122,5 +122,5 @@
   "engines": {
     "node": "^20.17.0"
   },
-  "packageManager": "yarn@4.4.1"
+  "packageManager": "yarn@4.6.0"
 }
