@@ -2,7 +2,7 @@ import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
-import { OwnedFeeCollector } from '../generated/typechain';
+import { type OwnedFeeCollector } from '../../typechain-types';
 
 interface Contracts {
   owned_fee_collector: OwnedFeeCollector;
