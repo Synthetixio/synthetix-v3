@@ -46,16 +46,9 @@ library KeeperCosts {
 
     function getFlagKeeperCosts(
         Data storage self,
-        uint128 accountId
+        uint256 numberOfUpdatedFeeds
     ) internal view returns (uint256 sUSDCost) {
         PerpsMarketFactory.Data storage factory = PerpsMarketFactory.load();
-
-        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        uint256 numberOfCollateralFeeds = account.activeCollateralTypes.contains(SNX_USD_MARKET_ID)
-            ? account.activeCollateralTypes.length() - 1
-            : account.activeCollateralTypes.length();
-        uint256 numberOfUpdatedFeeds = numberOfCollateralFeeds +
-            account.openPositionMarketIds.length();
 
         sUSDCost = _processWithRuntime(
             self.keeperCostNodeId,

@@ -225,30 +225,47 @@ library AsyncOrder {
     }
 
     /**
-     * @dev Struct used internally in validateOrder() to prevent stack too deep error.
+     * @notice Builds state variables of the resulting state if a user were to complete the given order.
+     * Useful for validation or various getters on the modules.
      */
-    struct SimulateDataRuntime {
-        bool isEligible;
-        int128 sizeDelta;
-        uint128 accountId;
-        uint128 marketId;
-        uint256 fillPrice;
-        uint256 orderFees;
-        uint256 availableMargin;
-        uint256 currentLiquidationMargin;
-        uint256 accumulatedLiquidationRewards;
-        int128 newPositionSize;
-        uint256 newNotionalValue;
-        int256 currentAvailableMargin;
-        uint256 requiredInitialMargin;
-        uint256 initialRequiredMargin;
-        uint256 totalRequiredMargin;
-        Position.Data newPosition;
-        bytes32 trackingCode;
+    function createUpdatedPosition(
+        Data memory order,
+        uint256 orderPrice,
+        PerpsAccount.MemoryContext memory ctx
+    )
+        internal
+        view
+        returns (
+            PerpsAccount.MemoryContext memory newCtx,
+            Position.Data memory oldPosition,
+            Position.Data memory newPosition,
+            uint256 fillPrice,
+            uint256 orderFees
+        )
+    {
+        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
+
+        fillPrice = perpsMarketData.calculateFillPrice(order.request.sizeDelta, orderPrice).to128();
+        oldPosition = PerpsMarket.load(order.request.marketId).positions[order.request.accountId];
+        newPosition = Position.Data({
+            marketId: order.request.marketId,
+            latestInteractionPrice: fillPrice.to128(),
+            latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
+            latestInterestAccrued: 0,
+            size: oldPosition.size + order.request.sizeDelta
+        });
+
+        // update the account positions list, so we can now conveniently recompute required margin
+        newCtx = PerpsAccount.upsertPosition(ctx, newPosition);
+
+        orderFees = perpsMarketData.calculateOrderFee(
+            newPosition.size - oldPosition.size,
+            fillPrice
+        );
     }
 
     /**
-     * @notice Checks if the order request can be settled.
+     * @notice Checks if the order request can be settled. This function effectively simulates the future state and verifies it is good post settlement.
      * @dev it recomputes market funding rate, calculates fill price and fees for the order
      * @dev and with that data it checks that:
      * @dev - the account is eligible for liquidation
@@ -262,124 +279,113 @@ library AsyncOrder {
         Data storage order,
         SettlementStrategy.Data storage strategy,
         uint256 orderPrice
-    ) internal returns (Position.Data memory, uint256, uint256, Position.Data storage oldPosition) {
-        /// @dev runtime stores order settlement data and prevents stack too deep
-        SimulateDataRuntime memory runtime;
-
-        runtime.accountId = order.request.accountId;
-        runtime.marketId = order.request.marketId;
-        runtime.sizeDelta = order.request.sizeDelta;
-
-        if (runtime.sizeDelta == 0) {
+    )
+        internal
+        returns (
+            Position.Data memory newPosition,
+            uint256 orderFees,
+            uint256 fillPrice,
+            Position.Data memory oldPosition
+        )
+    {
+        if (order.request.sizeDelta == 0) {
             revert ZeroSizeOrder();
         }
 
-        PerpsAccount.Data storage account = PerpsAccount.load(runtime.accountId);
-
+        PerpsAccount.MemoryContext memory ctx = PerpsAccount
+            .load(order.request.accountId)
+            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
         (
-            runtime.isEligible,
-            runtime.currentAvailableMargin,
-            runtime.requiredInitialMargin,
-            ,
+            uint256 totalCollateralValueWithDiscount,
+            uint256 totalCollateralValueWithoutDiscount
+        ) = PerpsAccount.load(order.request.accountId).getTotalCollateralValue(
+                PerpsPrice.Tolerance.DEFAULT
+            );
 
-        ) = account.isEligibleForLiquidation(PerpsPrice.Tolerance.DEFAULT);
+        // verify if the account is *currently* liquidatable
+        // we are only checking this here because once an account enters liquidation they are not allowed to dig themselves out by repaying
+        {
+            int256 currentAvailableMargin;
+            {
+                bool isEligibleForLiquidation;
+                (isEligibleForLiquidation, currentAvailableMargin, , , ) = PerpsAccount
+                    .isEligibleForLiquidation(
+                        ctx,
+                        totalCollateralValueWithDiscount,
+                        totalCollateralValueWithoutDiscount
+                    );
 
-        if (runtime.isEligible) {
-            revert PerpsAccount.AccountLiquidatable(runtime.accountId);
-        }
+                if (isEligibleForLiquidation) {
+                    revert PerpsAccount.AccountLiquidatable(order.request.accountId);
+                }
+            }
 
-        PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(runtime.marketId);
-        perpsMarketData.recomputeFunding(orderPrice);
+            // now get the new state of the market by calling `createUpdatedPosition(order, orderPrice);`
+            PerpsMarket.load(order.request.marketId).recomputeFunding(orderPrice);
 
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            runtime.marketId
-        );
+            (ctx, oldPosition, newPosition, fillPrice, orderFees) = createUpdatedPosition(
+                order,
+                orderPrice,
+                ctx
+            );
 
-        runtime.fillPrice = calculateFillPrice(
-            perpsMarketData.skew,
-            marketConfig.skewScale,
-            runtime.sizeDelta,
-            orderPrice
-        );
+            // add the additional settlement fee, which is not included as part of the updating position fee
+            orderFees += settlementRewardCost(strategy);
 
-        runtime.orderFees =
-            calculateOrderFee(
-                runtime.sizeDelta,
-                runtime.fillPrice,
-                perpsMarketData.skew,
-                marketConfig.orderFees
-            ) +
-            settlementRewardCost(strategy);
+            // compute order fees and verify we can pay for them
+            // only account for negative pnl
+            currentAvailableMargin += MathUtil.min(
+                order.request.sizeDelta.mulDecimal(
+                    // solhint-disable numcast/safe-cast
+                    orderPrice.toInt() - uint256(newPosition.latestInteractionPrice).toInt()
+                ),
+                0
+            );
 
-        oldPosition = PerpsMarket.accountPosition(runtime.marketId, runtime.accountId);
-        runtime.newPositionSize = oldPosition.size + runtime.sizeDelta;
+            if (currentAvailableMargin < orderFees.toInt()) {
+                revert InsufficientMargin(currentAvailableMargin, orderFees);
+            }
 
-        // only account for negative pnl
-        runtime.currentAvailableMargin += MathUtil.min(
-            calculateFillPricePnl(runtime.fillPrice, orderPrice, runtime.sizeDelta),
-            0
-        );
+            // now that we have verified fees are sufficient, we can go ahead and remove from the available margin to simplify later calculation
+            currentAvailableMargin -= orderFees.toInt();
 
-        if (runtime.currentAvailableMargin < runtime.orderFees.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.orderFees);
-        }
+            // check that the new account margin would be satisfied
+            (uint256 totalRequiredMargin, , uint256 possibleLiquidationReward) = PerpsAccount
+                .getAccountRequiredMargins(ctx, totalCollateralValueWithoutDiscount);
 
-        PerpsMarket.validatePositionSize(
-            perpsMarketData,
-            marketConfig.maxMarketSize,
-            marketConfig.maxMarketValue,
-            orderPrice,
-            oldPosition.size,
-            runtime.newPositionSize
-        );
-
-        runtime.totalRequiredMargin =
-            getRequiredMarginWithNewPosition(
-                account,
-                marketConfig,
-                runtime.marketId,
-                oldPosition.size,
-                runtime.newPositionSize,
-                runtime.fillPrice,
-                runtime.requiredInitialMargin
-            ) +
-            runtime.orderFees;
-
-        if (runtime.currentAvailableMargin < runtime.totalRequiredMargin.toInt()) {
-            revert InsufficientMargin(runtime.currentAvailableMargin, runtime.totalRequiredMargin);
-        }
-
-        /// @dev if new position size is not 0, further credit validation required
-        if (runtime.newPositionSize != 0) {
-            /// @custom:magnitude determines if more market credit is required
-            /// when a position's magnitude is increased, more credit is required and risk increases
-            /// when a position's magnitude is decreased, less credit is required and risk decreases
-            uint256 newMagnitude = MathUtil.abs(runtime.newPositionSize);
-            uint256 oldMagnitude = MathUtil.abs(oldPosition.size);
-
-            /// @custom:side reflects if position is long or short; if side changes, further validation required
-            /// given new position size cannot be zero, it is inconsequential if old size is zero;
-            /// magnitude will necessarily be larger
-            bool sameSide = runtime.newPositionSize > 0 == oldPosition.size > 0;
-
-            // require validation if magnitude has increased or side has not remained the same
-            if (newMagnitude > oldMagnitude || !sameSide) {
-                int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
-                    newMagnitude.toInt() - oldMagnitude.toInt(),
-                    PerpsPrice.Tolerance.DEFAULT
+            if (
+                currentAvailableMargin < (totalRequiredMargin + possibleLiquidationReward).toInt()
+            ) {
+                revert InsufficientMargin(
+                    currentAvailableMargin,
+                    totalRequiredMargin + possibleLiquidationReward
                 );
-                GlobalPerpsMarket.load().validateMarketCapacity(lockedCreditDelta);
             }
         }
 
-        runtime.newPosition = Position.Data({
-            marketId: runtime.marketId,
-            latestInteractionPrice: runtime.fillPrice.to128(),
-            latestInteractionFunding: perpsMarketData.lastFundingValue.to128(),
-            latestInterestAccrued: 0,
-            size: runtime.newPositionSize
-        });
-        return (runtime.newPosition, runtime.orderFees, runtime.fillPrice, oldPosition);
+        // if the position is growing in magnitude, ensure market is not too big
+        // also verify that the credit capacity of the supermarket has not been exceeded
+        if (!MathUtil.isSameSideReducing(oldPosition.size, newPosition.size)) {
+            PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
+            perpsMarketData.validateGivenMarketSize(
+                (
+                    newPosition.size > 0
+                        ? perpsMarketData.getLongSize().toInt() +
+                            newPosition.size -
+                            MathUtil.max(0, oldPosition.size)
+                        : perpsMarketData.getShortSize().toInt() -
+                            newPosition.size +
+                            MathUtil.min(0, oldPosition.size)
+                ).toUint(),
+                orderPrice
+            );
+
+            int256 lockedCreditDelta = perpsMarketData.requiredCreditForSize(
+                MathUtil.abs(order.request.sizeDelta).toInt(),
+                PerpsPrice.Tolerance.DEFAULT
+            );
+            GlobalPerpsMarket.load().validateMarketCapacity(lockedCreditDelta);
+        }
     }
 
     /**
@@ -401,16 +407,7 @@ library AsyncOrder {
 
         PerpsMarket.Data storage perpsMarketData = PerpsMarket.load(order.request.marketId);
 
-        PerpsMarketConfiguration.Data storage marketConfig = PerpsMarketConfiguration.load(
-            order.request.marketId
-        );
-
-        fillPrice = calculateFillPrice(
-            perpsMarketData.skew,
-            marketConfig.skewScale,
-            order.request.sizeDelta,
-            orderPrice
-        );
+        fillPrice = perpsMarketData.calculateFillPrice(order.request.sizeDelta, orderPrice);
 
         Position.Data storage oldPosition = PerpsMarket.accountPosition(
             order.request.marketId,
@@ -442,190 +439,6 @@ library AsyncOrder {
         SettlementStrategy.Data storage strategy
     ) internal view returns (uint256) {
         return KeeperCosts.load().getSettlementKeeperCosts() + strategy.settlementReward;
-    }
-
-    /**
-     * @notice Calculates the order fees.
-     */
-    function calculateOrderFee(
-        int128 sizeDelta,
-        uint256 fillPrice,
-        int256 marketSkew,
-        OrderFee.Data storage orderFeeData
-    ) internal view returns (uint256) {
-        int256 notionalDiff = sizeDelta.mulDecimal(fillPrice.toInt());
-
-        // does this trade keep the skew on one side?
-        if (MathUtil.sameSide(marketSkew + sizeDelta, marketSkew)) {
-            // use a flat maker/taker fee for the entire size depending on whether the skew is increased or reduced.
-            //
-            // if the order is submitted on the same side as the skew (increasing it) - the taker fee is charged.
-            // otherwise if the order is opposite to the skew, the maker fee is charged.
-
-            uint256 staticRate = MathUtil.sameSide(notionalDiff, marketSkew)
-                ? orderFeeData.takerFee
-                : orderFeeData.makerFee;
-            return MathUtil.abs(notionalDiff.mulDecimal(staticRate.toInt()));
-        }
-
-        // this trade flips the skew.
-        //
-        // the proportion of size that moves in the direction after the flip should not be considered
-        // as a maker (reducing skew) as it's now taking (increasing skew) in the opposite direction. hence,
-        // a different fee is applied on the proportion increasing the skew.
-
-        // The proportions are computed as follows:
-        // makerSize = abs(marketSkew) => since we are reversing the skew, the maker size is the current skew
-        // takerSize = abs(marketSkew + sizeDelta) => since we are reversing the skew, the taker size is the new skew
-        //
-        // we then multiply the sizes by the fill price to get the notional value of each side, and that times the fee rate for each side
-
-        uint256 makerFee = MathUtil.abs(marketSkew).mulDecimal(fillPrice).mulDecimal(
-            orderFeeData.makerFee
-        );
-
-        uint256 takerFee = MathUtil.abs(marketSkew + sizeDelta).mulDecimal(fillPrice).mulDecimal(
-            orderFeeData.takerFee
-        );
-
-        return takerFee + makerFee;
-    }
-
-    /**
-     * @notice Calculates the fill price for an order.
-     */
-    function calculateFillPrice(
-        int256 skew,
-        uint256 skewScale,
-        int128 size,
-        uint256 price
-    ) internal pure returns (uint256) {
-        // How is the p/d-adjusted price calculated using an example:
-        //
-        // price      = $1200 USD (oracle)
-        // size       = 100
-        // skew       = 0
-        // skew_scale = 1,000,000 (1M)
-        //
-        // Then,
-        //
-        // pd_before = 0 / 1,000,000
-        //           = 0
-        // pd_after  = (0 + 100) / 1,000,000
-        //           = 100 / 1,000,000
-        //           = 0.0001
-        //
-        // price_before = 1200 * (1 + pd_before)
-        //              = 1200 * (1 + 0)
-        //              = 1200
-        // price_after  = 1200 * (1 + pd_after)
-        //              = 1200 * (1 + 0.0001)
-        //              = 1200 * (1.0001)
-        //              = 1200.12
-        // Finally,
-        //
-        // fill_price = (price_before + price_after) / 2
-        //            = (1200 + 1200.12) / 2
-        //            = 1200.06
-        if (skewScale == 0) {
-            return price;
-        }
-        // calculate pd (premium/discount) before and after trade
-        int256 pdBefore = skew.divDecimal(skewScale.toInt());
-        int256 newSkew = skew + size;
-        int256 pdAfter = newSkew.divDecimal(skewScale.toInt());
-
-        // calculate price before and after trade with pd applied
-        int256 priceBefore = price.toInt() + (price.toInt().mulDecimal(pdBefore));
-        int256 priceAfter = price.toInt() + (price.toInt().mulDecimal(pdAfter));
-
-        // the fill price is the average of those prices
-        return (priceBefore + priceAfter).toUint().divDecimal(DecimalMath.UNIT * 2);
-    }
-
-    struct RequiredMarginWithNewPositionRuntime {
-        uint256 newRequiredMargin;
-        uint256 oldRequiredMargin;
-        uint256 requiredMarginForNewPosition;
-        uint256 accumulatedLiquidationRewards;
-        uint256 maxNumberOfWindows;
-        uint256 numberOfWindows;
-        uint256 requiredRewardMargin;
-    }
-
-    /**
-     * @notice PnL incurred from closing old position/opening new position based on fill price
-     */
-    function calculateFillPricePnl(
-        uint256 fillPrice,
-        uint256 marketPrice,
-        int128 sizeDelta
-    ) internal pure returns (int256) {
-        return sizeDelta.mulDecimal(marketPrice.toInt() - fillPrice.toInt());
-    }
-
-    /**
-     * @notice After the required margins are calculated with the old position, this function replaces the
-     * old position initial margin with the new position initial margin requirements and returns them.
-     * @dev SIP-359: If the position is being reduced, required margin is 0.
-     */
-    function getRequiredMarginWithNewPosition(
-        PerpsAccount.Data storage account,
-        PerpsMarketConfiguration.Data storage marketConfig,
-        uint128 marketId,
-        int128 oldPositionSize,
-        int128 newPositionSize,
-        uint256 fillPrice,
-        uint256 currentTotalInitialMargin
-    ) internal view returns (uint256) {
-        RequiredMarginWithNewPositionRuntime memory runtime;
-
-        if (MathUtil.isSameSideReducing(oldPositionSize, newPositionSize)) {
-            return 0;
-        }
-
-        // get initial margin requirement for the new position
-        (, , runtime.newRequiredMargin, ) = marketConfig.calculateRequiredMargins(
-            newPositionSize,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-        );
-
-        // get initial margin of old position
-        (, , runtime.oldRequiredMargin, ) = marketConfig.calculateRequiredMargins(
-            oldPositionSize,
-            PerpsPrice.getCurrentPrice(marketId, PerpsPrice.Tolerance.DEFAULT)
-        );
-
-        // remove the old initial margin and add the new initial margin requirement
-        // this gets us our total required margin for new position
-        runtime.requiredMarginForNewPosition =
-            currentTotalInitialMargin +
-            runtime.newRequiredMargin -
-            runtime.oldRequiredMargin;
-
-        (runtime.accumulatedLiquidationRewards, runtime.maxNumberOfWindows) = account
-            .getKeeperRewardsAndCosts(
-                marketId,
-                PerpsPrice.Tolerance.DEFAULT,
-                marketConfig.calculateFlagReward(
-                    MathUtil.abs(newPositionSize).mulDecimal(fillPrice)
-                )
-            );
-        runtime.numberOfWindows = marketConfig.numberOfLiquidationWindows(
-            MathUtil.abs(newPositionSize)
-        );
-        runtime.maxNumberOfWindows = MathUtil.max(
-            runtime.numberOfWindows,
-            runtime.maxNumberOfWindows
-        );
-
-        runtime.requiredRewardMargin = account.getPossibleLiquidationReward(
-            runtime.accumulatedLiquidationRewards,
-            runtime.maxNumberOfWindows
-        );
-
-        // this is the required margin for the new position (minus any order fees)
-        return runtime.requiredMarginForNewPosition + runtime.requiredRewardMargin;
     }
 
     function validateAcceptablePrice(Data storage order, uint256 fillPrice) internal view {

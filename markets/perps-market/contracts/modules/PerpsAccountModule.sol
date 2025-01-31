@@ -2,6 +2,7 @@
 pragma solidity >=0.8.11 <0.9.0;
 
 import {ERC2771Context} from "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {FeatureFlag} from "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 import {Account} from "@synthetixio/main/contracts/storage/Account.sol";
 import {AccountRBAC} from "@synthetixio/main/contracts/storage/AccountRBAC.sol";
@@ -21,6 +22,7 @@ import {MathUtil} from "../utils/MathUtil.sol";
 import {Flags} from "../utils/Flags.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import {PerpsCollateralConfiguration} from "../storage/PerpsCollateralConfiguration.sol";
+import {PerpsMarketConfiguration} from "../storage/PerpsMarketConfiguration.sol";
 
 /**
  * @title Module to manage accounts
@@ -34,6 +36,8 @@ contract PerpsAccountModule is IPerpsAccountModule {
     using SafeCastI256 for int256;
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using PerpsMarketFactory for PerpsMarketFactory.Data;
+    using Position for Position.Data;
+    using PerpsMarketConfiguration for PerpsMarketConfiguration.Data;
 
     /**
      * @inheritdoc IPerpsAccountModule
@@ -57,6 +61,17 @@ contract PerpsAccountModule is IPerpsAccountModule {
         );
 
         if (amountDelta == 0) revert InvalidAmountDelta(amountDelta);
+
+        if (
+            amountDelta < 0 &&
+            PerpsAccount.load(accountId).getOrderMode() == "BOOK" &&
+            PerpsAccount.load(accountId).getOrderMode() == "RECENTLY_CHANGED"
+        ) {
+            revert ParameterError.InvalidParameter(
+                "amountDelta",
+                "cannot remove collateral while BOOK order mode"
+            );
+        }
 
         PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
 
@@ -121,19 +136,23 @@ contract PerpsAccountModule is IPerpsAccountModule {
     /**
      * @inheritdoc IPerpsAccountModule
      */
-    function totalCollateralValue(uint128 accountId) external view override returns (uint256) {
-        return
-            PerpsAccount.load(accountId).getTotalCollateralValue(
-                PerpsPrice.Tolerance.DEFAULT,
-                false
-            );
+    function totalCollateralValue(
+        uint128 accountId
+    ) external view override returns (uint256 totalValue) {
+        (, totalValue) = PerpsAccount.load(accountId).getTotalCollateralValue(
+            PerpsPrice.Tolerance.DEFAULT
+        );
     }
 
     /**
      * @inheritdoc IPerpsAccountModule
      */
     function totalAccountOpenInterest(uint128 accountId) external view override returns (uint256) {
-        return PerpsAccount.load(accountId).getTotalNotionalOpenInterest();
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        return PerpsAccount.getTotalNotionalOpenInterest(ctx);
     }
 
     /**
@@ -173,12 +192,60 @@ contract PerpsAccountModule is IPerpsAccountModule {
     /**
      * @inheritdoc IPerpsAccountModule
      */
+    function getAccountFullPositionInfo(
+        uint128 accountId
+    ) external view override returns (DetailedPosition[] memory detailedPositions) {
+        PerpsAccount.MemoryContext memory ctx = PerpsAccount
+            .load(accountId)
+            .getOpenPositionsAndCurrentPrices(PerpsPrice.Tolerance.DEFAULT);
+
+        detailedPositions = new DetailedPosition[](ctx.positions.length);
+        for (uint256 i = 0; i < ctx.positions.length; i++) {
+            detailedPositions[i].size = ctx.positions[i].size;
+            detailedPositions[i].currentPrice = ctx.prices[i];
+            (
+                ,
+                detailedPositions[i].pnl,
+                ,
+                detailedPositions[i].chargedInterest,
+                detailedPositions[i].accruedFunding,
+                ,
+
+            ) = ctx.positions[i].getPositionData(ctx.prices[i]);
+
+            // NOTE: we consider the position to be re-entered when it is interacted with
+            detailedPositions[i].entryPrice = ctx.positions[i].latestInteractionPrice;
+
+            (
+                ,
+                ,
+                detailedPositions[i].requiredInitialMargin,
+                detailedPositions[i].requiredMaintenanceMargin
+            ) = PerpsMarketConfiguration.load(ctx.positions[i].marketId).calculateRequiredMargins(
+                ctx.positions[i].size,
+                ctx.prices[i]
+            );
+            PerpsMarket.Data storage market = PerpsMarket.load(ctx.positions[i].marketId);
+            detailedPositions[i].marketId = ctx.positions[i].marketId;
+            detailedPositions[i].marketName = market.name;
+            detailedPositions[i].marketSymbol = market.symbol;
+        }
+    }
+
+    /**
+     * @inheritdoc IPerpsAccountModule
+     */
     function getAvailableMargin(
         uint128 accountId
     ) external view override returns (int256 availableMargin) {
-        availableMargin = PerpsAccount.load(accountId).getAvailableMargin(
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
             PerpsPrice.Tolerance.DEFAULT
         );
+        (uint256 totalCollateralValueWithDiscount, ) = account.getTotalCollateralValue(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        availableMargin = PerpsAccount.getAvailableMargin(ctx, totalCollateralValueWithDiscount);
     }
 
     /**
@@ -188,7 +255,18 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (int256 withdrawableMargin) {
         PerpsAccount.Data storage account = PerpsAccount.load(accountId);
-        withdrawableMargin = account.getWithdrawableMargin(PerpsPrice.Tolerance.DEFAULT);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        (
+            uint256 totalCollateralValueWithDiscount,
+            uint256 totalCollateralValueWithoutDiscount
+        ) = account.getTotalCollateralValue(PerpsPrice.Tolerance.DEFAULT);
+        withdrawableMargin = PerpsAccount.getWithdrawableMargin(
+            ctx,
+            totalCollateralValueWithoutDiscount,
+            totalCollateralValueWithDiscount
+        );
     }
 
     /**
@@ -211,8 +289,14 @@ contract PerpsAccountModule is IPerpsAccountModule {
             return (0, 0, 0);
         }
 
-        (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = account
-            .getAccountRequiredMargins(PerpsPrice.Tolerance.DEFAULT);
+        PerpsAccount.MemoryContext memory ctx = account.getOpenPositionsAndCurrentPrices(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        (, uint256 totalCollateralValueWithoutDiscount) = account.getTotalCollateralValue(
+            PerpsPrice.Tolerance.DEFAULT
+        );
+        (requiredInitialMargin, requiredMaintenanceMargin, maxLiquidationReward) = PerpsAccount
+            .getAccountRequiredMargins(ctx, totalCollateralValueWithoutDiscount);
 
         // Include liquidation rewards to required initial margin and required maintenance margin
         requiredInitialMargin += maxLiquidationReward;
@@ -236,6 +320,29 @@ contract PerpsAccountModule is IPerpsAccountModule {
         uint128 accountId
     ) external view override returns (uint256[] memory) {
         return PerpsAccount.load(accountId).activeCollateralTypes.values();
+    }
+
+    function getAccountAllCollateralAmounts(
+        uint128 accountId
+    )
+        external
+        view
+        override
+        returns (
+            uint256[] memory collateralIds,
+            uint256[] memory collateralAmounts,
+            uint256 accountDebt
+        )
+    {
+        PerpsAccount.Data storage account = PerpsAccount.load(accountId);
+        collateralIds = account.activeCollateralTypes.values();
+        collateralAmounts = new uint256[](collateralIds.length);
+        for (uint256 i = 0; i < collateralIds.length; i++) {
+            // solhint-disable-next-line numcast/safe-cast
+            collateralAmounts[i] = account.collateralAmounts[uint128(collateralIds[i])];
+        }
+
+        accountDebt = account.debt;
     }
 
     /**
