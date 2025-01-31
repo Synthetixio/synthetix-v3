@@ -221,7 +221,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         address sender = ERC2771Context._msgSender();
         IERC721 accountToken = IERC721(v3System.getAccountTokenAddress());
         if (sender != accountToken.ownerOf(accountId)) {
-            revert AccessError.Unauthorized(ERC2771Context._msgSender());
+            revert AccessError.Unauthorized(sender);
         }
 
         uint256 currentLoan = _loanedAmount(loans[accountId], block.timestamp);
