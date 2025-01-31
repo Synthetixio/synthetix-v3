@@ -220,15 +220,9 @@ contract VaultModule is IVaultModule {
         _verifyNotCapacityLocked(oldPoolId);
 
         // newly migrated position must not be liquidatable
-        uint256 minIssuanceRatioD18 = Pool
-            .loadExisting(newPoolId)
-            .collateralConfigurations[collateralType]
-            .issuanceRatioD18;
-
-        CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
+        CollateralConfiguration.load(collateralType).verifyLiquidationRatio(
             currentDebtAmount,
-            currentCollateralAmount.mulDecimal(collateralPrice),
-            minIssuanceRatioD18
+            currentCollateralAmount.mulDecimal(collateralPrice)
         );
 
         // now assign the new debt to the account
