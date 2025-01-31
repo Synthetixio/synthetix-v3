@@ -186,7 +186,6 @@ contract VaultModule is IVaultModule {
             revert ParameterError.InvalidParameter("oldPoolId", "not delegated");
         }
 
-        // Cannot migrate if c-ratio is in liquidation
         int256 currentDebtAmount = Pool.load(oldPoolId).updateAccountDebt(
             collateralType,
             accountId
@@ -202,9 +201,14 @@ contract VaultModule is IVaultModule {
         Pool.load(oldPoolId).updateRewardsToVaults(
             Vault.PositionSelector(accountId, oldPoolId, collateralType)
         );
+        Pool.load(newPoolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, newPoolId, collateralType)
+        );
+
 
         // Clear debt for account in preparation for movement to new pool
         Pool.load(oldPoolId).assignDebtToAccount(collateralType, accountId, -currentDebtAmount);
+        Pool.load(newPoolId).updateAccountDebt(collateralType, accountId);
 
         // Update the account's position for the given pool and collateral type,
         _updateAccountCollateralPools(accountId, oldPoolId, collateralType, false);
