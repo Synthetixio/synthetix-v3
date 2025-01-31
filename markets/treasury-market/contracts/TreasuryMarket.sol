@@ -156,13 +156,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert ParameterError.InvalidParameter("accountId", "not delegated to pool");
         }
 
-        _rebalance();
-
         // get the actual collateralization of the pool now
         (, uint256 vaultCollateralValue) = v3System.getVaultCollateral(poolId, collateralToken);
         int256 vaultDebtValue = v3System.getVaultDebt(poolId, collateralToken);
 
-        //
         uint256 newlySaddledValue = accountCollateralValue -
             (saddledCollateral[accountId] * accountCollateralValue) /
             accountCollateral;
