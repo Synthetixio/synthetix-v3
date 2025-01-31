@@ -53,6 +53,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     uint256 lockedCollateral;
 
+    uint256 public totalSaddledCollateral;
+
     mapping(uint128 => uint256) public saddledCollateral;
     mapping(uint128 => LoanInfo) public loans;
 
@@ -164,7 +166,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         // we want this newly added user to match the current collateralization status of the pool
         int256 targetDebt = vaultDebtValue;
-        if (artificialDebt == 0) {
+        if (totalSaddledCollateral == 0) {
             // if there is no artificial debt, it means that this is the first user and we should create a bunch
             // to bring to low cratio
             targetDebt = vaultCollateralValue.divDecimal(targetCratio).toInt();
@@ -204,6 +206,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         }
 
         saddledCollateral[accountId] = accountCollateral;
+        totalSaddledCollateral += accountCollateral;
 
         emit AccountSaddled(accountId, accountCollateral, uint256(targetDebt - accountDebt));
     }
@@ -253,6 +256,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             emit AccountUnsaddled(accountId, accountCollateral, neededToRepay);
         }
 
+        totalSaddledCollateral -= saddledCollateral[accountId];
         saddledCollateral[accountId] = 0;
 
         // undelegate collateral automatically for the user because they should no longer be part of this pool anyway now that they have been unsaddled

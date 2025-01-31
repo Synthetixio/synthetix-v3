@@ -106,7 +106,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         v3System.setFeatureFlagAllowAll("associateDebt", true);
     }
 
-    function test_MarketFunctions() external {
+    function test_MarketFunctions() external view {
         assertEq(market.name(market.marketId()), "Treasury Market");
         assertEq(market.reportedDebt(market.marketId()), 0);
         assertEq(market.minimumCredit(market.marketId()), uint256(type(int256).max));
@@ -812,23 +812,21 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             abi.encodeWithSelector(IV3CoreProxy.CapacityLocked.selector, market.marketId())
         );
         v3System.migrateDelegation(1337, poolId, address(collateralToken), otherPoolId);
+    }
 
-        /*
-        v3System.deposit(1337, address(collateralToken), 98 ether);
-        v3System.delegateCollateral(1337, otherPoolId, address(collateralToken), 100 ether, 1 ether);
-        v3System.mintUsd(1337, otherPoolId, address(collateralToken), 20 ether);
-
+    function test_IncorrectTargetDebt() public {
+        market.saddle(accountId);
+        sideMarket.setReportedDebt(3 ether); // should make artificial debt zero
         market.rebalance();
-        v3System.migrateDelegation(1337, otherPoolId, address(collateralToken), poolId);
-        market.saddle(1337);
 
-        IERC721(v3System.getAccountTokenAddress()).approve(address(market), 1337);
-        market.unsaddle(1337);
-
-        // Withdraw our collateral and an additional 20 USD
-        // repay flash loan, so profit is 20 USD - 1 USD = 19 USD
-        v3System.withdraw(1337, address(collateralToken), 100 ether);
-        v3System.withdraw(1337, address(usdToken), 20 ether);*/
+        v3System.delegateCollateral(
+            accountId + 1,
+            poolId,
+            address(collateralToken),
+            4 ether,
+            1 ether
+        );
+        market.saddle(accountId + 1);
     }
 
     function onERC721Received(
