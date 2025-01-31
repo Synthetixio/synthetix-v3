@@ -352,7 +352,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint128 endPenalty
     ) external onlyOwner {
         if (power > 100) {
-            revert ParameterError.InvalidParameter("debtDecayPower", "too high");
+            revert ParameterError.InvalidParameter("power", "too high");
         }
         if (startPenalty > 1 ether) {
             revert ParameterError.InvalidParameter("startPenalty", "must be less than 1 ether");
