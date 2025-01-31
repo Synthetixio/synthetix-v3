@@ -111,6 +111,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.reportedDebt(market.marketId()), 0);
         assertEq(market.minimumCredit(market.marketId()), uint256(type(int256).max));
         assertEq(market.loanedAmount(42), 0);
+        assertEq(market.totalSaddledCollateral(), 0);
         assertTrue(market.marketId() != 0);
     }
 
@@ -174,6 +175,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // this user is the first to saddle, so the debt should now be at 200% c-ratio and the debt increased on the current account
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 2 ether);
+        assertEq(market.totalSaddledCollateral(), 4 ether);
     }
 
     function test_SaddleSecondAccount() external {
@@ -196,6 +198,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         // saddle the second account
         market.saddle(accountId + 1);
+        assertEq(market.totalSaddledCollateral(), 5 ether);
 
         // the new account has 1/4 the amount of collateral, so it should have 1/4 the amount of debt
         assertEq(
@@ -227,6 +230,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // delegate more collateral on the first account
         v3System.delegateCollateral(accountId, poolId, address(collateralToken), 8 ether, 1 ether);
         market.saddle(accountId);
+        assertEq(market.totalSaddledCollateral(), 10 ether);
+
         assertEq(
             v3System.getPositionDebt(accountId, poolId, address(collateralToken)),
             v3System.getPositionDebt(accountId + 1, poolId, address(collateralToken)) * 4
@@ -267,7 +272,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.saddle(accountId);
 
         // mint some treasury money so the debt becomes fundamentally unrepayable
-        vm.prank(market.owner());
+        vm.prank(market.treasury());
         market.mintTreasury(1 ether);
 
         IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
@@ -298,7 +303,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
-                "debtDecayPower",
+                "power",
                 "too high"
             )
         );
@@ -530,7 +535,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         vm.expectEmit();
         emit ITreasuryMarket.Rebalanced(3 ether, 2 ether);
-        vm.prank(market.owner());
+        vm.prank(market.treasury());
         market.mintTreasury(1 ether);
 
         assertEq(usdToken.balanceOf(market.treasury()), 1 ether);
@@ -549,7 +554,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_TreasuryBurn() external {
         market.saddle(accountId);
 
-        vm.prank(market.owner());
+        vm.prank(market.treasury());
         market.mintTreasury(1 ether);
 
         vm.startPrank(market.treasury());
@@ -560,7 +565,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.expectEmit();
         emit ITreasuryMarket.Rebalanced(1 ether, 2 ether);
 
-        vm.prank(market.owner());
+        vm.prank(market.treasury());
         market.burnTreasury(1 ether);
         assertEq(usdToken.balanceOf(market.treasury()), 0);
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
@@ -591,9 +596,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         sideMarket.setReportedDebt(0);
 
+        assertEq(market.totalSaddledCollateral(), 14 ether);
         IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
         market.unsaddle(accountId);
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 0);
+        assertEq(market.totalSaddledCollateral(), 10 ether);
     }
 
     function test_RevertIf_UpgradeToUnauthorized() external {

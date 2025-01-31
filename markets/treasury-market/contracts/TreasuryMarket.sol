@@ -205,8 +205,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
         }
 
+        totalSaddledCollateral += accountCollateral - saddledCollateral[accountId];
         saddledCollateral[accountId] = accountCollateral;
-        totalSaddledCollateral += accountCollateral;
 
         emit AccountSaddled(accountId, accountCollateral, uint256(targetDebt - accountDebt));
     }
@@ -370,13 +370,13 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         _rebalance();
     }
 
-    function mintTreasury(uint256 amount) external onlyOwner {
+    function mintTreasury(uint256 amount) external onlyTreasury {
         v3System.withdrawMarketUsd(marketId, treasury, amount);
         emit TreasuryMinted(amount);
         _rebalance();
     }
 
-    function burnTreasury(uint256 amount) external onlyOwner {
+    function burnTreasury(uint256 amount) external onlyTreasury {
         v3System.depositMarketUsd(marketId, treasury, amount);
         emit TreasuryBurned(amount);
         _rebalance();
@@ -460,5 +460,13 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     loans[accountId].power
                 )
             );
+    }
+
+    modifier onlyTreasury() {
+        if (msg.sender != treasury) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        _;
     }
 }
