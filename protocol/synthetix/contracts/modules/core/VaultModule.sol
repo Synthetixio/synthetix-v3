@@ -205,7 +205,6 @@ contract VaultModule is IVaultModule {
             Vault.PositionSelector(accountId, newPoolId, collateralType)
         );
 
-
         // Clear debt for account in preparation for movement to new pool
         Pool.load(oldPoolId).assignDebtToAccount(collateralType, accountId, -currentDebtAmount);
         Pool.load(newPoolId).updateAccountDebt(collateralType, accountId);

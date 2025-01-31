@@ -269,8 +269,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         _rebalance();
 
-        // return the account token to the user
-        accountToken.safeTransferFrom(address(this), sender, accountId);
+        // return the account token to the user. we use the "unsafe" call here because the account is being returned to the same address
+        // it came from, so its probably ok and the account will be able to handle receipt of the NFT.
+        accountToken.transferFrom(address(this), sender, accountId);
     }
 
     function repaymentPenalty(
