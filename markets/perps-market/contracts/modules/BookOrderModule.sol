@@ -89,7 +89,10 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
 
     error IncorrectAccountMode(uint128 accountId, bytes16 mode);
 
-    function setBookMode(uint128 accountId, bool useBook) external {
+    /**
+     * @inheritdoc IBookOrderModule
+     */
+    function setBookMode(uint128 accountId, bool useBook) external override {
         FeatureFlag.ensureAccessToFeature(Flags.PERPS_SYSTEM);
 
         Account.exists(accountId);
@@ -105,6 +108,14 @@ contract BookOrderModule is IBookOrderModule, IAccountEvents, IMarketEvents {
         perpsAccount.setOrderMode(useBook ? bytes16("BOOK") : bytes16("ONCHAIN"));
 
         emit AccountOrderModeChanged(accountId, "BOOK");
+    }
+
+    /**
+     * @inheritdoc IBookOrderModule
+     */
+    function getOrderMode(uint128 accountId) external view override returns (bytes16) {
+        PerpsAccount.Data storage perpsAccount = PerpsAccount.load(accountId);
+        return perpsAccount.getOrderMode();
     }
 
     /**

@@ -1,10 +1,12 @@
 import { ethers } from 'ethers';
+import assert from 'assert/strict';
 import { bn, bootstrapMarkets } from '../bootstrap';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
 import { depositCollateral } from '../helpers';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { wei } from '@synthetixio/wei';
 
 describe('Settle Orderbook order', () => {
@@ -89,6 +91,33 @@ describe('Settle Orderbook order', () => {
   it.skip('fails if not called by orderbook', async () => {
     // for this test we consider `keeper` to be the orderbook
     // but it cna be a different address from the actual keeper
+  });
+
+  it('has correct order mode', async () => {
+    console.log(await systems().PerpsMarket.getOrderMode(3));
+    assert(
+      ethers.utils.parseBytes32String(
+        (await systems().PerpsMarket.getOrderMode(3)) + '00000000000000000000000000000000'
+      ) === 'RECENTLY_CHANGED'
+    );
+    assert(
+      ethers.utils.parseBytes32String(
+        (await systems().PerpsMarket.getOrderMode(5)) + '00000000000000000000000000000000'
+      ) === ''
+    );
+
+    await fastForwardTo((await getTime(provider())) + 1000, provider());
+
+    assert(
+      ethers.utils.parseBytes32String(
+        (await systems().PerpsMarket.getOrderMode(3)) + '00000000000000000000000000000000'
+      ) === 'BOOK'
+    );
+    assert(
+      ethers.utils.parseBytes32String(
+        (await systems().PerpsMarket.getOrderMode(5)) + '00000000000000000000000000000000'
+      ) === ''
+    );
   });
 
   it('fails when the orders are not increasing account id order', async () => {

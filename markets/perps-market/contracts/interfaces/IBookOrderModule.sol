@@ -61,6 +61,20 @@ interface IBookOrderModule {
     }
 
     /**
+     * @notice Set the current order mode to BOOK
+     * @param accountId the account id to set to BOOK
+     * @param useBook whether or not to set hte mode to BOOK. If not BOOK, it will be ONCHAIN
+     */
+    function setBookMode(uint128 accountId, bool useBook) external;
+
+    /**
+     * @notice Get the current order mode
+     * @param accountId the account id to pull data for
+     * @return the current order mode
+     */
+    function getOrderMode(uint128 accountId) external view returns (bytes16);
+
+    /**
      * @notice Called by the offchain orderbook to settle a prevoiusly placed order onchain. Any orders submitted to this function will be processed as if they happened simultaneously, at the prices given by the orderbook.
      * If an order is found to be unfillable (ex. insufficient account liquidity), it will be returned in the `statuses` return field.
      * @param marketId the market for which all of the following orders should be operated on

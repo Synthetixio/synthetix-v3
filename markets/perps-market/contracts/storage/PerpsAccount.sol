@@ -89,7 +89,7 @@ library PerpsAccount {
 
     error NonexistentDebt(uint128 accountId);
 
-    uint256 constant ORDER_MODE_CHANGE_GRACE_PERIOD = 180; // 3 minutes
+    uint256 constant ORDER_MODE_CHANGE_GRACE_PERIOD = 15; // seconds
 
     function load(uint128 id) internal pure returns (Data storage account) {
         bytes32 s = keccak256(abi.encode("io.synthetix.perps-market.Account", id));
