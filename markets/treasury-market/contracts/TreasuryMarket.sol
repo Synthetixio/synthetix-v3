@@ -265,10 +265,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         v3System.delegateCollateral(accountId, poolId, collateralToken, 0, 1 ether);
         lockedCollateral = uint256(type(int256).max);
 
+        _rebalance();
+
         // return the account token to the user
         accountToken.safeTransferFrom(address(this), sender, accountId);
-
-        _rebalance();
     }
 
     function repaymentPenalty(
