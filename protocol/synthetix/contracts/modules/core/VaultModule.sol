@@ -221,7 +221,7 @@ contract VaultModule is IVaultModule {
 
         // newly migrated position must not be liquidatable
         uint256 minIssuanceRatioD18 = Pool
-            .loadExisting(oldPoolId)
+            .loadExisting(newPoolId)
             .collateralConfigurations[collateralType]
             .issuanceRatioD18;
 
