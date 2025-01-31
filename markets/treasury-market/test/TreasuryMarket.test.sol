@@ -165,6 +165,17 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.saddle(accountId + 1);
     }
 
+    function test__RevertIf_SaddleAccountWithNoDelegatedCollateral() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "accountId",
+                "not delegated to pool"
+            )
+        );
+        market.saddle(accountId + 1);
+    }
+
     function test_Saddle() external {
         // add a little bit of debt to the account so we can verify saddle
         // works with debt in the account to start
@@ -301,11 +312,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_RevertIf_SetDebtDecayInvalidCases() external {
         vm.startPrank(market.owner());
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "power",
-                "too high"
-            )
+            abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "power", "too high")
         );
         market.setDebtDecayFunction(101, 86400, 0, 0);
         vm.expectRevert(

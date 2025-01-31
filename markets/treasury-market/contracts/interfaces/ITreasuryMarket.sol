@@ -25,7 +25,7 @@ interface ITreasuryMarket {
     event Rebalanced(int256 previousVaultDebt, int256 newVaultDebt);
 
     /**
-     * @notice Emitted if an account was migrated but its c-ratioi was insufficient for assigning debt in v3
+     * @notice Emitted if an account was migrated but its c-ratio was insufficient for assigning debt in v3
      */
     event AccountUnsaddled(
         uint128 indexed accountId,

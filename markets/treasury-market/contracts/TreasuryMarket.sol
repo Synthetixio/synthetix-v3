@@ -136,7 +136,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     function minimumCredit(
         uint128 /* requestedMarketId*/
     ) external view returns (uint256 lockedAmount) {
-        // we lock collateral here because
+        // we lock collateral here because it prevents any withdrawal of delegated collateral from the pool other than through `unsaddle`.
         return lockedCollateral;
     }
 
@@ -151,6 +151,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         // get current position information
         (uint256 accountCollateral, uint256 accountCollateralValue, int256 accountDebt, ) = v3System
             .getPosition(accountId, poolId, collateralToken);
+
+        if (accountCollateral == 0) {
+            revert ParameterError.InvalidParameter("accountId", "not delegated to pool");
+        }
 
         // get the actual collateralization of the pool now
         (, uint256 vaultCollateralValue) = v3System.getVaultCollateral(poolId, collateralToken);
@@ -185,14 +189,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert InsufficientCRatio(accountId, accountDebt.toUint(), targetDebt.toUint());
         }
 
-        artificialDebt += targetDebt - accountDebt;
-        v3System.associateDebt(
-            marketId,
-            poolId,
-            collateralToken,
-            accountId,
-            uint256(targetDebt - accountDebt)
-        );
+        uint256 debtIncrease = uint256(targetDebt - accountDebt);
+
+        artificialDebt += int256(debtIncrease);
+        v3System.associateDebt(marketId, poolId, collateralToken, accountId, debtIncrease);
 
         // if a user has not been saddled before, any existing account debt becomes a loan on the user
         if (accountDebt > 0 && saddledCollateral[accountId] == 0) {
@@ -208,7 +208,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         totalSaddledCollateral += accountCollateral - saddledCollateral[accountId];
         saddledCollateral[accountId] = accountCollateral;
 
-        emit AccountSaddled(accountId, accountCollateral, uint256(targetDebt - accountDebt));
+        emit AccountSaddled(accountId, accountCollateral, debtIncrease);
     }
 
     function unsaddle(uint128 accountId) external {
@@ -222,9 +222,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        uint256 currentLoan = _loanedAmount(accountId, block.timestamp);
+        uint256 currentLoan = _loanedAmount(loans[accountId], block.timestamp);
         if (currentLoan > 0) {
-            revert OutstandingLoan(accountId, _loanedAmount(accountId, block.timestamp));
+            revert OutstandingLoan(accountId, currentLoan);
         }
 
         // transfer the account token from the user so that we can undelegate them and repay their debt
@@ -273,28 +273,17 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function repaymentPenalty(
         uint128 accountId,
-        uint256 targetDebt
+        uint256 targetLoan
     ) external view returns (uint256) {
-        uint256 currentLoan = _loanedAmount(accountId, block.timestamp);
-        if (targetDebt > currentLoan || debtDecayPenaltyStart == 0) {
-            return 0;
-        }
-
-        uint256 loanCompletionPercentage = loans[accountId].duration > 0
-            ? (block.timestamp - loans[accountId].startTime).divDecimal(loans[accountId].duration)
-            : 0;
-
-        if (loanCompletionPercentage < 1 ether) {
-            uint256 currentPenalty = uint256(debtDecayPenaltyStart).mulDecimal(
-                1 ether - loanCompletionPercentage
-            ) + uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);
-            return
-                (loans[accountId].loanAmount - currentLoan).mulDecimal(currentPenalty).mulDecimal(
-                    1 ether - targetDebt.divDecimal(currentLoan)
-                );
-        }
-
-        return 0;
+        LoanInfo memory loan = loans[accountId];
+        uint256 timestamp = block.timestamp;
+        return
+            _repaymentPenalty(
+                loan,
+                targetLoan,
+                _currentPenaltyRate(loans[accountId], timestamp),
+                block.timestamp
+            );
     }
 
     function adjustLoan(uint128 accountId, uint256 amount) external {
@@ -303,32 +292,22 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
         }
 
-        uint256 currentLoan = _loanedAmount(accountId, block.timestamp);
+        LoanInfo memory loan = loans[accountId];
+        uint256 timestamp = block.timestamp;
+        uint256 currentLoan = _loanedAmount(loan, timestamp);
 
         if (amount > currentLoan) {
             revert ParameterError.InvalidParameter("amount", "must be less than current loan");
         } else if (amount < currentLoan) {
+            uint256 penaltyAmount = _repaymentPenalty(
+                loan,
+                amount,
+                _currentPenaltyRate(loan, timestamp),
+                timestamp
+            );
             // apply a penalty on whatever is repaid
-            // the penalty subtracts a certain percentage from what is . for example:
-            uint256 repaidBeforePenalty = currentLoan - amount;
 
-            uint256 loanCompletionPercentage = loans[accountId].duration > 0
-                ? (block.timestamp - loans[accountId].startTime).divDecimal(
-                    loans[accountId].duration
-                )
-                : 0;
-            if (loanCompletionPercentage < 1 ether && debtDecayPenaltyStart > 0) {
-                uint256 currentPenalty = uint256(debtDecayPenaltyStart).mulDecimal(
-                    1 ether - loanCompletionPercentage
-                ) + uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);
-                uint256 repaidAmount = (loans[accountId].loanAmount - currentLoan)
-                    .mulDecimal(currentPenalty)
-                    .mulDecimal(1 ether - amount.divDecimal(currentLoan)) + repaidBeforePenalty;
-
-                v3System.depositMarketUsd(marketId, sender, repaidAmount);
-            } else {
-                v3System.depositMarketUsd(marketId, sender, repaidBeforePenalty);
-            }
+            v3System.depositMarketUsd(marketId, sender, currentLoan - amount + penaltyAmount);
             _rebalance();
         } else {
             return; // nothing to do
@@ -342,7 +321,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function loanedAmount(uint128 accountId) external view returns (uint256) {
-        return _loanedAmount(accountId, block.timestamp);
+        return _loanedAmount(loans[accountId], block.timestamp);
     }
 
     function setDebtDecayFunction(
@@ -443,23 +422,71 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return cur;
     }
 
-    function _loanedAmount(uint128 accountId, uint256 timestamp) internal view returns (uint256) {
-        if (loans[accountId].power == 0 || timestamp <= loans[accountId].startTime) {
-            return loans[accountId].loanAmount;
-        } else if (timestamp >= loans[accountId].startTime + loans[accountId].duration) {
+    function _loanedAmount(
+        LoanInfo memory loan,
+        uint256 timestamp
+    ) internal pure returns (uint256) {
+        if (loan.power == 0 || timestamp <= loan.startTime) {
+            return loan.loanAmount;
+        } else if (timestamp >= loan.startTime + loan.duration) {
             return 0;
         }
 
         // this function is a polynomial decay
         // model if `power` is 2 and `duration` is 365 https://www.wolframalpha.com/input?i=graph+1-%28x%2F365%29%5E2+from+0+to+365
         return
-            loans[accountId].loanAmount -
-            uint256(loans[accountId].loanAmount).mulDecimal(
-                _decimalPow(
-                    (timestamp - loans[accountId].startTime).divDecimal(loans[accountId].duration),
-                    loans[accountId].power
-                )
+            loan.loanAmount -
+            uint256(loan.loanAmount).mulDecimal(
+                _decimalPow((timestamp - loan.startTime).divDecimal(loan.duration), loan.power)
             );
+    }
+
+    function _repaymentPenalty(
+        LoanInfo memory loan,
+        uint256 targetLoan,
+        uint256 currentPenalty,
+        uint256 timestamp
+    ) internal pure returns (uint256) {
+        uint256 currentLoan = _loanedAmount(loan, timestamp);
+        if (targetLoan > currentLoan || currentPenalty == 0) {
+            return 0;
+        }
+
+        uint256 loanCompletionPercentage = loan.duration > 0
+            ? (timestamp - loan.startTime).divDecimal(loan.duration)
+            : 0;
+
+        // the penalty subtracts a certain percentage from what has been decayed. for example, assuming 25% penalty:
+        // 1. starting with a $1000 loan over 40 days
+        // 2. 16 days in, it decays to a $600 loan
+        // 3. At 16 days in, user chooses to repay half. so $300 of the loan should remain
+        // 4. The penalty is 25% at time of repayment, so 25% $400 is $100, so this plus the amount of the principal
+        // to repay ($300) for a total of $400 is paid in total to repay $300
+        if (loanCompletionPercentage < 1 ether) {
+            return
+                (loan.loanAmount - currentLoan).mulDecimal(currentPenalty).mulDecimal(
+                    1 ether - targetLoan.divDecimal(currentLoan)
+                );
+        }
+
+        return 0;
+    }
+
+    function _currentPenaltyRate(
+        LoanInfo memory loan,
+        uint256 timestamp
+    ) internal view returns (uint256) {
+        uint256 loanCompletionPercentage = loan.duration > 0
+            ? (timestamp - loan.startTime).divDecimal(loan.duration)
+            : 0;
+
+        if (loanCompletionPercentage >= 1 ether) {
+            return debtDecayPenaltyEnd;
+        }
+
+        return
+            uint256(debtDecayPenaltyStart).mulDecimal(1 ether - loanCompletionPercentage) +
+            uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);
     }
 
     modifier onlyTreasury() {
