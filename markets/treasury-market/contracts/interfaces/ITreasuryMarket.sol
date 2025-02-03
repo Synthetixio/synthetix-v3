@@ -75,6 +75,11 @@ interface ITreasuryMarket {
     error OutstandingLoan(uint128 accountId, uint256 outstandingLoanAmount);
 
     /**
+     * @notice Emitted when there is not enough clearable debt to allow the user that is unsaddling to exit
+     */
+    error InsufficientExcessDebt(int256 neededToRepay, int256 ableToRepay);
+
+    /**
      * @notice called by the owner to register this market with v3. This is an initialization call only.
      */
     function registerMarket() external returns (uint128 newMarketId);

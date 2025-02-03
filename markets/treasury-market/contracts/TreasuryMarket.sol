@@ -247,6 +247,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             }
 
             uint256 neededToRepay = uint256(accountDebt);
+
+            if (int256(neededToRepay) > artificialDebt) {
+                revert InsufficientExcessDebt(int256(neededToRepay), artificialDebt);
+            }
+
             artificialDebt -= int256(neededToRepay);
             v3System.withdrawMarketUsd(marketId, address(this), neededToRepay);
             v3System.deposit(accountId, v3System.getUsdToken(), neededToRepay);

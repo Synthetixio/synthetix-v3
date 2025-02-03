@@ -298,7 +298,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.unsaddle(accountId);
     }
 
-    function test_UnsaddleNotSaddled() external {
+    function test_RevertIf_UnsaddleNotSaddled() external {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ParameterError.InvalidParameter.selector,
@@ -583,6 +583,32 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(1000)));
         vm.prank(address(1000));
+        market.unsaddle(accountId);
+    }
+
+    function test_RevertIf_UnsaddleInsufficientExcessDebt() external {
+        market.saddle(accountId);
+
+        v3System.delegateCollateral(
+            accountId + 1,
+            poolId,
+            address(collateralToken),
+            1 ether,
+            1 ether
+        );
+        market.saddle(accountId + 1);
+
+        sideMarket.setReportedDebt(1000 ether);
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ITreasuryMarket.InsufficientExcessDebt.selector,
+                4 ether,
+                2.5 ether
+            )
+        );
         market.unsaddle(accountId);
     }
 
