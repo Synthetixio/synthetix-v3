@@ -495,7 +495,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     modifier onlyTreasury() {
+        // solhint-disable-next-line meta-transactions/no-msg-sender
         if (msg.sender != treasury) {
+            // solhint-disable-next-line meta-transactions/no-msg-sender
             revert AccessError.Unauthorized(msg.sender);
         }
 
