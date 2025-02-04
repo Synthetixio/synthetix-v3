@@ -60,7 +60,7 @@ interface ITreasuryMarket {
     );
 
     /**
-     * @notice 
+     * @notice
      */
     event TreasuryBurned(uint256 amount);
 
