@@ -348,6 +348,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         debtDecayTime = time;
         debtDecayPenaltyStart = startPenalty;
         debtDecayPenaltyEnd = endPenalty;
+
+        emit DebtDecayUpdated(power, time, startPenalty, endPenalty);
     }
 
     function rebalance() external {

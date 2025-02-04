@@ -48,9 +48,9 @@ interface ITreasuryMarket {
     event TreasuryMinted(uint256 amount);
 
     /**
-     * @notice Emitted after a call to `treasuryBurn`, where the owner has pushed funds from the treasury into the market
+     * @notice Emitted after a call to `setDebtDecayFunction`, where the settings for new and existing issued loans may be modified by the owner.
      */
-    event TreasuryBurned(uint256 amount);
+    event DebtDecayUpdated(uint32 power, uint32 duration, uint128 startPenalty, uint128 endPenalty);
 
     // copied from v3 core system for event recognition purposes
     event MarketRegistered(
@@ -58,6 +58,11 @@ interface ITreasuryMarket {
         uint128 indexed marketId,
         address indexed sender
     );
+
+    /**
+     * @notice 
+     */
+    event TreasuryBurned(uint256 amount);
 
     /**
      * @notice Emitted when `registerMarket` is called, but the market has already been registered.
