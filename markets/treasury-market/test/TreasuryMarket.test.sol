@@ -351,6 +351,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
     function test_LoanDecayLinearConfig() external {
         vm.warp(100000000);
+        vm.expectEmit();
+        emit ITreasuryMarket.DebtDecayUpdated(1, 1000000, 0, 0);
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 1000000, 0, 0);
         sideMarket.setReportedDebt(1 ether);
