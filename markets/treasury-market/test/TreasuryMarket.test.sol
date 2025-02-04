@@ -685,6 +685,10 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.reportedDebt(market.marketId()), 0);
     }
 
+    function test_ReportedDebtInvalidMarketId() external view {
+        assertEq(market.reportedDebt(market.marketId() + 1), 0);
+    }
+
     function test_UpgradeTo() external {
         vm.prank(market.owner());
         market.upgradeTo(initialModuleBundleAddress);

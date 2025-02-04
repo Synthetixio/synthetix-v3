@@ -103,8 +103,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128 /*requestedMarketId*/) public view returns (uint256 debt) {
-        if (artificialDebt < 0) {
+    function reportedDebt(uint128 requestedMarketId) public view returns (uint256 debt) {
+        if (requestedMarketId != marketId || artificialDebt < 0) {
             // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
             return 0;
         }
