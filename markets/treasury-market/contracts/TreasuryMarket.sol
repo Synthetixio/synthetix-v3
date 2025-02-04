@@ -376,6 +376,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     ) public view virtual override(IERC165) returns (bool) {
         return
             interfaceId == type(IMarket).interfaceId ||
+            interfaceId == type(IERC721Receiver).interfaceId ||
             interfaceId == this.supportsInterface.selector;
     }
 
