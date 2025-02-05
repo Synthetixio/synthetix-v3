@@ -197,6 +197,12 @@ contract VaultModule is IVaultModule {
             oldVault.currentEpoch().lastDelegationTime[accountId]
         );
 
+        // Must not surpass collateral limit of new pool
+        Pool.loadExisting(newPoolId).checkPoolCollateralLimit(
+            collateralType,
+            currentCollateralAmount
+        );
+
         // distribute any outstanding rewards distributor value to vaults prior to updating positions
         Pool.load(oldPoolId).updateRewardsToVaults(
             Vault.PositionSelector(accountId, oldPoolId, collateralType)

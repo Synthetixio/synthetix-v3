@@ -82,7 +82,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc ITreasuryMarket
      */
-    function registerMarket() external onlyOwner returns (uint128 newMarketId) {
+    function registerMarket() external override onlyOwner returns (uint128 newMarketId) {
         if (marketId != 0) {
             revert MarketAlreadyRegistered(marketId);
         }
@@ -103,7 +103,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128 requestedMarketId) public view returns (uint256 debt) {
+    function reportedDebt(uint128 requestedMarketId) external override view returns (uint256 debt) {
         if (requestedMarketId != marketId || artificialDebt < 0) {
             // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
             return 0;
@@ -126,7 +126,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IMarket
      */
-    function name(uint128) external pure returns (string memory) {
+    function name(uint128) external override pure returns (string memory) {
         return "Treasury Market";
     }
 
@@ -135,19 +135,23 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      */
     function minimumCredit(
         uint128 /* requestedMarketId*/
-    ) external view returns (uint256 lockedAmount) {
+    ) external override view returns (uint256 lockedAmount) {
         // we lock collateral here because it prevents any withdrawal of delegated collateral from the pool other than through `unsaddle`.
         return lockedCollateral;
     }
 
-    function setTargetCRatio(uint256 ratio) external onlyOwner {
+    function setTargetCRatio(uint256 ratio) external override onlyOwner {
+        if (ratio <= v3System.getCollateralConfiguration(collateralToken).liquidationRatioD18) {
+            revert ParameterError.InvalidParameter("ratio", "would cause liquidation");
+        }
+
         targetCratio = ratio;
         emit TargetCRatioSet(ratio);
 
         _rebalance();
     }
 
-    function saddle(uint128 accountId) external {
+    function saddle(uint128 accountId) external override {
         // get current position information
         (uint256 accountCollateral, uint256 accountCollateralValue, int256 accountDebt, ) = v3System
             .getPosition(accountId, poolId, collateralToken);
@@ -210,7 +214,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         emit AccountSaddled(accountId, accountCollateral, debtIncrease);
     }
 
-    function unsaddle(uint128 accountId) external {
+    function unsaddle(uint128 accountId) external override {
         if (saddledCollateral[accountId] == 0) {
             revert ParameterError.InvalidParameter("accountId", "not saddled");
         }
@@ -279,7 +283,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     function repaymentPenalty(
         uint128 accountId,
         uint256 targetLoan
-    ) external view returns (uint256) {
+    ) external override view returns (uint256) {
         LoanInfo memory loan = loans[accountId];
         uint256 timestamp = block.timestamp;
         return
@@ -291,7 +295,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             );
     }
 
-    function adjustLoan(uint128 accountId, uint256 amount) external {
+    function adjustLoan(uint128 accountId, uint256 amount) external override {
         address sender = ERC2771Context._msgSender();
         if (sender != IERC721(v3System.getAccountTokenAddress()).ownerOf(accountId)) {
             revert AccessError.Unauthorized(ERC2771Context._msgSender());
@@ -325,7 +329,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         emit LoanAdjusted(accountId, amount, currentLoan);
     }
 
-    function loanedAmount(uint128 accountId) external view returns (uint256) {
+    function loanedAmount(uint128 accountId) external override view returns (uint256) {
         return _loanedAmount(loans[accountId], block.timestamp);
     }
 
@@ -334,7 +338,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint32 time,
         uint128 startPenalty,
         uint128 endPenalty
-    ) external onlyOwner {
+    ) external override onlyOwner {
         if (power > 100) {
             revert ParameterError.InvalidParameter("power", "too high");
         }
@@ -352,17 +356,17 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         emit DebtDecayUpdated(power, time, startPenalty, endPenalty);
     }
 
-    function rebalance() external {
+    function rebalance() external override {
         _rebalance();
     }
 
-    function mintTreasury(uint256 amount) external onlyTreasury {
+    function mintTreasury(uint256 amount) external override onlyTreasury {
         v3System.withdrawMarketUsd(marketId, treasury, amount);
         emit TreasuryMinted(amount);
         _rebalance();
     }
 
-    function burnTreasury(uint256 amount) external onlyTreasury {
+    function burnTreasury(uint256 amount) external override onlyTreasury {
         v3System.depositMarketUsd(marketId, treasury, amount);
         emit TreasuryBurned(amount);
         _rebalance();

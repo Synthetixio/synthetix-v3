@@ -102,6 +102,11 @@ interface ITreasuryMarket {
     function unsaddle(uint128 accountId) external;
 
     /**
+     * @dev Prior to calling this function, the account must have approved for transfer of the ERC721 account token to this address so that this market can repay the debt.
+     */
+    function adjustLoan(uint128 accountId, uint256 amount) external;
+
+    /**
      * @notice Called by the owner to mint available sUSD to the treasury.
      */
     function mintTreasury(uint256 amount) external;
@@ -111,6 +116,17 @@ interface ITreasuryMarket {
      * @dev Before calling this function, ensure that the treasury has `approve`d transfer of at least `amount` sUSD to this address.
      */
     function burnTreasury(uint256 amount) external;
+
+    /**
+     * @notice Adjust the market's reported debt such that the c-ratio of the vault matches that of the configured targetCRatio, if possible
+     * @dev this function's implementation is automtaically called by other functions, such as `unsaddle`, `mintTreasury`, `burnTreasury`
+     */
+    function rebalance() external;
+
+    /**
+     * @notice Called by owner to change the c-ratio which will be rebalanced to for the vault.
+     */
+    function setTargetCRatio(uint256 ratio) external;
 
     /**
      * @notice Retrieves the current amount of loan remaining for the given accountId

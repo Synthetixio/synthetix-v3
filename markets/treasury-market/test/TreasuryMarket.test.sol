@@ -699,6 +699,20 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.setTargetCRatio(3 ether);
     }
 
+    function test_RevertIf_SetTargetCRatioInvalid() external {
+        vm.startPrank(market.owner());
+
+        uint256 liqRatio = v3System.getCollateralConfiguration(market.collateralToken()).liquidationRatioD18;
+
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "ratio", "would cause liquidation"));
+        market.setTargetCRatio(liqRatio);
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "ratio", "would cause liquidation"));
+        market.setTargetCRatio(0.5 ether);
+
+        vm.stopPrank();
+    }
+
+
     function test_SetTargetCRatio() external {
         vm.prank(market.owner());
         market.setTargetCRatio(3 ether);
