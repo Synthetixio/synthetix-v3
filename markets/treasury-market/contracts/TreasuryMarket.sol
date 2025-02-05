@@ -103,7 +103,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IMarket
      */
-    function reportedDebt(uint128 requestedMarketId) external override view returns (uint256 debt) {
+    function reportedDebt(uint128 requestedMarketId) external view override returns (uint256 debt) {
         if (requestedMarketId != marketId || artificialDebt < 0) {
             // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
             return 0;
@@ -126,7 +126,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IMarket
      */
-    function name(uint128) external override pure returns (string memory) {
+    function name(uint128) external pure override returns (string memory) {
         return "Treasury Market";
     }
 
@@ -135,7 +135,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      */
     function minimumCredit(
         uint128 /* requestedMarketId*/
-    ) external override view returns (uint256 lockedAmount) {
+    ) external view override returns (uint256 lockedAmount) {
         // we lock collateral here because it prevents any withdrawal of delegated collateral from the pool other than through `unsaddle`.
         return lockedCollateral;
     }
@@ -283,7 +283,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     function repaymentPenalty(
         uint128 accountId,
         uint256 targetLoan
-    ) external override view returns (uint256) {
+    ) external view override returns (uint256) {
         LoanInfo memory loan = loans[accountId];
         uint256 timestamp = block.timestamp;
         return
@@ -329,7 +329,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         emit LoanAdjusted(accountId, amount, currentLoan);
     }
 
-    function loanedAmount(uint128 accountId) external override view returns (uint256) {
+    function loanedAmount(uint128 accountId) external view override returns (uint256) {
         return _loanedAmount(loans[accountId], block.timestamp);
     }
 
