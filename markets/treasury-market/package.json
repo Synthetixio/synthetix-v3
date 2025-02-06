@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/treasury-market",
-  "version": "3.10.2",
+  "version": "3.10.3",
   "description": "V3 Market to allow a trusted entity to manage excess liquidity on behalf of stakers",
   "publishConfig": {
     "access": "public"
