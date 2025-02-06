@@ -3551,6 +3551,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/treasury-market@workspace:markets/treasury-market":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/treasury-market@workspace:markets/treasury-market"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/docgen": "workspace:*"
+    "@synthetixio/main": "workspace:*"
+    forge-std: "github:foundry-rs/forge-std#master"
+    hardhat: "npm:^2.19.5"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/wei@npm:^2.74.4":
   version: 2.74.4
   resolution: "@synthetixio/wei@npm:2.74.4"

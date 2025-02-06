@@ -1,0 +1,292 @@
+name = "synthetix"
+version = "<%= package.version %>"
+description = "Core synthetix system"
+
+# `salt` here only affects proxy contract
+[setting.salt]
+description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
+defaultValue = "main"
+
+[setting.bundleSalt]
+description = "Change this to a unique string to get a new initial module bundle"
+defaultValue = "main"
+
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.oracle_manager_package]
+defaultValue = "oracle-manager"
+
+[setting.usd_token_name]
+defaultValue = "Synthetic USD Token v3"
+
+[setting.usd_token_symbol]
+defaultValue = "sUSD"
+
+[setting.account_token_name]
+defaultValue = "Synthetix Account"
+
+[setting.account_token_symbol]
+defaultValue = "SACCT"
+
+[contract.InitialModuleBundle]
+artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
+salt = "<%= settings.bundleSalt !== 'main' ? settings.bundleSalt : settings.salt %>"
+create2 = true
+ifExists = "continue"
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
+
+[contract.AccountModule]
+artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
+
+[contract.AssociateDebtModule]
+artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.CcipReceiverModule]
+artifact = "contracts/modules/core/CcipReceiverModule.sol:CcipReceiverModule"
+
+[contract.CollateralModule]
+artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
+
+[contract.CollateralConfigurationModule]
+artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralConfigurationModule"
+
+[contract.CrossChainUSDModule]
+artifact = "contracts/modules/core/CrossChainUSDModule.sol:CrossChainUSDModule"
+
+[contract.IssueUSDModule]
+artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
+
+[contract.LiquidationModule]
+artifact = "contracts/modules/core/LiquidationModule.sol:LiquidationModule"
+
+[contract.MarketCollateralModule]
+artifact = "contracts/modules/core/MarketCollateralModule.sol:MarketCollateralModule"
+
+[contract.MarketManagerModule]
+artifact = "contracts/modules/core/MarketManagerModule.sol:MarketManagerModule"
+
+[contract.PoolConfigurationModule]
+artifact = "contracts/modules/core/PoolConfigurationModule.sol:PoolConfigurationModule"
+
+[contract.PoolModule]
+artifact = "contracts/modules/core/PoolModule.sol:PoolModule"
+
+[contract.RewardsManagerModule]
+artifact = "contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule"
+
+[contract.UtilsModule]
+artifact = "contracts/modules/core/UtilsModule.sol:UtilsModule"
+
+[contract.VaultModule]
+artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
+
+[contract.AccountTokenModule]
+artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
+
+[contract.USDTokenModule]
+artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
+
+# Core
+[router.CoreRouter]
+contracts = [
+    "InitialModuleBundle",
+    "FeatureFlagModule",
+    "AccountModule",
+    "AssociateDebtModule",
+    "AssociatedSystemsModule",
+    "CcipReceiverModule",
+    "CollateralModule",
+    "CollateralConfigurationModule",
+    "CrossChainUSDModule",
+    "IssueUSDModule",
+    "LiquidationModule",
+    "MarketCollateralModule",
+    "MarketManagerModule",
+    "PoolConfigurationModule",
+    "PoolModule",
+    "RewardsManagerModule",
+    "UtilsModule",
+    "VaultModule",
+]
+
+[contract.InitialCoreProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+abiOf = ["InitialModuleBundle"]
+salt = "<%= settings.salt %>"
+create2 = true
+
+[invoke.upgrade_core_proxy]
+target = ["InitialCoreProxy"]
+abi = "UpgradeModule"
+fromCall.func = "owner"
+func = "upgradeTo"
+args = ["<%= contracts.CoreRouter.address %>"]
+factory.CoreProxy.abiOf = ["CoreRouter"]
+factory.CoreProxy.artifact = "contracts/Proxy.sol:Proxy"
+factory.CoreProxy.event = "Upgraded"
+factory.CoreProxy.arg = 0
+factory.CoreProxy.highlight = true
+
+# Account
+[router.AccountRouter]
+contracts = ["InitialModuleBundle", "AccountTokenModule"]
+
+# USD
+[router.USDRouter]
+contracts = ["InitialModuleBundle", "AssociatedSystemsModule", "USDTokenModule"]
+
+# Post stuff
+[invoke.init_account]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "initOrUpgradeNft"
+args = [
+    "<%= formatBytes32String('accountNft') %>",
+    "<%= settings.account_token_name %>",
+    "<%= settings.account_token_symbol %>",
+    "https://synthetix.io",
+    "<%= contracts.AccountRouter.address %>",
+]
+depends = ["invoke.upgrade_core_proxy", "router.AccountRouter"]
+factory.AccountProxy.abiOf = ["AccountRouter"]
+factory.AccountProxy.artifact = "UUPSProxyWithOwner"
+factory.AccountProxy.event = "AssociatedSystemSet"
+factory.AccountProxy.arg = 2
+factory.AccountProxy.highlight = true
+
+[invoke.init_usd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "initOrUpgradeToken"
+args = [
+    "<%= formatBytes32String('USDToken') %>",
+    "<%= settings.usd_token_name %>",
+    "<%= settings.usd_token_symbol %>",
+    18,
+    "<%= contracts.USDRouter.address %>",
+]
+depends = ["invoke.upgrade_core_proxy", "router.USDRouter"]
+factory.USDProxy.abiOf = ["USDRouter"]
+factory.USDProxy.artifact = "UUPSProxyWithOwner"
+factory.USDProxy.event = "AssociatedSystemSet"
+factory.USDProxy.arg = 2
+factory.USDProxy.highlight = true
+
+[invoke.set_oracle_manager]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "configureOracleManager"
+args = ["<%= imports.oracle_manager.contracts.Proxy.address %>"]
+
+[invoke.enable_feature_createAccount]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('createAccount') %>", true]
+
+[invoke.enable_feature_deposit]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('deposit') %>", true]
+
+[invoke.enable_feature_withdraw]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdraw') %>", true]
+
+[invoke.enable_feature_mintUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('mintUsd') %>", true]
+
+[invoke.enable_feature_burnUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('burnUsd') %>", true]
+
+[invoke.enable_feature_liquidate]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidate') %>", true]
+
+[invoke.enable_feature_liquidateVault]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidateVault') %>", true]
+
+[invoke.enable_feature_depositMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketCollateral') %>", true]
+
+[invoke.enable_feature_withdrawMarketCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketCollateral') %>", true]
+
+[invoke.enable_feature_depositMarketUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('depositMarketUsd') %>", true]
+
+[invoke.enable_feature_withdrawMarketUsd]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('withdrawMarketUsd') %>", true]
+
+[invoke.enable_feature_claimRewards]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('claimRewards') %>", true]
+
+[invoke.enable_feature_delegateCollateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('delegateCollateral') %>", true]
+
+[invoke.enable_feature_migrateDelegation]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('migrateDelegation') %>", true]
+
+[invoke.register_const_one_oracle]
+target = ["oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    # 8 = "constant" oracle
+    8,
+    "<%= defaultAbiCoder.encode(['uint256'], [parseEther('1')]) %>",
+    [],
+]
+extra.const_one_oracle_id.event = "NodeRegistered"
+extra.const_one_oracle_id.arg = 0
+
+# we register USD as a collateral type because it is useful to treat it the same way as any other collateral
+[invoke.configure_usd_collateral]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "configureCollateral"
+args = [
+    { tokenAddress = "<%= contracts.USDProxy.address %>", oracleNodeId = "<%= extras.const_one_oracle_id %>", issuanceRatioD18 = "<%= parseEther('10') %>", liquidationRatioD18 = "<%= parseEther('10') %>", liquidationRewardD18 = "0", minDelegationD18 = "<%= MaxUint256 %>", depositingEnabled = true },
+]
