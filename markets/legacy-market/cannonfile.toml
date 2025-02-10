@@ -12,7 +12,7 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.v2x_package]
-defaultValue = "synthetix:2.101.2"
+defaultValue = "synthetix:2.101.3"
 
 [setting.v3_package]
 defaultValue = "synthetix:3.3.15"
