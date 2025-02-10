@@ -52,6 +52,13 @@ interface ILegacyMarket {
     event ConvertedUSD(address indexed account, uint256 amount);
 
     /**
+     * @notice Emitted after a call to `returnUSD`, moving debt from v3 to v2x.
+     * @param account the address of the address which provided the v3 sUSD for conversion
+     * @param amount the amount of v3 sUSD burnt, and the amount of v2x sUSD minted
+     */
+    event ReturnedUSD(address indexed account, uint256 amount);
+
+    /**
      * @notice Emitted after a call to `setPauseStablecoinConversion`
      * @param sender the address setting the stablecoin conversion pause status
      * @param paused whether stablecoin conversion is being paused or unpaused
@@ -64,6 +71,16 @@ interface ILegacyMarket {
      * @param paused whether migration is being paused or unpaused
      */
     event PauseMigrationSet(address indexed sender, bool paused);
+
+    /**
+     * @notice Called by anyone with {amount} v3 sUSD to convert {amount} v3 sUSD to {amount} v2x sUSD.
+     * The v3 sUSD will be burned (thereby reducing the sUSD total supply and v3 system size), and v2x sUSD will be minted.
+     * Any user who has v3 sUSD can call this function.
+     * Requirements:
+     * * User must first approve() the legacy market contract to spend the user's v3 sUSD
+     * @param amount the quantity to convert
+     */
+    function returnUSD(uint256 amount) external;
 
     /**
      * @notice Called by anyone with {amount} sUSD to convert {amount} sUSD to {amount} snxUSD.
