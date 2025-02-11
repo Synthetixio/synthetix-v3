@@ -253,6 +253,13 @@ library Account {
                     keccak256(abi.encode(_CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT, accountId)),
                     86400 * 365 * 100
                 ) -
+                1 &&
+            block.timestamp <
+            account.lastInteraction +
+                Config.readUint(
+                    keccak256(abi.encode(_CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT, ERC2771Context._msgSender())),
+                    86400 * 365 * 100
+                ) -
                 1
         ) {
             revert AccountActivityTimeoutPending(accountId, block.timestamp, endWaitingPeriod);
