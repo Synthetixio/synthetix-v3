@@ -15,7 +15,7 @@ defaultValue = "1"
 defaultValue = "<%= imports.v3.contracts.CollateralMock.address %>"
 
 [setting.v3_package]
-defaultValue = "synthetix:3.10.2-testable"
+defaultValue = "synthetix:<%= package.version %>-testable"
 
 depends = []
 
