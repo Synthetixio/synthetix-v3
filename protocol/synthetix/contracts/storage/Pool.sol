@@ -11,6 +11,8 @@ import "./PoolCollateralConfiguration.sol";
 import "./SystemPoolConfiguration.sol";
 import "./PoolCollateralConfiguration.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/RevertUtil.sol";
@@ -652,6 +654,20 @@ library Pool {
                         abi.encode(
                             _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME,
                             accountId,
+                            self.id
+                        )
+                    ),
+                    86400 * 365 * 100
+                ) -
+                1 &&
+            // same kind of override for msg sender
+            block.timestamp <
+            lastDelegationTime +
+                Config.readUint(
+                    keccak256(
+                        abi.encode(
+                            _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME,
+                            ERC2771Context._msgSender(),
                             self.id
                         )
                     ),
