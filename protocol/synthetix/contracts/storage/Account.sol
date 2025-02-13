@@ -247,7 +247,7 @@ library Account {
 
         uint256 endWaitingPeriod = account.lastInteraction + timeout;
         if (
-            block.timestamp < account.lastInteraction + timeout &&
+            block.timestamp < endWaitingPeriod &&
             block.timestamp <
             account.lastInteraction +
                 Config.readUint(
