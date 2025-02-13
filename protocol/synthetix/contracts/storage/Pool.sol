@@ -70,6 +70,8 @@ library Pool {
     bytes32 private constant _CONFIG_SET_MARKET_MIN_DELEGATE_MAX = "setMarketMinDelegateTime_max";
     bytes32 private constant _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME =
         "accountOverrideMinDelegateTime";
+    bytes32 private constant _CONFIG_SET_SENDER_OVERRIDE_MIN_DELEGATE_TIME =
+        "senderOverrideMinDelegateTime";
 
     struct Data {
         /**
@@ -666,7 +668,7 @@ library Pool {
                 Config.readUint(
                     keccak256(
                         abi.encode(
-                            _CONFIG_SET_ACCOUNT_OVERRIDE_MIN_DELEGATE_TIME,
+                            _CONFIG_SET_SENDER_OVERRIDE_MIN_DELEGATE_TIME,
                             ERC2771Context._msgSender(),
                             self.id
                         )
