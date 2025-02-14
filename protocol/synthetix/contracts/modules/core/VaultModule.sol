@@ -352,6 +352,17 @@ contract VaultModule is IVaultModule {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
     }
 
+    function getLastDelegationTime(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view override returns (uint256 lastDelegationTime) {
+        return
+            Pool.loadExisting(poolId).vaults[collateralType].currentEpoch().lastDelegationTime[
+                accountId
+            ];
+    }
+
     /**
      * @dev Updates the given account's position regarding the given pool and collateral type,
      * with the new amount of delegated collateral.

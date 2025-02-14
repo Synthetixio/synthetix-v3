@@ -196,4 +196,17 @@ interface IVaultModule {
         uint128 poolId,
         address collateralType
     ) external returns (uint256 ratioD18);
+
+    /**
+     * @notice Returns the last delegation time registered for a delegated account position
+     * @param accountId The id of the account whose delegation time is being queried.
+     * @param poolId The id of the pool in which the account's position is held.
+     * @param collateralType The address of the collateral used in the queried position.
+     * @return lastDelegationTime The timestamp of the last delegation update.
+     */
+    function getLastDelegationTime(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view returns (uint256 lastDelegationTime);
 }
