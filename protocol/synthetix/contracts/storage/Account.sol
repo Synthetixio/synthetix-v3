@@ -56,7 +56,8 @@ library Account {
 
     bytes32 private constant _CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT =
         "accountOverrideWithdrawTimeout";
-    bytes32 private constant _CONFIG_SET_SENDER_OVERRIDE_WITHDRAW_TIMEOUT = "senderOverrideWithdrawTimeout";
+    bytes32 private constant _CONFIG_SET_SENDER_OVERRIDE_WITHDRAW_TIMEOUT =
+        "senderOverrideWithdrawTimeout";
 
     struct Data {
         /**
