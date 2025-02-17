@@ -39,6 +39,9 @@ artifact = "PerpsMarketFactoryModule"
 [contract.AsyncOrderModule]
 artifact = "AsyncOrderModule"
 
+[contract.AsyncOrderSettlementChainlinkModule]
+artifact = "AsyncOrderSettlementChainlinkModule"
+
 [contract.AsyncOrderSettlementPythModule]
 artifact = "AsyncOrderSettlementPythModule"
 
@@ -85,6 +88,7 @@ contracts = [
     "PerpsAccountModule",
     "PerpsMarketModule",
     "AsyncOrderModule",
+    "AsyncOrderSettlementChainlinkModule",
     "AsyncOrderSettlementPythModule",
     "AsyncOrderCancelModule",
     "FeatureFlagModule",
