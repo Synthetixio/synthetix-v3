@@ -11,7 +11,7 @@ import { formatBytes32String } from 'ethers/lib/utils';
 const bn = (n: number) => wei(n).toBN();
 
 describe('WrapperModule', () => {
-  const { systems, signers, marketId } = bootstrapTraders(
+  const { systems, signers, marketId, aggregator } = bootstrapTraders(
     bootstrapWithSynth('Synthetic Ether', 'snxETH')
   );
 
@@ -365,6 +365,50 @@ describe('WrapperModule', () => {
         formatBytes32String('wrapperEnabled' + marketId().toString()),
         true
       );
+    });
+  });
+
+  describe('ensure it uses monthly price tolerance', () => {
+    const BASE_PRICE = bn(900);
+    beforeEach('reset monthly price', async () => {
+      await aggregator().mockSetMonthlyTolerancePrice(BASE_PRICE);
+    });
+
+    it('trader1 wraps 1 eth', async () => {
+      await systems().CollateralMock.connect(trader1).approve(systems().SpotMarket.address, bn(1));
+
+      const original = await systems()
+        .SpotMarket.connect(trader1)
+        .callStatic.wrap(marketId(), bn(1), 0);
+      await aggregator().mockSetMonthlyTolerancePrice(BASE_PRICE.mul(2));
+      const tx = await systems().SpotMarket.connect(trader1).callStatic.wrap(marketId(), bn(1), 0);
+
+      assertBn.equal(tx.fees.wrapperFees, original.fees.wrapperFees.mul(2));
+    });
+
+    it('trader1 unwraps 0.5 eth', async () => {
+      await synth.approve(systems().SpotMarket.address, bn(0.5));
+
+      const original = await systems()
+        .SpotMarket.connect(trader1)
+        .callStatic.unwrap(marketId(), bn(0.5), 0);
+      await aggregator().mockSetMonthlyTolerancePrice(BASE_PRICE.div(2));
+      const tx = await systems()
+        .SpotMarket.connect(trader1)
+        .callStatic.unwrap(marketId(), bn(0.5), 0);
+      assertBn.equal(tx.fees.wrapperFees, original.fees.wrapperFees.div(2));
+    });
+
+    it('strict price should have no effect', async () => {
+      await systems().CollateralMock.connect(trader1).approve(systems().SpotMarket.address, bn(1));
+
+      const original = await systems()
+        .SpotMarket.connect(trader1)
+        .callStatic.wrap(marketId(), bn(1), 0);
+      await aggregator().mockSetCurrentPrice(BASE_PRICE.mul(10));
+      const tx = await systems().SpotMarket.connect(trader1).callStatic.wrap(marketId(), bn(1), 0);
+
+      assertBn.equal(tx.fees.wrapperFees, original.fees.wrapperFees);
     });
   });
 });
