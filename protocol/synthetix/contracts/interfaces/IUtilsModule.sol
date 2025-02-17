@@ -13,6 +13,11 @@ interface IUtilsModule is IERC165 {
     event NewSupportedCrossChainNetwork(uint64 newChainId);
 
     /**
+     * @notice Emitted when a freestyle config value is set via `setConfig`
+     */
+    event ConfigSet(bytes32 indexed k, bytes32 v);
+
+    /**
      * @notice Configure CCIP addresses on the stablecoin.
      * @param ccipRouter The address on this chain to which CCIP messages will be sent or received.
      * @param ccipTokenPool The address where CCIP fees will be sent to when sending and receiving cross chain messages.

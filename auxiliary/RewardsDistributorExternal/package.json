@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/rewards-dist-ext",
-  "version": "3.10.3",
+  "version": "3.10.4",
   "publishConfig": {
     "access": "public"
   },

@@ -56,6 +56,8 @@ library Account {
 
     bytes32 private constant _CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT =
         "accountOverrideWithdrawTimeout";
+    bytes32 private constant _CONFIG_SET_SENDER_OVERRIDE_WITHDRAW_TIMEOUT =
+        "senderOverrideWithdrawTimeout";
 
     struct Data {
         /**
@@ -246,11 +248,23 @@ library Account {
 
         uint256 endWaitingPeriod = account.lastInteraction + timeout;
         if (
-            block.timestamp < account.lastInteraction + timeout &&
+            block.timestamp < endWaitingPeriod &&
             block.timestamp <
             account.lastInteraction +
                 Config.readUint(
                     keccak256(abi.encode(_CONFIG_SET_ACCOUNT_OVERRIDE_WITHDRAW_TIMEOUT, accountId)),
+                    86400 * 365 * 100
+                ) -
+                1 &&
+            block.timestamp <
+            account.lastInteraction +
+                Config.readUint(
+                    keccak256(
+                        abi.encode(
+                            _CONFIG_SET_SENDER_OVERRIDE_WITHDRAW_TIMEOUT,
+                            ERC2771Context._msgSender()
+                        )
+                    ),
                     86400 * 365 * 100
                 ) -
                 1
