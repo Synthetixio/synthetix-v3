@@ -1,6 +1,6 @@
 import { BigNumberish, Contract, ethers } from 'ethers';
 import hre from 'hardhat';
-import { Proxy } from '../generated/typechain';
+import { type Proxy } from '../../typechain-types';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import NodeTypes from '../integration/mixins/Node.types';
 

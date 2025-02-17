@@ -2,7 +2,7 @@ import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { NodeModule } from '../generated/typechain';
+import { type NodeModule } from '../../typechain-types';
 import NodeTypes from './mixins/Node.types';
 
 const abi = ethers.utils.defaultAbiCoder;
