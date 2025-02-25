@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/owned-fee-collector",
-  "version": "3.10.1",
+  "version": "3.10.4",
   "description": "Collects fees on behalf of an owner",
   "publishConfig": {
     "access": "public"

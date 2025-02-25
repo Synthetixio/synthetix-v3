@@ -1,11 +1,15 @@
 # overrides to create a testable deployment of the core system
 version = "<%= package.version %>-testable"
-include = ["cannonfile.toml"]
+include = ["cannonfile.common.toml"]
 
 # use the testable oracle manager
 [setting.oracle_manager_source]
 defaultValue = "oracle-manager:<%= package.version %>-testable"
 depends = []
+
+[clone.oracle_manager]
+source = "<%= settings.oracle_manager_source %>"
+target = "oracle-manager@synthetix-test"
 
 # Test Modules
 [contract.TestableAccountStorage]
