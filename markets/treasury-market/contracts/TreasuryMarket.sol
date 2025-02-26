@@ -10,6 +10,8 @@ import {UUPSImplementation} from "@synthetixio/core-contracts/contracts/proxy/UU
 
 import "./interfaces/ITreasuryMarket.sol";
 
+import "./interfaces/external/IOracleManagerProxy.sol";
+
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
@@ -38,6 +40,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     uint128 public immutable poolId;
     address public immutable collateralToken;
     IV3CoreProxy public immutable v3System;
+    IOracleManagerProxy public immutable oracleManager;
 
     int256 public artificialDebt;
 
@@ -58,22 +61,23 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     mapping(uint128 => uint256) public saddledCollateral;
     mapping(uint128 => LoanInfo) public loans;
 
-    struct LoanInfo {
-        uint64 startTime;
-        uint32 power;
-        uint32 duration;
-        uint128 loanAmount;
-    }
+    mapping(address => uint256) public availableDepositRewards;
+
+    DepositRewardConfiguration[] public depositRewardConfigurations;
+
+    mapping(uint128 => mapping(address => LoanInfo)) public depositRewards;
 
     // solhint-disable-next-line no-empty-blocks
     constructor(
         IV3CoreProxy v3SystemAddress,
+        IOracleManagerProxy oracleManagerAddress,
         address treasuryAddress,
         uint128 v3PoolId,
         address collateralTokenAddress
     ) Ownable(ERC2771Context._msgSender()) {
         treasury = treasuryAddress;
         v3System = v3SystemAddress;
+        oracleManager = oracleManagerAddress;
         poolId = v3PoolId;
 
         collateralToken = collateralTokenAddress;
@@ -198,14 +202,58 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         v3System.associateDebt(marketId, poolId, collateralToken, accountId, debtIncrease);
 
         // if a user has not been saddled before, any existing account debt becomes a loan on the user
-        if (accountDebt > 0 && saddledCollateral[accountId] == 0) {
-            loans[accountId] = LoanInfo(
-                uint64(block.timestamp),
-                debtDecayPower,
-                debtDecayTime,
-                accountDebt.toUint().to128()
-            );
-            emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
+        if (saddledCollateral[accountId] == 0) {
+            if (accountDebt > 0) {
+                loans[accountId] = LoanInfo(
+                    uint64(block.timestamp),
+                    debtDecayPower,
+                    debtDecayTime,
+                    accountDebt.toUint().to128()
+                );
+                emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
+            } else {
+                // this depositor is eligible for possible rewards
+                //DepositRewardConfiguration[] memory drc = depositRewardConfigurations;
+                for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
+                    DepositRewardConfiguration memory config = depositRewardConfigurations[i];
+                    uint256 rewardAmount = (((accountCollateral *
+                        oracleManager.process(config.valueRatioOracle).price.toUint()) / 1 ether) *
+                        config.percent) / 1 ether;
+                    if (rewardAmount > availableDepositRewards[config.token]) {
+                        revert InsufficientAvailableReward(
+                            config.token,
+                            rewardAmount,
+                            availableDepositRewards[config.token]
+                        );
+                    }
+
+                    // stack was too deep to set this as a local variable. annoying.
+                    //LoanInfo memory depositRewardData =
+                    LoanInfo(
+                        uint64(block.timestamp),
+                        config.power,
+                        config.duration,
+                        rewardAmount.to128()
+                    );
+                    depositRewards[accountId][config.token] = LoanInfo(
+                        uint64(block.timestamp),
+                        config.power,
+                        config.duration,
+                        rewardAmount.to128()
+                    );
+
+                    emit DepositRewardIssued(
+                        accountId,
+                        config.token,
+                        LoanInfo(
+                            uint64(block.timestamp),
+                            config.power,
+                            config.duration,
+                            rewardAmount.to128()
+                        )
+                    );
+                }
+            }
         }
 
         totalSaddledCollateral += accountCollateral - saddledCollateral[accountId];
@@ -275,6 +323,27 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         _rebalance();
 
+        // distribute any deposit rewards to the user's account
+        uint256 timestamp = block.timestamp;
+        for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
+            DepositRewardConfiguration memory config = depositRewardConfigurations[i];
+            LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
+            if (userDepositReward.loanAmount > 0) {
+                uint256 penaltyPaid = _repaymentPenalty(
+                    userDepositReward,
+                    0,
+                    _currentPenaltyRate(userDepositReward, timestamp),
+                    timestamp
+                );
+
+                uint256 receivedAmount = userDepositReward.loanAmount -
+                    _loanedAmount(userDepositReward, timestamp) -
+                    penaltyPaid;
+
+                emit DepositRewardRedeemed(accountId, config.token, receivedAmount, penaltyPaid);
+            }
+        }
+
         // return the account token to the user. we use the "unsafe" call here because the account is being returned to the same address
         // it came from, so its probably ok and the account will be able to handle receipt of the NFT.
         accountToken.transferFrom(address(this), sender, accountId);
@@ -286,13 +355,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     ) external view override returns (uint256) {
         LoanInfo memory loan = loans[accountId];
         uint256 timestamp = block.timestamp;
-        return
-            _repaymentPenalty(
-                loan,
-                targetLoan,
-                _currentPenaltyRate(loans[accountId], timestamp),
-                block.timestamp
-            );
+        return _repaymentPenalty(loan, targetLoan, _currentPenaltyRate(loan, timestamp), timestamp);
     }
 
     function adjustLoan(uint128 accountId, uint256 amount) external override {
@@ -333,6 +396,15 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return _loanedAmount(loans[accountId], block.timestamp);
     }
 
+    function depositRewardAvailable(
+        uint128 accountId,
+        address rewardTokenAddress
+    ) external view override returns (uint256) {
+        return
+            depositRewards[accountId][rewardTokenAddress].loanAmount -
+            _loanedAmount(depositRewards[accountId][rewardTokenAddress], block.timestamp);
+    }
+
     function setDebtDecayFunction(
         uint32 power,
         uint32 time,
@@ -356,8 +428,50 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         emit DebtDecayUpdated(power, time, startPenalty, endPenalty);
     }
 
+    function setDepositRewardConfigurations(
+        DepositRewardConfiguration[] memory newDrcs
+    ) external override onlyOwner {
+        for (uint256 i = 0; i < newDrcs.length; i++) {
+            if (depositRewardConfigurations.length <= i) {
+                depositRewardConfigurations.push();
+            }
+            depositRewardConfigurations[i] = newDrcs[i];
+        }
+
+        uint256 popped = depositRewardConfigurations.length - newDrcs.length;
+        for (uint256 i = 0; i < popped; i++) {
+            depositRewardConfigurations.pop();
+        }
+    }
+
     function rebalance() external override {
         _rebalance();
+    }
+
+    function fundForDepositReward(
+        address token,
+        uint256 amount
+    ) external override returns (uint256) {
+        IERC20(token).transferFrom(ERC2771Context._msgSender(), address(this), amount);
+        v3System.depositMarketCollateral(marketId, token, amount);
+        availableDepositRewards[token] += amount;
+
+        return availableDepositRewards[token];
+    }
+
+    function removeFromDepositReward(
+        address token,
+        uint256 amount
+    ) external override onlyTreasury returns (uint256) {
+        if (availableDepositRewards[token] < amount) {
+            revert ParameterError.InvalidParameter("amount", "greater than available rewards");
+        }
+        v3System.withdrawMarketCollateral(marketId, token, amount);
+        IERC20(token).transfer(ERC2771Context._msgSender(), amount);
+
+        availableDepositRewards[token] -= amount;
+
+        return availableDepositRewards[token];
     }
 
     function mintTreasury(uint256 amount) external override onlyTreasury {

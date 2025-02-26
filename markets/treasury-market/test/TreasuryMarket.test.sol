@@ -19,6 +19,7 @@ interface IV3TestCoreProxy is IV3CoreProxy {}
 contract TreasuryMarketTest is Test, IERC721Receiver {
     TreasuryMarket private market;
     IV3TestCoreProxy private v3System;
+    IOracleManagerProxy private oracleManager;
     CollateralMock private collateralToken;
     MockMarket private sideMarket;
     address private initialModuleBundleAddress;
@@ -37,6 +38,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         deployer.run();
         market = TreasuryMarket(deployer.getAddress(keccak256("Proxy")));
         v3System = IV3TestCoreProxy(deployer.getAddress(keccak256("CoreProxy")));
+        oracleManager = IOracleManagerProxy(deployer.getAddress(keccak256("Proxy")));
         usdToken = IERC20(deployer.getAddress(keccak256("USDProxy")));
         collateralToken = CollateralMock(deployer.getAddress(keccak256("CollateralMock")));
         initialModuleBundleAddress = deployer.getAddress(keccak256("InitialModuleBundle"));
@@ -53,6 +55,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // TODO: need to find a better way to do this
         TreasuryMarket treasuryMarketCode = new TreasuryMarket(
             v3System,
+            oracleManager,
             market.treasury(),
             poolId,
             address(collateralToken)
@@ -126,6 +129,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_NewMarketRegistration() external {
         TreasuryMarket newMarket = new TreasuryMarket(
             v3System,
+            oracleManager,
             market.treasury(),
             poolId,
             address(collateralToken)
