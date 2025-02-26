@@ -43,7 +43,6 @@ describe('LegacyMarket', function () {
   let synthetixDebtShare: ethers.Contract;
   let liquidationRewards: ethers.Contract;
   let rewardEscrow: ethers.Contract;
-  let snxDistributor: ethers.Contract;
 
   let v3System: ethers.Contract;
   let v3Account: ethers.Contract;
@@ -116,11 +115,6 @@ describe('LegacyMarket', function () {
       outputs.imports.v3.contracts.USDProxy.address,
       outputs.imports.v3.contracts.USDProxy.abi,
       provider
-    );
-
-    snxDistributor = new ethers.Contract(
-      outputs.contracts.SNXDistributor.address,
-      outputs.contracts.SNXDistributor.abi
     );
 
     await rewardEscrow
@@ -211,6 +205,86 @@ describe('LegacyMarket', function () {
           await assertEvent(
             txn,
             `ConvertedUSD("${snxStakerAddress}", ${convertedAmount.toBN().toString()})`,
+            market
+          );
+        });
+      });
+    });
+  });
+
+  describe('returnUSD()', async () => {
+    before(restore);
+
+    before('approve', async () => {
+      await susdToken.connect(snxStaker).approve(market.address, ethers.constants.MaxUint256);
+    });
+
+    describe('when some snxUSD is available and collateral has been migrated', async () => {
+      const convertedAmount = wei(1);
+
+      before('do migration', async () => {
+        await snxToken.connect(snxStaker).approve(market.address, ethers.constants.MaxUint256);
+        await market.connect(snxStaker).migrate(migratedAccountId);
+
+        // sanity
+        assertBn.gte(
+          await v3System.getWithdrawableMarketUsd(await market.marketId()),
+          convertedAmount.toBN()
+        );
+      });
+
+      before('do convert', async () => {
+        await (await market.connect(snxStaker).convertUSD(convertedAmount.toBN())).wait();
+      });
+
+      it('fails when returnUSD argument is 0', async () => {
+        await assertRevert(market.connect(snxStaker).returnUSD(0), 'InvalidParameter(\\"amount\\"');
+      });
+
+      it('fails when insufficient source balance', async () => {
+        // transfer away some of the sUSD so that we can see what happens when there is not balance
+        await susdToken.connect(snxStaker).transfer(await owner.getAddress(), wei(500).toBN());
+        await assertRevert(
+          market.connect(snxStaker).convertUSD(wei(501).toBN()),
+          'Error(\\"Insufficient balance after any settlement owing\\")'
+        );
+      });
+
+      describe('when invoked', async () => {
+        let txn: ethers.providers.TransactionReceipt;
+
+        let beforeMarketBalance: Wei;
+
+        before('record priors', async () => {
+          beforeMarketBalance = wei(await v3System.getMarketNetIssuance(await market.marketId()));
+        });
+
+        before('when invoked', async () => {
+          await (
+            await v3Usd.connect(snxStaker).approve(market.address, convertedAmount.toBN())
+          ).wait();
+          txn = await (await market.connect(snxStaker).returnUSD(convertedAmount.toBN())).wait();
+        });
+
+        it('mints v2x USD', async () => {
+          assertBn.equal(await susdToken.balanceOf(await snxStaker.getAddress()), wei(500).toBN());
+        });
+
+        it('burns v3 USD', async () => {
+          assertBn.equal(await v3Usd.balanceOf(await snxStaker.getAddress()), 0);
+        });
+
+        it('increased market balance', async () => {
+          assertBn.equal(
+            await v3System.getMarketNetIssuance(await market.marketId()),
+            beforeMarketBalance.sub(1).toBN()
+          );
+        });
+
+        it('emitted an event', async () => {
+          await assertEvent(
+            txn,
+            `ReturnedUSD("${snxStakerAddress}", ${convertedAmount.toBN().toString()})`,
             market
           );
         });
@@ -437,42 +511,6 @@ describe('LegacyMarket', function () {
               ),
               ethers.utils.parseEther('1000')
             );
-          });
-
-          it('rewards available for distributed', async () => {
-            assertBn.equal(
-              await v3System
-                .connect(owner)
-                .callStatic.claimRewards(
-                  accountId,
-                  await v3System.getPreferredPool(),
-                  snxToken.address,
-                  snxDistributor.address
-                ),
-              ethers.utils.parseEther('10')
-            );
-          });
-
-          describe('claim rewards from rewards distributor', async () => {
-            let beforeBalance: ethers.BigNumberish;
-            before('claim', async () => {
-              beforeBalance = await snxToken.balanceOf(await owner.getAddress());
-              await v3System
-                .connect(owner)
-                .claimRewards(
-                  accountId,
-                  await v3System.getPreferredPool(),
-                  snxToken.address,
-                  snxDistributor.address
-                );
-            });
-
-            it('should have collateral in account', async () => {
-              assertBn.equal(
-                (await snxToken.balanceOf(await owner.getAddress())).sub(beforeBalance),
-                ethers.utils.parseEther('10')
-              );
-            });
           });
         });
       });

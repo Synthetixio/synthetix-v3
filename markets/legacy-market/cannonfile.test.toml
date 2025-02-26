@@ -29,7 +29,7 @@ from = "<%= settings.pool_owner %>"
 args = [
     "<%= settings.sc_pool_id %>",
     [
-        { marketId = "<%= extras.marketId %>", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
+        { marketId = "<%= settings.market_id %>", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
     ],
 ]
 depends = ["invoke.createPool"]
@@ -40,16 +40,3 @@ func = "setPreferredPool"
 args = ["<%= settings.sc_pool_id %>"]
 fromCall.func = "owner"
 depends = ["invoke.createPool"]
-
-[invoke.registerRewardsDistributor]
-target = ["v3.CoreProxy"]
-func = "registerRewardsDistributor"
-args = [
-    "<%= settings.sc_pool_id %>",
-    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
-    "<%= contracts.SNXDistributor.address %>",
-]
-
-fromCall.func = "owner"
-
-depends = ["invoke.createPool", "contract.SNXDistributor"]
