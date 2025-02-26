@@ -108,23 +108,18 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      * @inheritdoc IMarket
      */
     function reportedDebt(uint128 requestedMarketId) external view override returns (uint256 debt) {
-        if (requestedMarketId != marketId || artificialDebt < 0) {
+        if (requestedMarketId != marketId) {
             // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
             return 0;
         }
 
-        return uint256(artificialDebt);
+        uint256 depositedDebt = v3System.getMarketCollateralValue(marketId);
 
-        // TODO: I would really like for the pool to display exactly ex. 200% c-ratio by reporting higher debt here,
-        // but calling `getVaultDebt` effectively calls this function, which calls `getVaultDebt` again
-        // so we would need to reverse engineer this calculation somehow, and that just seems like way too much effort
-        // for the needs of this project.
-        // report enough debt to make it look like the target c-ratio
-        /*(, uint256 collateralValue) = v3System.getVaultCollateral(poolId, collateralToken);
-        int256 currentDebt = v3System.getVaultDebt(poolId, collateralToken);
+        if (-artificialDebt > int256(depositedDebt)) {
+            return 0;
+        }
 
-        int256 targetDebt = (collateralValue * targetCratio / 1e18).toInt();
-        return currentDebt > targetDebt ? uint256(currentDebt - targetDebt) : 0;*/
+        return depositedDebt + uint256(artificialDebt);
     }
 
     /**
@@ -137,7 +132,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IMarket
      */
-    function minimumCredit(uint128 /* requestedMarketId*/ ) external view override returns (uint256 lockedAmount) {
+    function minimumCredit(
+        uint128 /* requestedMarketId*/
+    ) external view override returns (uint256 lockedAmount) {
         // we lock collateral here because it prevents any withdrawal of delegated collateral from the pool other than through `unsaddle`.
         return lockedCollateral;
     }
@@ -155,8 +152,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function saddle(uint128 accountId) external override {
         // get current position information
-        (uint256 accountCollateral, uint256 accountCollateralValue, int256 accountDebt,) =
-            v3System.getPosition(accountId, poolId, collateralToken);
+        (uint256 accountCollateral, uint256 accountCollateralValue, int256 accountDebt, ) = v3System
+            .getPosition(accountId, poolId, collateralToken);
 
         if (accountCollateral == 0) {
             revert ParameterError.InvalidParameter("accountId", "not delegated to pool");
@@ -166,8 +163,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         (, uint256 vaultCollateralValue) = v3System.getVaultCollateral(poolId, collateralToken);
         int256 vaultDebtValue = v3System.getVaultDebt(poolId, collateralToken);
 
-        uint256 newlySaddledValue =
-            accountCollateralValue - (saddledCollateral[accountId] * accountCollateralValue) / accountCollateral;
+        uint256 newlySaddledValue = accountCollateralValue -
+            (saddledCollateral[accountId] * accountCollateralValue) /
+            accountCollateral;
 
         // debt can only be added once an account joins the pool for the first time
         int256 newlySaddledDebt = saddledCollateral[accountId] > 0 ? int256(0) : accountDebt;
@@ -181,8 +179,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         } else if (vaultCollateralValue > accountCollateralValue) {
             // we calculate what the c-ratio of the pool should have been prior to when the account added onto the pool
             // this will allow for the correct debt to be set on this account to "equalize" with the other accounts
-            targetDebt = (accountCollateralValue.toInt() * (vaultDebtValue - newlySaddledDebt))
-                / (vaultCollateralValue - newlySaddledValue).toInt();
+            targetDebt =
+                (accountCollateralValue.toInt() * (vaultDebtValue - newlySaddledDebt)) /
+                (vaultCollateralValue - newlySaddledValue).toInt();
         }
 
         // cannot saddle account if its c-ratio is too low
@@ -200,34 +199,55 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         // if a user has not been saddled before, any existing account debt becomes a loan on the user
         if (saddledCollateral[accountId] == 0) {
             if (accountDebt > 0) {
-                loans[accountId] =
-                    LoanInfo(uint64(block.timestamp), debtDecayPower, debtDecayTime, accountDebt.toUint().to128());
+                loans[accountId] = LoanInfo(
+                    uint64(block.timestamp),
+                    debtDecayPower,
+                    debtDecayTime,
+                    accountDebt.toUint().to128()
+                );
                 emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
             } else {
                 // this depositor is eligible for possible rewards
                 //DepositRewardConfiguration[] memory drc = depositRewardConfigurations;
                 for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
                     DepositRewardConfiguration memory config = depositRewardConfigurations[i];
-                    uint256 rewardAmount = (
-                        ((accountCollateral * oracleManager.process(config.valueRatioOracle).price.toUint()) / 1 ether)
-                            * config.percent
-                    ) / 1 ether;
+                    uint256 rewardAmount = (((accountCollateral *
+                        oracleManager.process(config.valueRatioOracle).price.toUint()) / 1 ether) *
+                        config.percent) / 1 ether;
                     if (rewardAmount > availableDepositRewards[config.token]) {
                         revert InsufficientAvailableReward(
-                            config.token, rewardAmount, availableDepositRewards[config.token]
+                            config.token,
+                            rewardAmount,
+                            availableDepositRewards[config.token]
                         );
                     }
 
                     // stack was too deep to set this as a local variable. annoying.
                     //LoanInfo memory depositRewardData =
-                    LoanInfo(uint64(block.timestamp), config.power, config.duration, rewardAmount.to128());
-                    depositRewards[accountId][config.token] =
-                        LoanInfo(uint64(block.timestamp), config.power, config.duration, rewardAmount.to128());
+                    LoanInfo(
+                        uint64(block.timestamp),
+                        config.power,
+                        config.duration,
+                        rewardAmount.to128()
+                    );
+                    depositRewards[accountId][config.token] = LoanInfo(
+                        uint64(block.timestamp),
+                        config.power,
+                        config.duration,
+                        uint128(rewardAmount)
+                    );
+
+                    availableDepositRewards[config.token] -= rewardAmount;
 
                     emit DepositRewardIssued(
                         accountId,
                         config.token,
-                        LoanInfo(uint64(block.timestamp), config.power, config.duration, rewardAmount.to128())
+                        LoanInfo(
+                            uint64(block.timestamp),
+                            config.power,
+                            config.duration,
+                            rewardAmount.to128()
+                        )
                     );
                 }
             }
@@ -259,13 +279,20 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         accountToken.safeTransferFrom(ERC2771Context._msgSender(), address(this), accountId);
 
         // get current position information
-        (uint256 accountCollateral,, int256 accountDebt,) = v3System.getPosition(accountId, poolId, collateralToken);
+        (uint256 accountCollateral, , int256 accountDebt, ) = v3System.getPosition(
+            accountId,
+            poolId,
+            collateralToken
+        );
 
         if (accountDebt > 0) {
-            (uint256 vaultCollateral,) = v3System.getVaultCollateral(poolId, collateralToken);
+            (uint256 vaultCollateral, ) = v3System.getVaultCollateral(poolId, collateralToken);
 
             if (accountCollateral == vaultCollateral) {
-                revert ParameterError.InvalidParameter("accountCollateral", "no surplus collateral to fund exit");
+                revert ParameterError.InvalidParameter(
+                    "accountCollateral",
+                    "no surplus collateral to fund exit"
+                );
             }
 
             uint256 neededToRepay = uint256(accountDebt);
@@ -300,13 +327,37 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
             if (userDepositReward.loanAmount > 0) {
                 uint256 penaltyPaid = _repaymentPenalty(
-                    userDepositReward, 0, _currentPenaltyRate(userDepositReward, timestamp), timestamp
+                    userDepositReward,
+                    0,
+                    _currentPenaltyRate(
+                        userDepositReward,
+                        config.penaltyStart,
+                        config.penaltyEnd,
+                        timestamp
+                    ),
+                    timestamp
                 );
 
-                uint256 receivedAmount =
-                    userDepositReward.loanAmount - _loanedAmount(userDepositReward, timestamp) - penaltyPaid;
+                uint256 receivedAmount = userDepositReward.loanAmount -
+                    _loanedAmount(userDepositReward, timestamp) -
+                    penaltyPaid;
 
-                emit DepositRewardRedeemed(accountId, config.token, receivedAmount, penaltyPaid);
+                if (receivedAmount > 0) {
+                    v3System.withdrawMarketCollateral(marketId, config.token, receivedAmount);
+                    v3System.deposit(accountId, config.token, receivedAmount);
+
+                    emit DepositRewardRedeemed(
+                        accountId,
+                        config.token,
+                        receivedAmount,
+                        penaltyPaid
+                    );
+                }
+
+                // return any rewards not received to the available deposit rewards
+                availableDepositRewards[config.token] +=
+                    userDepositReward.loanAmount -
+                    receivedAmount;
             }
         }
 
@@ -315,10 +366,19 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         accountToken.transferFrom(address(this), sender, accountId);
     }
 
-    function repaymentPenalty(uint128 accountId, uint256 targetLoan) external view override returns (uint256) {
+    function repaymentPenalty(
+        uint128 accountId,
+        uint256 targetLoan
+    ) external view override returns (uint256) {
         LoanInfo memory loan = loans[accountId];
         uint256 timestamp = block.timestamp;
-        return _repaymentPenalty(loan, targetLoan, _currentPenaltyRate(loan, timestamp), timestamp);
+        return
+            _repaymentPenalty(
+                loan,
+                targetLoan,
+                _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, timestamp),
+                timestamp
+            );
     }
 
     function adjustLoan(uint128 accountId, uint256 amount) external override {
@@ -334,7 +394,12 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         if (amount > currentLoan) {
             revert ParameterError.InvalidParameter("amount", "must be less than current loan");
         } else if (amount < currentLoan) {
-            uint256 penaltyAmount = _repaymentPenalty(loan, amount, _currentPenaltyRate(loan, timestamp), timestamp);
+            uint256 penaltyAmount = _repaymentPenalty(
+                loan,
+                amount,
+                _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, timestamp),
+                timestamp
+            );
             // apply a penalty on whatever is repaid
 
             v3System.depositMarketUsd(marketId, sender, currentLoan - amount + penaltyAmount);
@@ -344,7 +409,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         }
 
         // fractionally modify the original loan amount--this will continue the repayment schedule where the user left off without resetting it
-        loans[accountId].loanAmount = ((loans[accountId].loanAmount * amount) / currentLoan).to128();
+        loans[accountId].loanAmount = ((loans[accountId].loanAmount * amount) / currentLoan)
+            .to128();
 
         emit LoanAdjusted(accountId, amount, currentLoan);
     }
@@ -353,21 +419,21 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return _loanedAmount(loans[accountId], block.timestamp);
     }
 
-    function depositRewardAvailable(uint128 accountId, address rewardTokenAddress)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return depositRewards[accountId][rewardTokenAddress].loanAmount
-            - _loanedAmount(depositRewards[accountId][rewardTokenAddress], block.timestamp);
+    function depositRewardAvailable(
+        uint128 accountId,
+        address rewardTokenAddress
+    ) external view override returns (uint256) {
+        return
+            depositRewards[accountId][rewardTokenAddress].loanAmount -
+            _loanedAmount(depositRewards[accountId][rewardTokenAddress], block.timestamp);
     }
 
-    function setDebtDecayFunction(uint32 power, uint32 time, uint128 startPenalty, uint128 endPenalty)
-        external
-        override
-        onlyOwner
-    {
+    function setDebtDecayFunction(
+        uint32 power,
+        uint32 time,
+        uint128 startPenalty,
+        uint128 endPenalty
+    ) external override onlyOwner {
         if (power > 100) {
             revert ParameterError.InvalidParameter("power", "too high");
         }
@@ -385,7 +451,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         emit DebtDecayUpdated(power, time, startPenalty, endPenalty);
     }
 
-    function setDepositRewardConfigurations(DepositRewardConfiguration[] memory newDrcs) external override onlyOwner {
+    function setDepositRewardConfigurations(
+        DepositRewardConfiguration[] memory newDrcs
+    ) external override onlyOwner {
         for (uint256 i = 0; i < newDrcs.length; i++) {
             if (depositRewardConfigurations.length <= i) {
                 depositRewardConfigurations.push();
@@ -406,7 +474,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         _rebalance();
     }
 
-    function fundForDepositReward(address token, uint256 amount) external override returns (uint256) {
+    function fundForDepositReward(
+        address token,
+        uint256 amount
+    ) external override returns (uint256) {
         IERC20(token).transferFrom(ERC2771Context._msgSender(), address(this), amount);
         v3System.depositMarketCollateral(marketId, token, amount);
         availableDepositRewards[token] += amount;
@@ -414,7 +485,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return availableDepositRewards[token];
     }
 
-    function removeFromDepositReward(address token, uint256 amount) external override onlyTreasury returns (uint256) {
+    function removeFromDepositReward(
+        address token,
+        uint256 amount
+    ) external override onlyTreasury returns (uint256) {
         if (availableDepositRewards[token] < amount) {
             revert ParameterError.InvalidParameter("amount", "greater than available rewards");
         }
@@ -441,9 +515,13 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     /**
      * @inheritdoc IERC165
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IMarket).interfaceId || interfaceId == type(IERC721Receiver).interfaceId
-            || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IMarket).interfaceId ||
+            interfaceId == type(IERC721Receiver).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 
     function upgradeTo(address to) external onlyOwner {
@@ -496,7 +574,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return cur;
     }
 
-    function _loanedAmount(LoanInfo memory loan, uint256 timestamp) internal pure returns (uint256) {
+    function _loanedAmount(
+        LoanInfo memory loan,
+        uint256 timestamp
+    ) internal pure returns (uint256) {
         if (loan.power == 0 || timestamp <= loan.startTime) {
             return loan.loanAmount;
         } else if (timestamp >= loan.startTime + loan.duration) {
@@ -505,24 +586,27 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         // this function is a polynomial decay
         // model if `power` is 2 and `duration` is 365 https://www.wolframalpha.com/input?i=graph+1-%28x%2F365%29%5E2+from+0+to+365
-        return loan.loanAmount
-            - uint256(loan.loanAmount).mulDecimal(
+        return
+            loan.loanAmount -
+            uint256(loan.loanAmount).mulDecimal(
                 _decimalPow((timestamp - loan.startTime).divDecimal(loan.duration), loan.power)
             );
     }
 
-    function _repaymentPenalty(LoanInfo memory loan, uint256 targetLoan, uint256 currentPenalty, uint256 timestamp)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _repaymentPenalty(
+        LoanInfo memory loan,
+        uint256 targetLoan,
+        uint256 currentPenalty,
+        uint256 timestamp
+    ) internal pure returns (uint256) {
         uint256 currentLoan = _loanedAmount(loan, timestamp);
         if (targetLoan > currentLoan || currentPenalty == 0) {
             return 0;
         }
 
-        uint256 loanCompletionPercentage =
-            loan.duration > 0 ? (timestamp - loan.startTime).divDecimal(loan.duration) : 0;
+        uint256 loanCompletionPercentage = loan.duration > 0
+            ? (timestamp - loan.startTime).divDecimal(loan.duration)
+            : 0;
 
         // the penalty subtracts a certain percentage from what has been decayed. for example, assuming 25% penalty:
         // 1. starting with a $1000 loan over 40 days
@@ -531,24 +615,32 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         // 4. The penalty is 25% at time of repayment, so 25% $400 is $100, so this plus the amount of the principal
         // to repay ($300) for a total of $400 is paid in total to repay $300
         if (loanCompletionPercentage < 1 ether) {
-            return (loan.loanAmount - currentLoan).mulDecimal(currentPenalty).mulDecimal(
-                1 ether - targetLoan.divDecimal(currentLoan)
-            );
+            return
+                (loan.loanAmount - currentLoan).mulDecimal(currentPenalty).mulDecimal(
+                    1 ether - targetLoan.divDecimal(currentLoan)
+                );
         }
 
         return 0;
     }
 
-    function _currentPenaltyRate(LoanInfo memory loan, uint256 timestamp) internal view returns (uint256) {
-        uint256 loanCompletionPercentage =
-            loan.duration > 0 ? (timestamp - loan.startTime).divDecimal(loan.duration) : 0;
+    function _currentPenaltyRate(
+        LoanInfo memory loan,
+        uint256 penaltyStart,
+        uint256 penaltyEnd,
+        uint256 timestamp
+    ) internal pure returns (uint256) {
+        uint256 loanCompletionPercentage = loan.duration > 0
+            ? (timestamp - loan.startTime).divDecimal(loan.duration)
+            : 0;
 
         if (loanCompletionPercentage >= 1 ether) {
-            return debtDecayPenaltyEnd;
+            return penaltyEnd;
         }
 
-        return uint256(debtDecayPenaltyStart).mulDecimal(1 ether - loanCompletionPercentage)
-            + uint256(debtDecayPenaltyEnd).mulDecimal(loanCompletionPercentage);
+        return
+            uint256(penaltyStart).mulDecimal(1 ether - loanCompletionPercentage) +
+            uint256(penaltyEnd).mulDecimal(loanCompletionPercentage);
     }
 
     modifier onlyTreasury() {
