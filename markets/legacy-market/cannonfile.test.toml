@@ -40,16 +40,3 @@ func = "setPreferredPool"
 args = ["<%= settings.sc_pool_id %>"]
 fromCall.func = "owner"
 depends = ["invoke.createPool"]
-
-#[invoke.registerRewardsDistributor]
-#target = ["v3.CoreProxy"]
-#func = "registerRewardsDistributor"
-#args = [
-#    "<%= settings.sc_pool_id %>",
-#    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
-#    "<%= contracts.SNXDistributor.address %>",
-#]
-
-#fromCall.func = "owner"
-
-#depends = ["invoke.createPool"]
