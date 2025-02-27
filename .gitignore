@@ -30,3 +30,5 @@ storage.new.dump.json
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+tsconfig.tsbuildinfo

@@ -38,6 +38,7 @@ describe('LegacyMarket (iosiro)', function () {
   let susdToken: ethers.Contract;
 
   let v3System: ethers.Contract;
+  let v3Account: ethers.Contract;
   let v3Usd: ethers.Contract;
 
   let cannonProvider: ethers.providers.JsonRpcProvider;
@@ -82,6 +83,7 @@ describe('LegacyMarket (iosiro)', function () {
       outputs.imports.v3.contracts.CoreProxy.abi,
       provider
     );
+
     v3Account = new ethers.Contract(
       outputs.imports.v3.contracts.AccountProxy.address,
       outputs.imports.v3.contracts.AccountProxy.abi,

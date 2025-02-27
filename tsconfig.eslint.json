@@ -9,9 +9,5 @@
     "./markets/**/*.js",
     "./auxiliary/**/*.js",
     "./auxiliary/**/*.ts"
-  ],
-  "exclude": [],
-  "compilerOptions": {
-    "noEmit": true
-  }
+  ]
 }
