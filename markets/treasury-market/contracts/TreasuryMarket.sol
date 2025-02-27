@@ -223,7 +223,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     }
 
                     // stack was too deep to set this as a local variable. annoying.
-                    //LoanInfo memory depositRewardData =
                     depositRewards[accountId][config.token] = LoanInfo(
                         uint64(block.timestamp),
                         config.power,
