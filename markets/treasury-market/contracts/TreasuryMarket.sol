@@ -361,6 +361,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function mintTreasury(uint256 amount) external override onlyTreasury {
+        if (amount > uint256(artificialDebt)) {
+            revert InsufficientExcessDebt(int256(amount), artificialDebt);
+        }
+
         v3System.withdrawMarketUsd(marketId, treasury, amount);
         emit TreasuryMinted(amount);
         _rebalance();
