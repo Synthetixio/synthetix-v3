@@ -405,7 +405,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function _rebalance() internal {
-        if (artificialDebt == 0) {
+        if (totalSaddledCollateral == 0) {
             return;
         }
 
