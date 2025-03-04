@@ -464,7 +464,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint256 timestamp
     ) internal pure returns (uint256) {
         uint256 currentLoan = _loanedAmount(loan, timestamp);
-        if (targetLoan > currentLoan || currentPenalty == 0) {
+        if (targetLoan >= currentLoan || currentPenalty == 0) {
             return 0;
         }
 
