@@ -470,7 +470,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         uint256 loanCompletionPercentage = loan.duration > 0
             ? (timestamp - loan.startTime).divDecimal(loan.duration)
-            : 0;
+            : 1 ether;
 
         // the penalty subtracts a certain percentage from what has been decayed. for example, assuming 25% penalty:
         // 1. starting with a $1000 loan over 40 days
