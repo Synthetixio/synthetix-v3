@@ -242,6 +242,7 @@ contract VaultModule is IVaultModule {
         // solhint-disable-next-line numcast/safe-cast
         newVault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
 
+        _verifyPoolCratio(oldPoolId, collateralType);
         _verifyPoolCratio(newPoolId, collateralType);
 
         emit DelegationUpdated(
