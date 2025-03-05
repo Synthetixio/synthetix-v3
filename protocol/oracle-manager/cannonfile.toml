@@ -40,6 +40,10 @@ func = "upgradeTo"
 args = ["<%= contracts.OracleRouter.address %>"]
 factory.Proxy.abiOf = ["OracleRouter"]
 factory.Proxy.artifact = "Proxy"
+factory.Proxy.constructorArgs = [
+    "<%= contracts.CoreModule.address %>",
+    "<%= settings.owner %>",
+]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true

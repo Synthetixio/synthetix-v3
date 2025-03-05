@@ -51,6 +51,10 @@ func = "upgradeTo"
 args = ["<%= contracts.MarketImpl.address %>"]
 factory.Proxy.abiOf = ["MarketImpl"]
 factory.Proxy.artifact = "SynthetixTreasuryProxy"
+factory.Proxy.constructorArgs = [
+    "<%= contracts.InitialModuleBundle.address %>",
+    "<%= settings.owner %>",
+]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
