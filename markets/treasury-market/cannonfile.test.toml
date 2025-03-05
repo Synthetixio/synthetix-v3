@@ -39,6 +39,7 @@ create2 = true
 artifact = "TreasuryMarket"
 args = [
     "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= imports.v3.imports.oracle_manager.contracts.Proxy.address %>",
     "<%= settings.treasury_address %>",
     "<%= settings.pool_id %>",
     "<%= settings.collateral_token %>",

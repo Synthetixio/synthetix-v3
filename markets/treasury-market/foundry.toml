@@ -1,3 +1,4 @@
 [profile.default]
 ast = true
 allow_paths = ["../../"]
+optimizer = true

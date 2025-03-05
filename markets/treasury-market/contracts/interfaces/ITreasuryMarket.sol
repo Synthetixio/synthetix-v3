@@ -7,6 +7,23 @@ import "./external/IV3CoreProxy.sol";
  * @title Synthetix V3 Market allowing for a trusted entity to manage excess liquidity allocated to a liquidity pool.
  */
 interface ITreasuryMarket {
+    struct DepositRewardConfiguration {
+        address token;
+        uint32 power;
+        uint32 duration;
+        uint128 percent;
+        bytes32 valueRatioOracle;
+        uint128 penaltyStart;
+        uint128 penaltyEnd;
+    }
+
+    struct LoanInfo {
+        uint64 startTime;
+        uint32 power;
+        uint32 duration;
+        uint128 loanAmount;
+    }
+
     function v3System() external view returns (IV3CoreProxy);
 
     /**
@@ -40,6 +57,25 @@ interface ITreasuryMarket {
         uint128 indexed accountId,
         uint256 newLoanedAmount,
         uint256 previousLoanedAmount
+    );
+
+    /**
+     * @notice Emitted when a user received a reward for depositing and saddling into the treasury market
+     */
+    event DepositRewardIssued(
+        uint128 indexed accountId,
+        address indexed rewardToken,
+        LoanInfo depositedRewardData
+    );
+
+    /**
+     *
+     */
+    event DepositRewardRedeemed(
+        uint128 indexed accountId,
+        address indexed rewardToken,
+        uint256 rewardRedeemed,
+        uint256 penaltyPaid
     );
 
     /**
@@ -85,6 +121,15 @@ interface ITreasuryMarket {
     error InsufficientExcessDebt(int256 neededToRepay, int256 ableToRepay);
 
     /**
+     * @notice Emitted when there is not enough deposited reward funds to cover the user's deposit in the contract
+     */
+    error InsufficientAvailableReward(
+        address rewardToken,
+        uint256 rewardedAmount,
+        uint256 availableToReward
+    );
+
+    /**
      * @notice called by the owner to register this market with v3. This is an initialization call only.
      */
     function registerMarket() external returns (uint128 newMarketId);
@@ -105,6 +150,16 @@ interface ITreasuryMarket {
      * @dev Prior to calling this function, the account must have approved for transfer of the ERC721 account token to this address so that this market can repay the debt.
      */
     function adjustLoan(uint128 accountId, uint256 amount) external;
+
+    /**
+     * @dev Used by the treasury to deposit a token to be used for a rewards configuration. The deposited tokens can also be minted from
+     */
+    function fundForDepositReward(address token, uint256 amount) external returns (uint256);
+
+    /**
+     * @dev Used by the treasury to remove a token from a deposit rewards configuration.
+     */
+    function removeFromDepositReward(address token, uint256 amount) external returns (uint256);
 
     /**
      * @notice Called by the owner to mint available sUSD to the treasury.
@@ -135,6 +190,15 @@ interface ITreasuryMarket {
     function loanedAmount(uint128 accountId) external view returns (uint256);
 
     /**
+     * @notice Retrieves the current amount of reward that the user would keep if they chose to withdraw immediately (not accounting for penalty)
+     * @param accountId The account to retrieve current debt for
+     */
+    function depositRewardAvailable(
+        uint128 accountId,
+        address rewardTokenAddress
+    ) external view returns (uint256);
+
+    /**
      * @notice Returns the amount of penalty which must be repaid upon early repayment. This amount is on top of the amount of the principal repaid.
      */
     function repaymentPenalty(
@@ -156,4 +220,10 @@ interface ITreasuryMarket {
         uint128 startPenalty,
         uint128 endPenalty
     ) external;
+
+    /**
+     * @notice Called by the owner to set rewards distributed to new saddlers. Completely replaces any existing reward configurations already set
+     * @param newDrcs The reward configurations that should be set
+     */
+    function setDepositRewardConfigurations(DepositRewardConfiguration[] memory newDrcs) external;
 }
