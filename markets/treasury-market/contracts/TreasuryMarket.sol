@@ -447,7 +447,38 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     function setDepositRewardConfigurations(
         DepositRewardConfiguration[] memory newDrcs
     ) external override onlyOwner {
+        address previousDrc = address(0);
+
+        DepositRewardConfiguration[] memory oldDrcs = depositRewardConfigurations;
+
+        uint256 j;
         for (uint256 i = 0; i < newDrcs.length; i++) {
+            if (newDrcs[i].token <= previousDrc) {
+                revert ParameterError.InvalidParameter("newDrcs", "token address must increase");
+            }
+            previousDrc = newDrcs[i].token;
+
+            // detect tokens that are being removed
+            while (j < oldDrcs.length && newDrcs[i].token > oldDrcs[j].token) {
+                // removing a reward token from the market
+                // verify that this token is not having any available rewards
+                if (availableDepositRewards[oldDrcs[j].token] > 0) {
+                    revert ParameterError.InvalidParameter(
+                        "newDrcs",
+                        "removes existing reward token"
+                    );
+                }
+
+                j++;
+            }
+
+            if (
+                j < depositRewardConfigurations.length &&
+                newDrcs[i].token == depositRewardConfigurations[j].token
+            ) {
+                j++;
+            }
+
             if (depositRewardConfigurations.length <= i) {
                 depositRewardConfigurations.push();
             }
@@ -455,6 +486,14 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
             // ensure that the v3 core system can pull funds from us
             IERC20(newDrcs[i].token).approve(address(v3System), type(uint256).max);
+        }
+
+        for (; j < oldDrcs.length; j++) {
+            // removing a reward token from the market
+            // verify that this token is not having any available rewards
+            if (availableDepositRewards[oldDrcs[j].token] > 0) {
+                revert ParameterError.InvalidParameter("newDrcs", "removes existing reward token");
+            }
         }
 
         uint256 popped = depositRewardConfigurations.length - newDrcs.length;

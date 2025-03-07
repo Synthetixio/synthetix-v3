@@ -945,8 +945,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_UnsaddleBypassLoans() public {
         ITreasuryMarket.DepositRewardConfiguration[]
             memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](0);
-        vm.prank(market.owner());
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.removeFromDepositReward(address(usdToken), 1000 ether);
         market.setDepositRewardConfigurations(dcr);
+        vm.stopPrank();
         usdToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(market), type(uint256).max);
@@ -1029,8 +1032,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_MigrateBypassLoans() public {
         ITreasuryMarket.DepositRewardConfiguration[]
             memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](0);
-        vm.prank(market.owner());
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.removeFromDepositReward(address(usdToken), 1000 ether);
         market.setDepositRewardConfigurations(dcr);
+        vm.stopPrank();
         usdToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(market), type(uint256).max);
@@ -1089,6 +1095,167 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             1 ether
         );
         market.saddle(accountId + 1);
+    }
+
+    function test_RevertIf_SetDepositConfigurationInvalidTokenOrder() public {
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](0);
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.removeFromDepositReward(address(usdToken), 1000 ether);
+        market.setDepositRewardConfigurations(dcr);
+        vm.stopPrank();
+
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](2);
+
+        // token addresses descend instead of ascend
+        bytes32[] memory parents = new bytes32[](0);
+
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+
+        configs[1] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(collateralToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "newDrcs",
+                "token address must increase"
+            )
+        );
+        market.setDepositRewardConfigurations(configs);
+    }
+
+    function test_SetDepositConfigurationOneRewardProperlyRemoved() public {
+        bytes32[] memory parents = new bytes32[](0);
+
+        // remove the usd deposit reward configuration
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](1);
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.setDepositRewardConfigurations(configs);
+        vm.stopPrank();
+    }
+
+    function test_SetDepositConfigurationOneRewardRugRemoved() public {
+        bytes32[] memory parents = new bytes32[](0);
+
+        // remove the usd deposit reward configuration
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](1);
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "newDrcs",
+                "removes existing reward token"
+            )
+        );
+        market.setDepositRewardConfigurations(configs);
+    }
+
+    function test_RevertIf_SetDepositConfigurationRugRewards() public {
+        market.saddle(accountId);
+
+        v3System.delegateCollateral(
+            accountId + 1,
+            poolId,
+            address(collateralToken),
+            4 ether,
+            1 ether
+        );
+        market.saddle(accountId + 1);
+        vm.warp(block.timestamp + 86400);
+
+        bytes32[] memory parents = new bytes32[](0);
+
+        // remove the usd deposit reward configuration
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](1);
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(collateralToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "newDrcs",
+                "removes existing reward token"
+            )
+        );
+        market.setDepositRewardConfigurations(configs);
+
+        /*
+        uint256 usdBalanceBefore = v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken));
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId + 1);
+
+        market.unsaddle(accountId + 1);
+
+        assertGt(v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken)), usdBalanceBefore);
+        */
     }
 
     function onERC721Received(
