@@ -131,6 +131,10 @@ func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
 factory.CoreProxy.abiOf = ["CoreRouter"]
 factory.CoreProxy.artifact = "contracts/Proxy.sol:Proxy"
+factory.CoreProxy.constructorArgs = [
+    "<%= contracts.InitialModuleBundle.address %>",
+    "<%= settings.owner %>",
+]
 factory.CoreProxy.event = "Upgraded"
 factory.CoreProxy.arg = 0
 factory.CoreProxy.highlight = true
