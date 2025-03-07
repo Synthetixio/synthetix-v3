@@ -32,7 +32,7 @@ The Chainlink Node retrieves data from a [Chainlink Price Feed](https://docs.cha
 - `nodeType` Value: 3
 - Parameters:
   - `address chainlinkAddress` - The address of the Chainlink price feed contract.
-  - `uint256 twapTimeInterval` - The the duration (in seconds) of the lookback window for price reports to be incorporated in a time-weighted average price calculation. Use `0` to retrieve only the latest price report.
+  - `uint256 twapTimeInterval` - The duration (in seconds) of the lookback window for price reports to be incorporated in a time-weighted average price calculation. Use `0` to retrieve only the latest price report.
   - `uint8 decimals` - The number of decimals places used by the Chainlink price feed contract. _This must match what is provided by the price feed contract's `decimals()` function_.
 - Expected Parents: 0
 

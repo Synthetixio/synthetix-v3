@@ -2480,7 +2480,7 @@ describe('MarginModule', async () => {
           bn(0.000001)
         );
 
-        // Change the price, this might lead to profit or loss, depending the the generated order is long or short
+        // Change the price, this might lead to profit or loss, depending the  generated order is long or short
         const newPrice = wei(order.oraclePrice).mul(1.5).toBN();
         // Update price
         await market.aggregator().mockSetCurrentPrice(newPrice);

@@ -37,7 +37,7 @@ export = {
   equal: _createAssertBN('eq'),
 
   /**
-   * Assert if `a` is less than than `b`
+   * Assert if `a` is less than `b`
    * @param {(string|number|BigNumber)} a
    * @param {(string|number|BigNumber)} b
    */
