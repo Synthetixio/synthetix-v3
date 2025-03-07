@@ -36,6 +36,7 @@ create2 = true
 artifact = "TreasuryMarket"
 args = [
     "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= imports.v3.imports.oracle_manager.contracts.Proxy.address %>",
     "<%= settings.treasury_address %>",
     "<%= settings.pool_id %>",
     "<%= settings.collateral_token %>",
@@ -51,6 +52,10 @@ func = "upgradeTo"
 args = ["<%= contracts.MarketImpl.address %>"]
 factory.Proxy.abiOf = ["MarketImpl"]
 factory.Proxy.artifact = "SynthetixTreasuryProxy"
+factory.Proxy.constructorArgs = [
+    "<%= contracts.InitialModuleBundle.address %>",
+    "<%= settings.owner %>",
+]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true

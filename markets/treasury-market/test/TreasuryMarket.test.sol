@@ -19,6 +19,7 @@ interface IV3TestCoreProxy is IV3CoreProxy {}
 contract TreasuryMarketTest is Test, IERC721Receiver {
     TreasuryMarket private market;
     IV3TestCoreProxy private v3System;
+    IOracleManagerProxy private oracleManager;
     CollateralMock private collateralToken;
     MockMarket private sideMarket;
     address private initialModuleBundleAddress;
@@ -35,11 +36,12 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function setUp() external {
         CannonDeploy deployer = new CannonDeploy();
         deployer.run();
-        market = TreasuryMarket(deployer.getAddress(keccak256("Proxy")));
-        v3System = IV3TestCoreProxy(deployer.getAddress(keccak256("CoreProxy")));
-        usdToken = IERC20(deployer.getAddress(keccak256("USDProxy")));
-        collateralToken = CollateralMock(deployer.getAddress(keccak256("CollateralMock")));
-        initialModuleBundleAddress = deployer.getAddress(keccak256("InitialModuleBundle"));
+        market = TreasuryMarket(deployer.getAddress("Proxy"));
+        v3System = IV3TestCoreProxy(deployer.getAddress("v3.CoreProxy"));
+        oracleManager = IOracleManagerProxy(deployer.getAddress("v3.oracle_manager.Proxy"));
+        usdToken = IERC20(deployer.getAddress("v3.USDProxy"));
+        collateralToken = CollateralMock(deployer.getAddress("v3.CollateralMock"));
+        initialModuleBundleAddress = deployer.getAddress("v3.InitialModuleBundle");
 
         sideMarket = new MockMarket();
         uint128 sideMarketId = v3System.registerMarket(address(sideMarket));
@@ -53,11 +55,12 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // TODO: need to find a better way to do this
         TreasuryMarket treasuryMarketCode = new TreasuryMarket(
             v3System,
+            oracleManager,
             market.treasury(),
             poolId,
             address(collateralToken)
         );
-        vm.etch(deployer.getAddress(keccak256("MarketImpl")), address(treasuryMarketCode).code);
+        vm.etch(deployer.getAddress("MarketImpl"), address(treasuryMarketCode).code);
 
         market.setTargetCRatio(2 ether);
 
@@ -92,23 +95,83 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.stopPrank();
 
         // stake
-        collateralToken.mint(address(this), 1000 ether);
-        collateralToken.approve(address(v3System), 1000 ether);
+        collateralToken.mint(address(this), 100000 ether);
+        collateralToken.approve(address(v3System), 100000 ether);
 
-        for (uint128 i = 0; i < 2; i++) {
+        for (uint128 i = 0; i < 3; i++) {
             v3System.createAccount(accountId + i);
-            v3System.deposit(accountId + i, address(collateralToken), 50 ether);
+            v3System.deposit(accountId + i, address(collateralToken), 5000 ether);
         }
 
         v3System.delegateCollateral(accountId, poolId, address(collateralToken), 4 ether, 1 ether);
 
+        // deposit into the 0 pool and mint some USD token
+        v3System.delegateCollateral(
+            accountId + 2,
+            0,
+            address(collateralToken),
+            5000 ether,
+            1 ether
+        );
+        v3System.mintUsd(accountId + 2, 0, address(collateralToken), 1000 ether);
+        v3System.withdraw(accountId + 2, address(usdToken), 1000 ether);
+
         vm.prank(v3System.owner());
         v3System.setFeatureFlagAllowAll("associateDebt", true);
+
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](2);
+        dcr[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(collateralToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+        dcr[1] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 2,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 0.0 ether,
+            penaltyEnd: 0.0 ether
+        });
+
+        vm.startPrank(v3System.owner());
+        v3System.configureMaximumMarketCollateral(
+            market.marketId(),
+            address(collateralToken),
+            1000 ether
+        );
+        v3System.configureMaximumMarketCollateral(market.marketId(), address(usdToken), 1000 ether);
+        vm.stopPrank();
+
+        vm.prank(market.owner());
+        market.setDepositRewardConfigurations(dcr);
+
+        collateralToken.mint(address(this), 10000 ether);
+        collateralToken.approve(address(market), 1000 ether);
+        market.fundForDepositReward(address(collateralToken), 1000 ether);
+
+        //usdToken.mint(address(this), 10000 ether);
+        usdToken.approve(address(market), 1000 ether);
+        market.fundForDepositReward(address(usdToken), 1000 ether);
     }
 
     function test_MarketFunctions() external view {
         assertEq(market.name(market.marketId()), "Treasury Market");
-        assertEq(market.reportedDebt(market.marketId()), 0);
+        assertEq(market.reportedDebt(market.marketId()), 2000 ether); // 1000 for each collateral type
         assertEq(market.minimumCredit(market.marketId()), uint256(type(int256).max));
         assertEq(market.loanedAmount(42), 0);
         assertEq(market.totalSaddledCollateral(), 0);
@@ -126,6 +189,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test_NewMarketRegistration() external {
         TreasuryMarket newMarket = new TreasuryMarket(
             v3System,
+            oracleManager,
             market.treasury(),
             poolId,
             address(collateralToken)
@@ -187,6 +251,42 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 2 ether);
         assertEq(market.totalSaddledCollateral(), 4 ether);
+
+        // check rewards
+        assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0);
+
+        (uint64 startTime, uint32 power, uint32 duration, uint128 amount) = market.depositRewards(
+            accountId,
+            address(collateralToken)
+        );
+        assertEq(amount, 0);
+        assertEq(duration, 0);
+        assertEq(power, 0);
+        vm.warp(startTime + 43200);
+        assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0);
+    }
+
+    function test_SaddleNoDebt() external {
+        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 0);
+        market.saddle(accountId);
+
+        // this user is the first to saddle, so the debt should now be at 200% c-ratio and the debt increased on the current account
+        assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
+        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 2 ether);
+        assertEq(market.totalSaddledCollateral(), 4 ether);
+
+        // check rewards
+        assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0);
+
+        (uint64 startTime, uint32 power, uint32 duration, uint128 amount) = market.depositRewards(
+            accountId,
+            address(collateralToken)
+        );
+        assertEq(amount, 0.8 ether);
+        assertEq(duration, 86400);
+        assertEq(power, 1);
+        vm.warp(startTime + 86400 / 4);
+        assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0.2 ether);
     }
 
     function test_SaddleSecondAccount() external {
@@ -580,6 +680,42 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(v3System.getVaultCollateralRatio(poolId, address(collateralToken)), 2 ether);
     }
 
+    function test_RemoveDepositReward() external {
+        assertEq(market.availableDepositRewards(address(collateralToken)), 1000 ether);
+        uint256 preBalance = collateralToken.balanceOf(market.owner());
+
+        vm.prank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 500 ether);
+
+        assertEq(market.availableDepositRewards(address(collateralToken)), 500 ether);
+        assertEq(collateralToken.balanceOf(market.owner()) - preBalance, 500 ether);
+
+        vm.prank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 500 ether);
+
+        assertEq(market.availableDepositRewards(address(collateralToken)), 0);
+    }
+
+    function test__RevertIf_RemoveDepositRewardUnauthorized() external {
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
+        market.removeFromDepositReward(address(collateralToken), 500 ether);
+    }
+
+    function test__RevertIf_RemoveDepositRewardWhenAllocated() external {
+        // saddle with no debt will trigger deposit reward to be consumed
+        market.saddle(accountId);
+
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "amount",
+                "greater than available rewards"
+            )
+        );
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+    }
+
     function test_RevertIf_UnsaddleUnauthorized() external {
         market.saddle(accountId);
 
@@ -618,6 +754,9 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.saddle(accountId);
         sideMarket.setReportedDebt(1 ether);
 
+        (uint64 startTime, , , ) = market.depositRewards(accountId, address(collateralToken));
+        vm.warp(startTime + 86400 / 4);
+
         // we need a second account to go ahead and repay the first account
         // (sort of means that this market can never be fully emptied without an actual repay by stakers at some point)
         v3System.delegateCollateral(
@@ -631,11 +770,30 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         sideMarket.setReportedDebt(0);
 
+        uint256 priorCollateralAmount = v3System.getAccountAvailableCollateral(
+            accountId,
+            address(collateralToken)
+        );
+
         assertEq(market.totalSaddledCollateral(), 14 ether);
         IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+        vm.expectEmit();
+        emit ITreasuryMarket.DepositRewardRedeemed(
+            accountId,
+            address(collateralToken),
+            0.025 ether,
+            0.175 ether
+        );
         market.unsaddle(accountId);
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 0);
         assertEq(market.totalSaddledCollateral(), 10 ether);
+
+        // should have received rewards in the first account since it didnt have any debt prior to leaving
+        assertEq(
+            v3System.getAccountAvailableCollateral(accountId, address(collateralToken)) -
+                priorCollateralAmount,
+            4.025 ether
+        );
     }
 
     function test_RevertIf_UpgradeToUnauthorized() external {
@@ -680,7 +838,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     }
 
     function test_ReportedDebtInvalidArtificialDebt() external {
-        vm.store(address(market), bytes32(uint256(0)), bytes32(uint256(int256(-31337))));
+        vm.store(address(market), bytes32(uint256(0)), bytes32(uint256(int256(-3000 ether))));
 
         assertEq(market.reportedDebt(market.marketId()), 0);
     }
@@ -785,6 +943,13 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     }
 
     function test_UnsaddleBypassLoans() public {
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](0);
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.removeFromDepositReward(address(usdToken), 1000 ether);
+        market.setDepositRewardConfigurations(dcr);
+        vm.stopPrank();
         usdToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(market), type(uint256).max);
@@ -841,7 +1006,37 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.unsaddle(1337);
     }
 
+    function test__RevertIf_SaddleTooBigForReward() public {
+        collateralToken.mint(address(this), 10000 ether);
+        v3System.deposit(accountId, address(collateralToken), 10000 ether);
+        v3System.delegateCollateral(
+            accountId,
+            poolId,
+            address(collateralToken),
+            10000 ether,
+            1 ether
+        );
+
+        // this staker is huge so there are not enough rewards to cover them entering the pool
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ITreasuryMarket.InsufficientAvailableReward.selector,
+                address(collateralToken),
+                2000 ether,
+                1000 ether
+            )
+        );
+        market.saddle(accountId);
+    }
+
     function test_MigrateBypassLoans() public {
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](0);
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.removeFromDepositReward(address(usdToken), 1000 ether);
+        market.setDepositRewardConfigurations(dcr);
+        vm.stopPrank();
         usdToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(v3System), type(uint256).max);
         collateralToken.approve(address(market), type(uint256).max);
@@ -900,6 +1095,167 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             1 ether
         );
         market.saddle(accountId + 1);
+    }
+
+    function test_RevertIf_SetDepositConfigurationInvalidTokenOrder() public {
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory dcr = new ITreasuryMarket.DepositRewardConfiguration[](0);
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.removeFromDepositReward(address(usdToken), 1000 ether);
+        market.setDepositRewardConfigurations(dcr);
+        vm.stopPrank();
+
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](2);
+
+        // token addresses descend instead of ascend
+        bytes32[] memory parents = new bytes32[](0);
+
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+
+        configs[1] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(collateralToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "newDrcs",
+                "token address must increase"
+            )
+        );
+        market.setDepositRewardConfigurations(configs);
+    }
+
+    function test_SetDepositConfigurationOneRewardProperlyRemoved() public {
+        bytes32[] memory parents = new bytes32[](0);
+
+        // remove the usd deposit reward configuration
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](1);
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+        vm.startPrank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 1000 ether);
+        market.setDepositRewardConfigurations(configs);
+        vm.stopPrank();
+    }
+
+    function test_SetDepositConfigurationOneRewardRugRemoved() public {
+        bytes32[] memory parents = new bytes32[](0);
+
+        // remove the usd deposit reward configuration
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](1);
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(usdToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "newDrcs",
+                "removes existing reward token"
+            )
+        );
+        market.setDepositRewardConfigurations(configs);
+    }
+
+    function test_RevertIf_SetDepositConfigurationRugRewards() public {
+        market.saddle(accountId);
+
+        v3System.delegateCollateral(
+            accountId + 1,
+            poolId,
+            address(collateralToken),
+            4 ether,
+            1 ether
+        );
+        market.saddle(accountId + 1);
+        vm.warp(block.timestamp + 86400);
+
+        bytes32[] memory parents = new bytes32[](0);
+
+        // remove the usd deposit reward configuration
+        ITreasuryMarket.DepositRewardConfiguration[]
+            memory configs = new ITreasuryMarket.DepositRewardConfiguration[](1);
+        configs[0] = ITreasuryMarket.DepositRewardConfiguration({
+            token: address(collateralToken),
+            power: 1,
+            duration: 86400,
+            percent: 0.2 ether,
+            valueRatioOracle: NodeModule(0x83A0444B93927c3AFCbe46E522280390F748E171).registerNode(
+                NodeDefinition.NodeType.CHAINLINK,
+                abi.encode(address(mockAggregator), uint256(0), uint8(18)),
+                parents
+            ),
+            penaltyStart: 1.0 ether,
+            penaltyEnd: 0.5 ether
+        });
+
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "newDrcs",
+                "removes existing reward token"
+            )
+        );
+        market.setDepositRewardConfigurations(configs);
+
+        /*
+        uint256 usdBalanceBefore = v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken));
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId + 1);
+
+        market.unsaddle(accountId + 1);
+
+        assertGt(v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken)), usdBalanceBefore);
+        */
     }
 
     function onERC721Received(
