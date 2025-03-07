@@ -34,8 +34,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     using SafeCastI256 for int256;
     using DecimalMath for uint256;
 
-    uint32 public constant MIN_DELEGATION_TIME = 0;
-
     address public immutable treasury;
     uint128 public immutable poolId;
     address public immutable collateralToken;
@@ -92,7 +90,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         }
 
         newMarketId = v3System.registerMarket(address(this));
-        //v3System.setMarketMinDelegateTime(newMarketId, MIN_DELEGATION_TIME);
         marketId = newMarketId;
 
         // while we are here, also set the approval that we need for the core sysetm to pull USD from us
@@ -109,17 +106,18 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
      */
     function reportedDebt(uint128 requestedMarketId) external view override returns (uint256 debt) {
         if (requestedMarketId != marketId) {
-            // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
             return 0;
         }
 
         uint256 depositedDebt = v3System.getMarketCollateralValue(marketId);
+        int256 totalDebt = artificialDebt + int256(depositedDebt);
 
-        if (-artificialDebt > int256(depositedDebt)) {
+        if (totalDebt < 0) {
+            // from a logic perspective, this branch should not be possible. But we dont want a revert if somehow this was negative.
             return 0;
         }
 
-        return depositedDebt + uint256(artificialDebt);
+        return uint256(totalDebt);
     }
 
     /**
@@ -211,9 +209,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 //DepositRewardConfiguration[] memory drc = depositRewardConfigurations;
                 for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
                     DepositRewardConfiguration memory config = depositRewardConfigurations[i];
-                    uint256 rewardAmount = (((accountCollateral *
-                        oracleManager.process(config.valueRatioOracle).price.toUint()) / 1 ether) *
-                        config.percent) / 1 ether;
+                    uint256 rewardAmount = accountCollateral
+                        .mulDecimal(oracleManager.process(config.valueRatioOracle).price.toUint())
+                        .mulDecimal(config.percent);
                     if (rewardAmount > availableDepositRewards[config.token]) {
                         revert InsufficientAvailableReward(
                             config.token,
