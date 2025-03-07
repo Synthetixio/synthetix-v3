@@ -59,8 +59,12 @@ library Collateral {
      * @dev Decrements the entry's availableCollateral.
      */
     function decreaseAvailableCollateral(Data storage self, uint256 amountD18) internal {
-        if (self.amountAvailableForDelegationD18 < amountD18) {
-            revert InsufficentAvailableCollateral(self.amountAvailableForDelegationD18, amountD18);
+        uint256 totalLocked = getTotalLocked(self);
+        if (self.amountAvailableForDelegationD18 - totalLocked < amountD18) {
+            revert InsufficentAvailableCollateral(
+                self.amountAvailableForDelegationD18 - totalLocked,
+                amountD18
+            );
         }
         self.amountAvailableForDelegationD18 -= amountD18;
     }

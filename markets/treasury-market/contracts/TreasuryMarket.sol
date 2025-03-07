@@ -531,6 +531,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function mintTreasury(uint256 amount) external override onlyTreasury {
+        if (amount > uint256(artificialDebt)) {
+            revert InsufficientExcessDebt(int256(amount), artificialDebt);
+        }
+
         v3System.withdrawMarketUsd(marketId, treasury, amount);
         emit TreasuryMinted(amount);
         _rebalance();
@@ -575,7 +579,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function _rebalance() internal {
-        if (artificialDebt == 0) {
+        if (totalSaddledCollateral == 0) {
             return;
         }
 
@@ -630,13 +634,13 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint256 timestamp
     ) internal pure returns (uint256) {
         uint256 currentLoan = _loanedAmount(loan, timestamp);
-        if (targetLoan > currentLoan || currentPenalty == 0) {
+        if (targetLoan >= currentLoan || currentPenalty == 0) {
             return 0;
         }
 
         uint256 loanCompletionPercentage = loan.duration > 0
             ? (timestamp - loan.startTime).divDecimal(loan.duration)
-            : 0;
+            : 1 ether;
 
         // the penalty subtracts a certain percentage from what has been decayed. for example, assuming 25% penalty:
         // 1. starting with a $1000 loan over 40 days
