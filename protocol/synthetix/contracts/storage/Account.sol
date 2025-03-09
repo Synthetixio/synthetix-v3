@@ -305,4 +305,13 @@ library Account {
     ) internal {
         self.collaterals[collateralType].decreaseAvailableCollateral(amountD18);
     }
+
+    // required only for testing
+    function decreaseAvailableCollateralWithoutLockCheck(
+        Data storage self,
+        address collateralType,
+        uint256 amountD18
+    ) internal {
+        self.collaterals[collateralType].amountAvailableForDelegationD18 -= amountD18;
+    }
 }

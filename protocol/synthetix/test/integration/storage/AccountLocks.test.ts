@@ -74,7 +74,7 @@ describe('AccountLocks', () => {
           collateralAddress()
         );
         // should result in 50% scaling
-        await systems().Core.Account_decreaseAvailableCollateral(
+        await systems().Core.Account_decreaseAvailableCollateralWithoutLockCheck(
           accountId,
           collateralAddress(),
           collatInfo2.totalDeposited.sub(collatInfo2.totalLocked.div(2))
