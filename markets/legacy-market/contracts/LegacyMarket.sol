@@ -138,6 +138,35 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     /**
      * @inheritdoc ILegacyMarket
      */
+    function returnUSD(uint256 amount) external override {
+        if (pauseStablecoinConversion) {
+            revert Paused();
+        }
+
+        if (amount == 0) {
+            revert ParameterError.InvalidParameter("amount", "Should be non-zero");
+        }
+
+        address sender = ERC2771Context._msgSender();
+
+        // get synthetix v2x addresses
+        IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
+        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("Synthetix"));
+        IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
+
+        // retrieve the v3 sUSD from the user so we can burn it
+        v3System.depositMarketUsd(marketId, sender, amount);
+
+        // now issue new synths and send them to the user
+        oldSynthetix.issueSynths(amount);
+        oldUSD.transfer(sender, amount);
+
+        emit ReturnedUSD(ERC2771Context._msgSender(), amount);
+    }
+
+    /**
+     * @inheritdoc ILegacyMarket
+     */
     function convertUSD(uint256 amount) external {
         if (pauseStablecoinConversion) {
             revert Paused();
