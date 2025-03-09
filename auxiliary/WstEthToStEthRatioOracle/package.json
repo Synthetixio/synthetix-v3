@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/wsteth-to-steth-ratio-oracle",
-  "version": "3.10.5",
+  "version": "3.11.0",
   "description": "wstETH to stETH Ratio Oracle Node",
   "publishConfig": {
     "access": "public"
