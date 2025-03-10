@@ -701,21 +701,6 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.removeFromDepositReward(address(collateralToken), 500 ether);
     }
 
-    function test__RevertIf_RemoveDepositRewardWhenAllocated() external {
-        // saddle with no debt will trigger deposit reward to be consumed
-        market.saddle(accountId);
-
-        vm.prank(market.owner());
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "amount",
-                "greater than available rewards"
-            )
-        );
-        market.removeFromDepositReward(address(collateralToken), 1000 ether);
-    }
-
     function test_RevertIf_UnsaddleUnauthorized() external {
         market.saddle(accountId);
 
@@ -1006,27 +991,40 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.unsaddle(1337);
     }
 
-    function test__RevertIf_SaddleTooBigForReward() public {
-        collateralToken.mint(address(this), 10000 ether);
-        v3System.deposit(accountId, address(collateralToken), 10000 ether);
+    function test__RevertIf_UnsaddleTooBigForReward() public {
+        market.saddle(accountId);
+        sideMarket.setReportedDebt(1 ether);
+
+        (uint64 startTime, , , ) = market.depositRewards(accountId, address(collateralToken));
+        vm.warp(startTime + 86400 / 4);
+
+        // we need a second account to go ahead and repay the first account
+        // (sort of means that this market can never be fully emptied without an actual repay by stakers at some point)
         v3System.delegateCollateral(
-            accountId,
+            accountId + 1,
             poolId,
             address(collateralToken),
-            10000 ether,
+            10 ether,
             1 ether
         );
+        market.saddle(accountId + 1);
 
-        // this staker is huge so there are not enough rewards to cover them entering the pool
+        sideMarket.setReportedDebt(0);
+
+        vm.prank(market.owner());
+        market.removeFromDepositReward(address(collateralToken), 999.9 ether);
+
+        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
+        // this staker is huge so there are not enough rewards to cover them exiting the pool
         vm.expectRevert(
             abi.encodeWithSelector(
                 ITreasuryMarket.InsufficientAvailableReward.selector,
                 address(collateralToken),
-                2000 ether,
-                1000 ether
+                0.775 ether,
+                0.1 ether
             )
         );
-        market.saddle(accountId);
+        market.unsaddle(accountId);
     }
 
     function test_MigrateBypassLoans() public {
