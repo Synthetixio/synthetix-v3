@@ -212,13 +212,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     uint256 rewardAmount = accountCollateral
                         .mulDecimal(oracleManager.process(config.valueRatioOracle).price.toUint())
                         .mulDecimal(config.percent);
-                    if (rewardAmount > availableDepositRewards[config.token]) {
-                        revert InsufficientAvailableReward(
-                            config.token,
-                            rewardAmount,
-                            availableDepositRewards[config.token]
-                        );
-                    }
 
                     // stack was too deep to set this as a local variable. annoying.
                     depositRewards[accountId][config.token] = LoanInfo(
@@ -228,8 +221,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                         uint128(rewardAmount)
                     );
 
-                    availableDepositRewards[config.token] -= rewardAmount;
-
                     emit DepositRewardIssued(
                         accountId,
                         config.token,
@@ -237,7 +228,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                             uint64(block.timestamp),
                             config.power,
                             config.duration,
-                            rewardAmount.to128()
+                            uint128(rewardAmount)
                         )
                     );
                 }
@@ -345,10 +336,15 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     );
                 }
 
-                // return any rewards not received to the available deposit rewards
-                availableDepositRewards[config.token] +=
-                    userDepositReward.loanAmount -
-                    receivedAmount;
+                uint256 rewardAmount = userDepositReward.loanAmount - receivedAmount;
+                if (rewardAmount > availableDepositRewards[config.token]) {
+                    revert InsufficientAvailableReward(
+                        config.token,
+                        rewardAmount,
+                        availableDepositRewards[config.token]
+                    );
+                }
+                availableDepositRewards[config.token] -= rewardAmount;
             }
         }
 
