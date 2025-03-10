@@ -160,7 +160,7 @@ contract CollateralMockWithoutDecimals {
             revert InsufficientBalance(amount, accountBalance);
         }
 
-        // No need for underflow check since it would have occured in the previous step
+        // No need for underflow check since it would have occurred in the previous step
         unchecked {
             store.balanceOf[from] -= amount;
             store.totalSupply -= amount;
