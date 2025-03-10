@@ -67,6 +67,8 @@ library PerpsAccount {
         uint256 withdrawAmount
     );
 
+    error InsufficientCreditForDebtRebalance(uint128 accountId, uint256 debt, uint256 credit);
+
     error InsufficientAccountMargin(uint256 leftover);
 
     error AccountLiquidatable(uint128 accountId);
@@ -279,6 +281,40 @@ library PerpsAccount {
         perpsMarketFactory.synthetix.depositMarketUsd(
             perpsMarketFactory.perpsMarketId,
             ERC2771Context._msgSender(),
+            debtPaid
+        );
+    }
+
+    /**
+     * @notice Allows the user to repay debt using his snxUSD margin if there is any
+     */
+    function rebalanceDebt(Data storage self, uint256 amount) internal returns (uint256 debtPaid) {
+        if (self.debt == 0) {
+            revert NonexistentDebt(self.id);
+        }
+
+        /*
+            1. if the debt is less than the amount, set debt to 0 and only take from margin the debt amount
+            2. if the debt is more than the amount, subtract the amount from the debt
+            3. excess amount is ignored
+        */
+
+        GlobalPerpsMarketConfiguration.Data storage config = GlobalPerpsMarketConfiguration.load();
+        PerpsMarketFactory.Data storage perpsMarketFactory = PerpsMarketFactory.load();
+
+        debtPaid = MathUtil.min(self.debt, amount);
+
+        uint256 creditAvailable = self.collateralAmounts[SNX_USD_MARKET_ID];
+
+        if (creditAvailable < debtPaid) {
+            revert InsufficientCreditForDebtRebalance(self.id, self.debt, creditAvailable);
+        }
+
+        updateAccountDebt(self, -debtPaid.toInt());
+
+        perpsMarketFactory.synthetix.withdrawMarketUsd(
+            perpsMarketFactory.perpsMarketId,
+            address(config.feeCollector),
             debtPaid
         );
     }
