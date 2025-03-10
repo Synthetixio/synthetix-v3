@@ -11,12 +11,12 @@ commands:
       - run: date +"%Y-%m" > /tmp/month.txt && cat /tmp/month.txt
       - restore_cache:
           keys:
-            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
-            - yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
+            - yarn-{{ .Environment.NODE_MODULES_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+            - yarn-{{ .Environment.NODE_MODULES_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-
       - run: yarn -v
       - run: yarn install --immutable
       - save_cache:
-          key: yarn-{{ .Environment.YARN_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
+          key: yarn-{{ .Environment.NODE_MODULES_CACHE_VERSION }}-{{ checksum "/tmp/month.txt" }}-{{ checksum "yarn.lock" }}
           paths:
             - "~/.yarn/berry"
 
