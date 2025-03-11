@@ -37,9 +37,9 @@ echo "## Legacy Market" >> $OUT
 echo "" >> $OUT
 cat $ROOT/markets/legacy-market/docs/index.md >> $OUT
 
-echo "## BFP Market" >> $OUT
-echo "" >> $OUT
-cat $ROOT/markets/bfp-market/docs/index.md >> $OUT
+#echo "## BFP Market" >> $OUT
+#echo "" >> $OUT
+#cat $ROOT/markets/bfp-market/docs/index.md >> $OUT
 
 echo "## Governance" >> $OUT
 echo "" >> $OUT

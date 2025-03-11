@@ -276,9 +276,9 @@ jobs:
             - "markets/legacy-market/artifacts"
             - "markets/legacy-market/cache"
             - "markets/legacy-market/typechain-types"
-            - "markets/bfp-market/artifacts"
-            - "markets/bfp-market/cache"
-            - "markets/bfp-market/typechain-types"
+            #- "markets/bfp-market/artifacts"
+            #- "markets/bfp-market/cache"
+            #- "markets/bfp-market/typechain-types"
 
             - "auxiliary/ArbitrumGasPriceOracle/artifacts"
             - "auxiliary/BuybackSnx/artifacts"
@@ -739,12 +739,12 @@ workflows:
           parallelism: 8
           batch-size: 1
 
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          dir: "./markets/bfp-market"
-          parallelism: 6
-          batch-size: 1
+      #      - test-contracts:
+      #          name: "test-bfp-market"
+      #          requires: [build-testable]
+      #          dir: "./markets/bfp-market"
+      #          parallelism: 6
+      #          batch-size: 1
 
       - test-contracts:
           name: "test-core-modules"
