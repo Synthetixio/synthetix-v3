@@ -200,10 +200,24 @@ interface ITreasuryMarket {
 
     /**
      * @notice Returns the amount of penalty which must be repaid upon early repayment. This amount is on top of the amount of the principal repaid.
+     * @param accountId The account for which the repayment penalty is being calculated.
+     * @param targetDebt The target amount of debt to calculate the repayment penalty for.
+     * @return The calculated penalty amount.
      */
     function repaymentPenalty(
         uint128 accountId,
         uint256 targetDebt
+    ) external view returns (uint256);
+
+    /**
+     * @notice Calculates the penalty amount for early withdrawal. This penalty is added on top of the accrued rewards amount.
+     * @param accountId The account for which the deposit reward penalty is being calculated.
+     * @param depositRewardToken The token in which the deposit reward is denominated.
+     * @return The calculated penalty amount that is applied on top of accrued rewards.
+     */
+    function depositRewardPenalty(
+        uint128 accountId,
+        address depositRewardToken
     ) external view returns (uint256);
 
     /**

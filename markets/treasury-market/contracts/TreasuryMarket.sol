@@ -368,6 +368,38 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             );
     }
 
+    function depositRewardPenalty(
+        uint128 accountId,
+        address depositRewardToken
+    ) external view override returns (uint256) {
+        DepositRewardConfiguration memory config;
+        bool configFound = false;
+        for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
+            if (depositRewardConfigurations[i].token == depositRewardToken) {
+                config = depositRewardConfigurations[i];
+                configFound = true;
+                break;
+            }
+        }
+        if (!configFound) {
+            revert ParameterError.InvalidParameter("depositRewardToken", "config not found");
+        }
+        LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
+        uint256 timestamp = block.timestamp;
+        return
+            _repaymentPenalty(
+                userDepositReward,
+                0,
+                _currentPenaltyRate(
+                    userDepositReward,
+                    config.penaltyStart,
+                    config.penaltyEnd,
+                    timestamp
+                ),
+                timestamp
+            );
+    }
+
     function adjustLoan(uint128 accountId, uint256 amount) external override {
         address sender = ERC2771Context._msgSender();
         if (sender != IERC721(v3System.getAccountTokenAddress()).ownerOf(accountId)) {

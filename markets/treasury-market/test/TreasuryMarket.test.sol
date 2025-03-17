@@ -275,8 +275,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 2 ether);
         assertEq(market.totalSaddledCollateral(), 4 ether);
 
-        // check rewards
-        assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0);
+        assertEq(
+            market.depositRewardAvailable(accountId, address(collateralToken)),
+            0,
+            "should have 0 rewards at the beginning"
+        );
 
         (uint64 startTime, uint32 power, uint32 duration, uint128 amount) = market.depositRewards(
             accountId,
@@ -285,8 +288,30 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(amount, 0.8 ether);
         assertEq(duration, 86400);
         assertEq(power, 1);
-        vm.warp(startTime + 86400 / 4);
-        assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0.2 ether);
+
+        assertEq(
+            market.depositRewardPenalty(accountId, address(collateralToken)),
+            0,
+            "should have maximum penalty at the beginning, but as reward is 0, penalty is also 0"
+        );
+
+        vm.warp(startTime + 86400 / 2);
+
+        assertEq(
+            market.depositRewardAvailable(accountId, address(collateralToken)),
+            0.8 ether / 2,
+            "should have half of rewards accumulated at half the time"
+        );
+
+        // total rewards - 0.8 ether
+        // at half the time:
+        // - available rewards is 0.8 / 2
+        // - penalty is in the middle of (1..0.5), which is 0.75
+        assertEq(
+            market.depositRewardPenalty(accountId, address(collateralToken)),
+            (0.8 ether / 2) * (1 - 0.5 / 2),
+            "should have 0.75 penalty on accrued rewards"
+        );
     }
 
     function test_SaddleSecondAccount() external {
