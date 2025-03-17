@@ -959,7 +959,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user1)
           .migrateDelegation(accountId, poolId + 12341234, collateralAddress(), migratePoolId),
-        `InvalidParameter("1")`,
+        'PoolNotFound("12341235")',
         systems().Core
       );
     });
@@ -968,7 +968,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user1)
           .migrateDelegation(accountId, poolId, collateralAddress(), migratePoolId + 12341234),
-        `InvalidParameter("1")`,
+        'PoolNotFound("12349816")',
         systems().Core
       );
     });
@@ -977,7 +977,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user1)
           .migrateDelegation(accountId, migratePoolId, collateralAddress(), migratePoolId + 1),
-        `InvalidParameter("1")`,
+        `PoolNotFound("8583")`,
         systems().Core
       );
     });
@@ -986,7 +986,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user1)
           .migrateDelegation(accountId, migratePoolId, collateralAddress(), poolId),
-        `InvalidParameter("1")`,
+        `InvalidParameter("newPoolId", "already delegated")`,
         systems().Core
       );
     });
