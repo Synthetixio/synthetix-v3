@@ -226,6 +226,12 @@ fromCall.func = "owner"
 func = "setFeatureFlagAllowAll"
 args = ["<%= formatBytes32String('liquidate') %>", true]
 
+[invoke.enable_feature_liquidateToTreasury]
+target = ["CoreProxy"]
+fromCall.func = "owner"
+func = "setFeatureFlagAllowAll"
+args = ["<%= formatBytes32String('liquidateToTreasury') %>", true]
+
 [invoke.enable_feature_liquidateVault]
 target = ["CoreProxy"]
 fromCall.func = "owner"
