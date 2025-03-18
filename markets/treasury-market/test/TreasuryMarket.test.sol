@@ -1021,7 +1021,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         sideMarket.setReportedDebt(1 ether);
 
         (uint64 startTime, , , ) = market.depositRewards(accountId, address(collateralToken));
-        vm.warp(startTime + 86400 / 4);
+        vm.warp(startTime + 86400 / 2);
 
         // we need a second account to go ahead and repay the first account
         // (sort of means that this market can never be fully emptied without an actual repay by stakers at some point)
@@ -1037,7 +1037,15 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         sideMarket.setReportedDebt(0);
 
         vm.prank(market.owner());
-        market.removeFromDepositReward(address(collateralToken), 999.9 ether);
+        market.removeFromDepositReward(address(collateralToken), 999.99 ether);
+
+        uint256 rewardsProjected = market.depositRewardAvailable(
+            accountId,
+            address(collateralToken)
+        );
+        uint256 rewardsPenalty = market.depositRewardPenalty(accountId, address(collateralToken));
+
+        uint256 rewardsAvailable = rewardsProjected - rewardsPenalty;
 
         IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId);
         // this staker is huge so there are not enough rewards to cover them exiting the pool
@@ -1045,8 +1053,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             abi.encodeWithSelector(
                 ITreasuryMarket.InsufficientAvailableReward.selector,
                 address(collateralToken),
-                0.775 ether,
-                0.1 ether
+                rewardsAvailable,
+                0.01 ether
             )
         );
         market.unsaddle(accountId);

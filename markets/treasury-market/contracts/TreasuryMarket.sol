@@ -325,6 +325,16 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     penaltyPaid;
 
                 if (receivedAmount > 0) {
+                    if (receivedAmount > availableDepositRewards[config.token]) {
+                        revert InsufficientAvailableReward(
+                            config.token,
+                            receivedAmount,
+                            availableDepositRewards[config.token]
+                        );
+                    }
+
+                    availableDepositRewards[config.token] -= receivedAmount;
+
                     v3System.withdrawMarketCollateral(marketId, config.token, receivedAmount);
                     v3System.deposit(accountId, config.token, receivedAmount);
 
@@ -335,16 +345,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                         penaltyPaid
                     );
                 }
-
-                uint256 rewardAmount = userDepositReward.loanAmount - receivedAmount;
-                if (rewardAmount > availableDepositRewards[config.token]) {
-                    revert InsufficientAvailableReward(
-                        config.token,
-                        rewardAmount,
-                        availableDepositRewards[config.token]
-                    );
-                }
-                availableDepositRewards[config.token] -= rewardAmount;
             }
         }
 
