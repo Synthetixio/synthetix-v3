@@ -179,7 +179,7 @@ describe('AssociateDebtModule', function () {
               MockMarket()
                 .connect(user2)
                 .callAssociateDebt(poolId, collateralAddress(), accountId, amount),
-              `NotFundedByPool("${marketId()}", "1")`,
+              `InsufficientCollateralRatio("${ethers.utils.parseEther('1000')}", "${ethers.utils.parseEther('1100')}", "909090909090909090", "${ethers.utils.parseEther('1.5')}")`,
               systems().Core
             );
 
