@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/buyback-snx",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "description": "Market buys and burns SNX",
   "publishConfig": {
     "access": "public"
