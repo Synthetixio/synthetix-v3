@@ -88,6 +88,19 @@ interface ILiquidationModule {
     ) external returns (LiquidationData memory liquidationData);
 
     /**
+     * @notice Liquidates a position by distributing its debt and collateral to the treasury.
+     * @param accountId The id of the account whose position is to be liquidated.
+     * @param poolId The id of the pool which holds the position that is to be liquidated.
+     * @param collateralType The address of the collateral being used in the position that is to be liquidated.
+     * @return liquidationData Information about the position that was liquidated.
+     */
+    function liquidateToTreasury(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external returns (LiquidationData memory liquidationData);
+
+    /**
      * @notice Liquidates an entire vault.
      * @dev Can only be done if the vault itself is under collateralized.
      * @dev LiquidateAsAccountId determines which account to deposit the seized collateral into (this is necessary particularly if the collateral in the vault is vesting).
