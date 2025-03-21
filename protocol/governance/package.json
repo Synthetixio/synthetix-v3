@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/governance",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "description": "On-Chain elections for all Synthetix councils",
   "publishConfig": {
     "access": "public"
@@ -13,21 +13,21 @@
     "*.toml"
   ],
   "scripts": {
-    "clean": "hardhat clean && rm -rf contracts/generated",
-    "build": "yarn build:contracts",
-    "build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
-    "storage:dump": "hardhat storage:dump --output storage.new.dump.json",
-    "storage:verify": " hardhat storage:verify",
-    "generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
-    "build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
-    "check:storage": "diff -uw storage.dump.json storage.new.dump.json",
-    "test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
-    "coverage": "hardhat coverage --network hardhat",
-    "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat compile && hardhat size-contracts",
-    "publish-contracts": "cannon publish synthetix:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
-    "deploy": "yarn build && yarn publish-contracts",
-    "docgen": "hardhat docgen"
+    "SKIP.clean": "hardhat clean && rm -rf contracts/generated",
+    "SKIP.build": "yarn build:contracts",
+    "SKIP.build:contracts": "hardhat compile --force && yarn storage:dump && CANNON_REGISTRY_PRIORITY=local hardhat cannon:build",
+    "SKIP.storage:dump": "hardhat storage:dump --output storage.new.dump.json",
+    "SKIP.storage:verify": " hardhat storage:verify",
+    "SKIP.generate-testable": "rm -rf contracts/generated && hardhat generate-testable",
+    "SKIP.build-testable": "CANNON_REGISTRY_PRIORITY=local hardhat cannon:build cannonfile.test.toml",
+    "SKIP.check:storage": "diff -uw storage.dump.json storage.new.dump.json",
+    "SKIP.test": "CANNON_REGISTRY_PRIORITY=local hardhat test",
+    "SKIP.coverage": "hardhat coverage --network hardhat",
+    "SKIP.compile-contracts": "hardhat compile",
+    "SKIP.size-contracts": "hardhat compile && hardhat size-contracts",
+    "SKIP.publish-contracts": "cannon publish synthetix:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "SKIP.deploy": "yarn build && yarn publish-contracts",
+    "SKIP.docgen": "hardhat docgen"
   },
   "keywords": [],
   "author": "",

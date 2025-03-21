@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/treasury-market",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "description": "V3 Market to allow a trusted entity to manage excess liquidity on behalf of stakers",
   "publishConfig": {
     "access": "public"
@@ -18,7 +18,8 @@
     "build": "yarn build:contracts",
     "build-testable": "cannon build cannonfile.test.toml --write-script script/Deploy.sol --write-script-format foundry --wipe",
     "storage:verify": " hardhat storage:verify",
-    "test": "forge test",
+    "forge-test": "forge test -vvvvv",
+    "forge-coverage": "forge coverage --report lcov",
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",

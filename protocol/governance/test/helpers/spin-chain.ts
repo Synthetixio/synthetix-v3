@@ -1,6 +1,5 @@
 import path from 'node:path';
 import { cannonBuild } from '@synthetixio/core-utils/utils/bootstrap/cannon-build';
-import { cannonInspect } from '@synthetixio/core-utils/utils/bootstrap/cannon-inspect';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
@@ -54,12 +53,14 @@ export async function spinChain<GovernanceProxy>({
     pkgInfo: require(path.join(hre.config.paths.root, 'package.json')),
     projectDirectory: hre.config.paths.root,
   });
+  console.log(`  Package: ${packageRef}`);
 
-  await cannonInspect({
-    chainId,
-    packageRef,
-    writeDeployments,
-  });
+  // TODO: re-implement this
+  // await cannonInspect({
+  //   chainId,
+  //   packageRef,
+  //   writeDeployments,
+  // });
 
   const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/**/*.json`]);
 

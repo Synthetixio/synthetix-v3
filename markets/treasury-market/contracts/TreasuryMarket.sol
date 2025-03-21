@@ -212,13 +212,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     uint256 rewardAmount = accountCollateral
                         .mulDecimal(oracleManager.process(config.valueRatioOracle).price.toUint())
                         .mulDecimal(config.percent);
-                    if (rewardAmount > availableDepositRewards[config.token]) {
-                        revert InsufficientAvailableReward(
-                            config.token,
-                            rewardAmount,
-                            availableDepositRewards[config.token]
-                        );
-                    }
 
                     // stack was too deep to set this as a local variable. annoying.
                     depositRewards[accountId][config.token] = LoanInfo(
@@ -228,8 +221,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                         uint128(rewardAmount)
                     );
 
-                    availableDepositRewards[config.token] -= rewardAmount;
-
                     emit DepositRewardIssued(
                         accountId,
                         config.token,
@@ -237,7 +228,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                             uint64(block.timestamp),
                             config.power,
                             config.duration,
-                            rewardAmount.to128()
+                            uint128(rewardAmount)
                         )
                     );
                 }
@@ -334,6 +325,16 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     penaltyPaid;
 
                 if (receivedAmount > 0) {
+                    if (receivedAmount > availableDepositRewards[config.token]) {
+                        revert InsufficientAvailableReward(
+                            config.token,
+                            receivedAmount,
+                            availableDepositRewards[config.token]
+                        );
+                    }
+
+                    availableDepositRewards[config.token] -= receivedAmount;
+
                     v3System.withdrawMarketCollateral(marketId, config.token, receivedAmount);
                     v3System.deposit(accountId, config.token, receivedAmount);
 
@@ -344,11 +345,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                         penaltyPaid
                     );
                 }
-
-                // return any rewards not received to the available deposit rewards
-                availableDepositRewards[config.token] +=
-                    userDepositReward.loanAmount -
-                    receivedAmount;
             }
         }
 
@@ -368,6 +364,38 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 loan,
                 targetLoan,
                 _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, timestamp),
+                timestamp
+            );
+    }
+
+    function depositRewardPenalty(
+        uint128 accountId,
+        address depositRewardToken
+    ) external view override returns (uint256) {
+        DepositRewardConfiguration memory config;
+        bool configFound = false;
+        for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
+            if (depositRewardConfigurations[i].token == depositRewardToken) {
+                config = depositRewardConfigurations[i];
+                configFound = true;
+                break;
+            }
+        }
+        if (!configFound) {
+            revert ParameterError.InvalidParameter("depositRewardToken", "config not found");
+        }
+        LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
+        uint256 timestamp = block.timestamp;
+        return
+            _repaymentPenalty(
+                userDepositReward,
+                0,
+                _currentPenaltyRate(
+                    userDepositReward,
+                    config.penaltyStart,
+                    config.penaltyEnd,
+                    timestamp
+                ),
                 timestamp
             );
     }
