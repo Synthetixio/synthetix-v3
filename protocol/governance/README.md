@@ -12,7 +12,7 @@ yarn hardhat cannon
 
 ### Periods
 
-Then, for development purposes, you can for example fast forward to the nomination period on the current running node (remember to use the `Proxy` address as the `--address` paramenter):
+Then, for development purposes, you can for example fast forward to the nomination period on the current running node (remember to use the `Proxy` address as the `--address` parameter):
 
 ```bash
 yarn hardhat --network local fast-forward-to --address 0x866cf0358C0514D4E63fCef80fD4B57C2eE5Fbe0 nomination
