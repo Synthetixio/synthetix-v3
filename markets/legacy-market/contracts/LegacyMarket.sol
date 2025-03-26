@@ -305,12 +305,23 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         migrationInProgress = false;
 
         // now we can associate the debt to a single staker
+        // only associate the debt that can actually be sent to the user; any excess will need to be absorbed by the other stakers of the pool
+        uint256 debtValueAssigned = debtValueMigrated;
+        if (
+            cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
+        ) {
+            debtValueAssigned = collateralMigrated.divDecimal(
+                v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
+            );
+            emit DebtForgiven(staker, accountId, debtValueMigrated - debtValueAssigned);
+        }
+
         v3System.associateDebt(
             marketId,
             preferredPoolId,
             address(oldSynthetix),
             accountId,
-            debtValueMigrated
+            debtValueAssigned
         );
 
         if (v3System.isVaultLiquidatable(preferredPoolId, address(oldSynthetix))) {

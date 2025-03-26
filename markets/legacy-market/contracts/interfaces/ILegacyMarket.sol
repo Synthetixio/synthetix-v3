@@ -17,6 +17,14 @@ interface ILegacyMarket {
     function rewardsDistributor() external view returns (ISNXDistributor);
 
     /**
+     * @notice Emitted when some debt is effectively forgiven because the staker has an insufficient c-ratio to enter the v3 system
+     * @param staker the address of the v2x staker that migrated
+     * @param accountId the new account id
+     * @param debtForgiven the value of the debt forgiven from the account and socialized to the pool stakers
+     */
+    event DebtForgiven(address indexed staker, uint256 indexed accountId, uint256 debtForgiven);
+
+    /**
      * @notice Emitted after an account has been migrated from the (legacy) v2x system to v3
      * @param staker the address of the v2x staker that migrated
      * @param accountId the new account id
