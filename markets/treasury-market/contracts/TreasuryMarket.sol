@@ -206,13 +206,44 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
             } else {
                 // this depositor is eligible for possible rewards
-                //DepositRewardConfiguration[] memory drc = depositRewardConfigurations;
                 for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
-                    DepositRewardConfiguration memory config = depositRewardConfigurations[i];
-                    uint256 rewardAmount = accountCollateral
-                        .mulDecimal(oracleManager.process(config.valueRatioOracle).price.toUint())
-                        .mulDecimal(config.percent);
+                    DepositRewardConfiguration storage config = depositRewardConfigurations[i];
 
+                    uint256 rewardAmount;
+                    {
+                        uint256 remainingRewardableCollateral = accountCollateral;
+
+                        // we give the user as much rewards as we can give them until all rewards are exhausted
+                        for (
+                            uint256 j = 0;
+                            j < config.amounts.length && remainingRewardableCollateral > 0;
+                            j++
+                        ) {
+                            if (config.amounts[j].maxCollateral == 0) {
+                                continue;
+                            }
+
+                            uint256 rewardedCollateral = remainingRewardableCollateral <
+                                config.amounts[j].maxCollateral
+                                ? remainingRewardableCollateral
+                                : config.amounts[j].maxCollateral;
+
+                            rewardAmount += rewardedCollateral
+                                .mulDecimal(
+                                    oracleManager.process(config.valueRatioOracle).price.toUint()
+                                )
+                                .mulDecimal(config.amounts[j].percent);
+
+                            remainingRewardableCollateral -= rewardedCollateral;
+                            config.amounts[j].maxCollateral -= uint128(rewardedCollateral);
+                        }
+
+                        if (remainingRewardableCollateral > 0) {
+                            // the user was probably expecting to get some rewards so go ahead and revert to ensure they do not enter the pool
+                            // if they are not getting those rewards
+                            revert InsufficientAvailableReward(config.token, accountCollateral, 0);
+                        }
+                    }
                     // stack was too deep to set this as a local variable. annoying.
                     depositRewards[accountId][config.token] = LoanInfo(
                         uint64(block.timestamp),
@@ -508,7 +539,22 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             if (depositRewardConfigurations.length <= i) {
                 depositRewardConfigurations.push();
             }
-            depositRewardConfigurations[i] = newDrcs[i];
+
+            // NOTE: not possible to simply copy to storage here because of limitation of solidity compiler
+            depositRewardConfigurations[i].token = newDrcs[i].token;
+            depositRewardConfigurations[i].power = newDrcs[i].power;
+            depositRewardConfigurations[i].duration = newDrcs[i].duration;
+            depositRewardConfigurations[i].valueRatioOracle = newDrcs[i].valueRatioOracle;
+            depositRewardConfigurations[i].penaltyStart = newDrcs[i].penaltyStart;
+            depositRewardConfigurations[i].penaltyEnd = newDrcs[i].penaltyEnd;
+
+            for (uint256 k = 0; k < depositRewardConfigurations[i].amounts.length; k++) {
+                depositRewardConfigurations[i].amounts.pop();
+            }
+            for (uint256 k = 0; k < newDrcs.length; k++) {
+                depositRewardConfigurations[i].amounts.push();
+                depositRewardConfigurations[i].amounts[k] = newDrcs[i].amounts[k];
+            }
 
             // ensure that the v3 core system can pull funds from us
             IERC20(newDrcs[i].token).approve(address(v3System), type(uint256).max);
