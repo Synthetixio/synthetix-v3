@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/pyth-erc7412-wrapper",
-  "version": "3.11.2",
+  "version": "3.12.0",
   "description": "Benchmark prices oracle",
   "publishConfig": {
     "access": "public"
