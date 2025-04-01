@@ -165,6 +165,10 @@ contract LiquidationModule is ILiquidationModule {
 
         // solhint-disable-next-line numcast/safe-cast
         uint128 treasuryAccountId = uint128(Config.readUint(_CONFIG_TREASURY_ACCOUNT_ID, 0));
+        if (treasuryAccountId == 0) {
+            revert ParameterError.InvalidParameter("treasuryAccountId", "not set");
+        }
+
         VaultEpoch.Data storage treasuryAccountEpoch;
         {
             // solhint-disable-next-line numcast/safe-cast
@@ -173,10 +177,6 @@ contract LiquidationModule is ILiquidationModule {
                 revert ParameterError.InvalidParameter("treasuryPoolId", "not set");
             }
             treasuryAccountEpoch = Pool.load(treasuryPoolId).vaults[collateralType].currentEpoch();
-        }
-
-        if (treasuryAccountId == 0) {
-            revert ParameterError.InvalidParameter("treasuryAccountId", "not set");
         }
 
         CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(

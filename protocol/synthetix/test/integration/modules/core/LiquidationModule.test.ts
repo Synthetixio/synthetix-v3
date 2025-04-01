@@ -198,7 +198,10 @@ describe('LiquidationModule', function () {
   it('liquidateToTreasury: cannot liquidate when treasury pool id not configured', async () => {
     await systems()
       .Core.connect(owner)
-      .setConfig('treasuryAccountId', ethers.utils.defaultAbiCoder.encode(['uint256'], [12341234]));
+      .setConfig(
+        ethers.utils.formatBytes32String('treasuryAccountId'),
+        ethers.utils.defaultAbiCoder.encode(['uint256'], [12341234])
+      );
     await assertRevert(
       systems().Core.connect(user2).liquidateToTreasury(accountId, poolId, collateralAddress()),
       'InvalidParameter("treasuryPoolId"',
