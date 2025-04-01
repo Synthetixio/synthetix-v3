@@ -19,7 +19,7 @@
     "build-testable": "cannon build cannonfile.test.toml --write-script script/Deploy.sol --write-script-format foundry --wipe",
     "storage:verify": " hardhat storage:verify",
     "forge-test": "forge test -vvvvv",
-    "forge-coverage": "forge coverage -vvv --report lcov",
+    "forge-coverage": "forge coverage -vvvv --report lcov",
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",
