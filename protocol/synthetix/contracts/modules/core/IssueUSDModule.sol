@@ -47,6 +47,14 @@ contract IssueUSDModule is IIssueUSDModule {
     bytes32 private constant _CONFIG_BURN_FEE_ADDRESS = "burnUsd_feeAddress";
 
     /**
+     * @dev Thrown when collateral cannot be used for delegation or withdrawal because its insufficient balance in the account.
+     */
+    error InsufficientAvailableCollateral(
+        uint256 amountAvailableForDelegationD18,
+        uint256 amountD18
+    );
+
+    /**
      * @inheritdoc IIssueUSDModule
      */
     function mintUsd(
@@ -146,6 +154,18 @@ contract IssueUSDModule is IIssueUSDModule {
         usdToken.asToken().burn(address(this), amount);
 
         account.collaterals[usdToken.getAddress()].decreaseAvailableCollateral(amount);
+
+        // check to make sure we have not surpassed the minimum locked collateral
+        // NOTE: technically we should be checking the total amount deposited (since amountAvailableForDelegation could be decremented for just having collateral in the pool)
+        if (
+            account.collaterals[usdToken.getAddress()].getTotalLocked() >
+            account.collaterals[usdToken.getAddress()].amountAvailableForDelegationD18
+        ) {
+            revert InsufficientAvailableCollateral(
+                account.collaterals[usdToken.getAddress()].amountAvailableForDelegationD18,
+                account.collaterals[usdToken.getAddress()].getTotalLocked()
+            );
+        }
 
         // Decrease the debt of the position
         pool.assignDebtToAccount(collateralType, accountId, -amount.toInt());

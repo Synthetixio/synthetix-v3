@@ -38,7 +38,14 @@ contract LiquidationModule is ILiquidationModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     bytes32 private constant _LIQUIDATE_FEATURE_FLAG = "liquidate";
+    bytes32 private constant _LIQUIDATE_TO_TREASURY_FEATURE_FLAG = "liquidateToTreasury";
     bytes32 private constant _LIQUIDATE_VAULT_FEATURE_FLAG = "liquidateVault";
+
+    // the account that collateral and debt is sent to on liquidateToTreasury function
+    bytes32 private constant _CONFIG_TREASURY_ACCOUNT_ID = "treasuryAccountId";
+    bytes32 private constant _CONFIG_TREASURY_POOL_ID = "treasuryPoolId";
+
+    bytes32 private constant _CONFIG_POOL_DISABLE_LIQUIDATION = "disablePoolLiquidation";
 
     /**
      * @inheritdoc ILiquidationModule
@@ -52,6 +59,12 @@ contract LiquidationModule is ILiquidationModule {
         FeatureFlag.ensureAccessToFeature(_LIQUIDATE_FEATURE_FLAG);
         // Ensure the account receiving rewards exists
         Account.exists(liquidateAsAccountId);
+
+        if (
+            Config.readUint(keccak256(abi.encode(_CONFIG_POOL_DISABLE_LIQUIDATION, poolId)), 0) != 0
+        ) {
+            revert ParameterError.InvalidParameter("poolId", "liquidations disabled");
+        }
 
         CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(
             collateralType
@@ -137,6 +150,111 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
+    function liquidateToTreasury(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external override returns (LiquidationData memory liquidationData) {
+        FeatureFlag.ensureAccessToFeature(_LIQUIDATE_TO_TREASURY_FEATURE_FLAG);
+
+        if (
+            Config.readUint(keccak256(abi.encode(_CONFIG_POOL_DISABLE_LIQUIDATION, poolId)), 0) != 0
+        ) {
+            revert ParameterError.InvalidParameter("poolId", "liquidations disabled");
+        }
+
+        // solhint-disable-next-line numcast/safe-cast
+        uint128 treasuryAccountId = uint128(Config.readUint(_CONFIG_TREASURY_ACCOUNT_ID, 0));
+        if (treasuryAccountId == 0) {
+            revert ParameterError.InvalidParameter("treasuryAccountId", "not set");
+        }
+
+        VaultEpoch.Data storage treasuryAccountEpoch;
+        {
+            // solhint-disable-next-line numcast/safe-cast
+            uint128 treasuryPoolId = uint128(Config.readUint(_CONFIG_TREASURY_POOL_ID, 0));
+            if (treasuryPoolId == 0) {
+                revert ParameterError.InvalidParameter("treasuryPoolId", "not set");
+            }
+            treasuryAccountEpoch = Pool.load(treasuryPoolId).vaults[collateralType].currentEpoch();
+        }
+
+        CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(
+            collateralType
+        );
+        VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
+
+        int256 rawDebt = Pool.load(poolId).updateAccountDebt(collateralType, accountId);
+        (uint256 collateralAmount, uint256 collateralValue) = Pool
+            .load(poolId)
+            .currentAccountCollateral(collateralType, accountId);
+        liquidationData.collateralLiquidated = collateralAmount;
+
+        // Verify whether the position is eligible for liquidation
+        if (rawDebt <= 0 || !_isLiquidatable(collateralType, rawDebt, collateralValue)) {
+            revert IneligibleForLiquidation(
+                collateralValue,
+                rawDebt,
+                rawDebt <= 0 ? 0 : collateralValue.divDecimal(rawDebt.toUint()),
+                collateralConfig.liquidationRatioD18
+            );
+        }
+
+        liquidationData.debtLiquidated = rawDebt.toUint();
+
+        // distribute any outstanding rewards distributor value to the user who is about to be liquidated, since technically they are eligible.
+        Pool.load(poolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, poolId, collateralType)
+        );
+
+        // This will clear the user's account the same way as if they had withdrawn normally
+        epoch.updateAccountPosition(accountId, 0, 0);
+
+        // in case the liquidation caused the user to have less collateral than is actually locked in their account,
+        // this will ensure their locks are good.
+        // NOTE: limit is set to 50 here to prevent the user from DoSsing their account liquidation by creating locks on their own account
+        // if the limit is surpassed, their locks wont be scaled upon liquidation and that is their problem
+        Account.load(accountId).cleanAccountLocks(collateralType, 0, 50);
+
+        // move the collateral
+        Account.load(treasuryAccountId).increaseAvailableCollateral(
+            collateralType,
+            liquidationData.collateralLiquidated
+        );
+        treasuryAccountEpoch.collateralAmounts.set(
+            // solhint-disable-next-line numcast/safe-cast
+            bytes32(uint256(treasuryAccountId)),
+            // solhint-disable-next-line numcast/safe-cast
+            treasuryAccountEpoch.collateralAmounts.get(bytes32(uint256(treasuryAccountId))) +
+                liquidationData.collateralLiquidated
+        );
+
+        // move the debt
+        epoch.assignDebtToAccount(accountId, -liquidationData.debtLiquidated.toInt());
+        treasuryAccountEpoch.assignDebtToAccount(
+            treasuryAccountId,
+            liquidationData.debtLiquidated.toInt()
+        );
+
+        // Remove the debt assigned to the liquidated account
+
+        // The collateral is reduced by `amountRewarded`, so we need to reduce the stablecoins capacity available to the markets
+        Pool.load(poolId).recalculateVaultCollateral(collateralType);
+
+        // Send amountRewarded to the specified account
+        emit Liquidation(
+            accountId,
+            poolId,
+            collateralType,
+            liquidationData,
+            treasuryAccountId,
+            ERC2771Context._msgSender()
+        );
+    }
+
+    /**
+     * @inheritdoc ILiquidationModule
+     */
     function liquidateVault(
         uint128 poolId,
         address collateralType,
@@ -146,6 +264,12 @@ contract LiquidationModule is ILiquidationModule {
         FeatureFlag.ensureAccessToFeature(_LIQUIDATE_VAULT_FEATURE_FLAG);
         // Ensure the account receiving collateral exists
         Account.exists(liquidateAsAccountId);
+
+        if (
+            Config.readUint(keccak256(abi.encode(_CONFIG_POOL_DISABLE_LIQUIDATION, poolId)), 0) != 0
+        ) {
+            revert ParameterError.InvalidParameter("poolId", "liquidations disabled");
+        }
 
         // The liquidator must provide at least some stablecoins to repay debt
         if (maxUsd == 0) {

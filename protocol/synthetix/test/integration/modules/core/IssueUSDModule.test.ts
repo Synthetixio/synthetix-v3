@@ -384,7 +384,7 @@ describe('IssueUSDModule', function () {
           systems()
             .Core.connect(user1)
             .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10)),
-          'InsufficentAvailableCollateral("50000000000000000000", "100000000000000000000")'
+          'InsufficientAvailableCollateral("0", "50000000000000000000")'
         );
       });
 
