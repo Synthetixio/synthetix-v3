@@ -7,14 +7,19 @@ import "./external/IV3CoreProxy.sol";
  * @title Synthetix V3 Market allowing for a trusted entity to manage excess liquidity allocated to a liquidity pool.
  */
 interface ITreasuryMarket {
+    struct DepositRewardAmounts {
+        uint128 percent;
+        uint128 maxCollateral;
+    }
+
     struct DepositRewardConfiguration {
         address token;
         uint32 power;
         uint32 duration;
-        uint128 percent;
         bytes32 valueRatioOracle;
         uint128 penaltyStart;
         uint128 penaltyEnd;
+        DepositRewardAmounts[] amounts;
     }
 
     struct LoanInfo {
