@@ -310,9 +310,14 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         if (
             cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
         ) {
-            debtValueAssigned = collateralMigrated.divDecimal(
-                v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
-            );
+            debtValueAssigned =
+                (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix)))
+                    .divDecimal(
+                        v3System
+                            .getCollateralConfiguration(address(oldSynthetix))
+                            .liquidationRatioD18
+                    ) -
+                10;
             emit DebtForgiven(staker, accountId, debtValueMigrated - debtValueAssigned);
         }
 
