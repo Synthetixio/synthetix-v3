@@ -56,6 +56,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         uint128 indexed marketId,
         address indexed sender
     );
+
     error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
@@ -311,12 +312,8 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
             cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
         ) {
             debtValueAssigned =
-                (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix)))
-                    .divDecimal(
-                        v3System
-                            .getCollateralConfiguration(address(oldSynthetix))
-                            .liquidationRatioD18
-                    ) -
+                (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix))) /
+                v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18 -
                 10;
             emit DebtForgiven(staker, accountId, debtValueMigrated - debtValueAssigned);
         }
@@ -449,9 +446,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
 
     function onERC721Received(
         address operator,
-        address /*from*/,
-        uint256 /*tokenId*/,
-        bytes memory /*data*/
+        address,
+        /*from*/ uint256,
+        /*tokenId*/ bytes memory /*data*/
     ) external view override returns (bytes4) {
         if (operator != address(v3System)) {
             revert ParameterError.InvalidParameter("operator", "should be account token");
