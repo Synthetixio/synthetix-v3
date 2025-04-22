@@ -33,6 +33,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     uint128 constant accountId = 25;
     uint128 constant poolId = 1;
 
+    mapping(address => uint256) public balanceOf;
+
     function setUp() external {
         CannonDeploy deployer = new CannonDeploy();
         deployer.run();
@@ -59,7 +61,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             market.treasury(),
             poolId,
             address(collateralToken),
-            IStakingRewards(address(0))
+            IStakingRewards(address(this))
         );
         vm.etch(deployer.getAddress("MarketImpl"), address(treasuryMarketCode).code);
 
@@ -1280,15 +1282,52 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             )
         );
         market.setDepositRewardConfigurations(configs);
+    }
 
-        /*
-        uint256 usdBalanceBefore = v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken));
-        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId + 1);
+    function test_RevertIf_UnauthorizedUpdateAuxToken() external {
 
-        market.unsaddle(accountId + 1);
+    }
 
-        assertGt(v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken)), usdBalanceBefore);
-        */
+    function test_UpdateAuxTokenAndDebtDecayBehavior() external {
+        // first, set up decaying debt, saddle, and pass some time
+        vm.warp(100000000);
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1000000, 0, 0);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        // debt should be 50% paid off
+        vm.warp(100500000);
+        assertEq(market.loanedAmount(accountId), 0.5 ether);
+
+        // then, updateAuxToken
+        vm.prank(market.owner());
+        market.updateAuxToken(0.25 ether);
+
+        // then, let some time pass and make sure our saddled user does not have their debt paid off
+        vm.warp(100750000);
+        assertEq(market.loanedAmount(accountId), 0.5 ether);
+
+        // then, "deposit" some tokens, allow time to pass, and check that burn was "resumed". Also, add a second saddled user.
+        balanceOf[address(this)] = 0.25 ether;
+        market.reportAuxToken(1);
+        market.reportAuxToken(accountId);
+        vm.warp(100850000);
+        assertEq(market.loanedAmount(accountId), 0.4 ether);
+
+        // then, remove tokens and it should be paused again
+
+        balanceOf[address(this)] = 0.24 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(101500000);
+        assertEq(market.loanedAmount(accountId), 0.4 ether);
+
+        // then, verify we can get to the end of the distribution.
+
+        balanceOf[address(this)] = 0.25 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(102000000);
+        assertEq(market.loanedAmount(accountId), 0 ether);
     }
 
     function onERC721Received(
