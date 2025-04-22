@@ -67,7 +67,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     mapping(uint128 => mapping(address => LoanInfo)) public depositRewards;
 
     IStakingRewards public immutable auxTokenRewardsAddress;
-    AuxTokenLoanRatio[] public auxTokenInfo;
+    AuxTokenRequiredRatio[] public auxTokenRequiredRatios;
+    mapping(uint128 => AuxTokenInfo) public auxTokenInfo;
 
     // solhint-disable-next-line no-empty-blocks
     constructor(
@@ -208,11 +209,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     uint64(block.timestamp),
                     debtDecayPower,
                     debtDecayTime,
-                    accountDebt.toUint().to128(),
-                    0,
-                    0,
-                    0,
-                    0
+                    accountDebt.toUint().to128()
                 );
                 emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
             } else {
@@ -229,11 +226,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                         uint64(block.timestamp),
                         config.power,
                         config.duration,
-                        uint128(rewardAmount),
-                        0,
-                        0,
-                        0,
-                        0
+                        uint128(rewardAmount)
                     );
 
                     emit DepositRewardIssued(
@@ -243,11 +236,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                             uint64(block.timestamp),
                             config.power,
                             config.duration,
-                            uint128(rewardAmount),
-                            0,
-                            0,
-                            0,
-                            0
+                            uint128(rewardAmount)
                         )
                     );
                 }
@@ -276,8 +265,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             block.timestamp,
             _loanActiveTime(
                 loans[accountId],
+                auxTokenInfo[accountId],
                 block.timestamp,
-                _loanLastUpdateTime(loans[accountId])
+                _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId])
             )
         );
         if (currentLoan > 0) {
@@ -354,6 +344,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                         timestamp,
                         _loanActiveTime(
                             userDepositReward,
+                            auxTokenInfo[0],
                             block.timestamp,
                             block.timestamp - userDepositReward.startTime
                         )
@@ -390,6 +381,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function reportAuxToken(uint128 accountId) external {
+        if (msg.sender != address(auxTokenRewardsAddress)) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
         if (saddledCollateral[accountId] == 0) {
             revert ParameterError.InvalidParameter("accountId", "not saddled");
         }
@@ -402,26 +397,25 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             revert AccessError.Unauthorized(sender);
         }
 
-        uint256 curAuxTokenDeposit = loans[accountId].auxTokenDepositAmount;
+        uint256 curAuxTokenDeposit = auxTokenInfo[accountId].amount;
 
         // update aux token deposit amount
-        loans[accountId].auxTokenDepositAmount = auxTokenAmount.to128();
+        auxTokenInfo[accountId].amount = auxTokenAmount.to128();
 
         // update freeze status
         if (
-            auxTokenInfo.length != 0 &&
+            auxTokenRequiredRatios.length != 0 &&
             curAuxTokenDeposit <
             uint256(loans[accountId].loanAmount).mulDecimal(
-                auxTokenInfo[auxTokenInfo.length - 1].ratio
+                auxTokenRequiredRatios[auxTokenRequiredRatios.length - 1].ratio
             )
         ) {
-            loans[accountId].auxTokenDepositInsufficientTime = (loans[accountId]
-                .auxTokenDepositInsufficientTime +
+            auxTokenInfo[accountId].timeInsufficient = (auxTokenInfo[accountId].timeInsufficient +
                 block.timestamp -
-                _loanLastUpdateTime(loans[accountId])).to32();
+                _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId])).to32();
         }
 
-        loans[accountId].auxTokenDepositLastUpdated = uint64(block.timestamp);
+        auxTokenInfo[accountId].lastUpdated = uint64(block.timestamp);
 
         emit AuxTokenDepositChanged(accountId, auxTokenAmount, curAuxTokenDeposit);
     }
@@ -431,6 +425,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint256 targetLoan
     ) external view override returns (uint256) {
         LoanInfo memory loan = loans[accountId];
+        AuxTokenInfo memory ati = auxTokenInfo[accountId];
         uint256 timestamp = block.timestamp;
         return
             _repaymentPenalty(
@@ -438,7 +433,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 targetLoan,
                 _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, timestamp),
                 timestamp,
-                _loanActiveTime(loan, timestamp, _loanLastUpdateTime(loan))
+                _loanActiveTime(loan, ati, timestamp, _loanLastUpdateTime(loan, ati))
             );
     }
 
@@ -482,11 +477,12 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         }
 
         LoanInfo memory loan = loans[accountId];
+        AuxTokenInfo memory ati = auxTokenInfo[accountId];
         uint256 timestamp = block.timestamp;
         uint256 currentLoan = _loanedAmount(
             loan,
             timestamp,
-            _loanActiveTime(loan, block.timestamp, _loanLastUpdateTime(loan))
+            _loanActiveTime(loan, ati, block.timestamp, _loanLastUpdateTime(loan, ati))
         );
 
         if (amount > currentLoan) {
@@ -497,7 +493,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 amount,
                 _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, timestamp),
                 timestamp,
-                _loanActiveTime(loan, timestamp, _loanLastUpdateTime(loan))
+                _loanActiveTime(loan, ati, timestamp, _loanLastUpdateTime(loan, ati))
             );
             // apply a penalty on whatever is repaid
 
@@ -521,8 +517,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 block.timestamp,
                 _loanActiveTime(
                     loans[accountId],
+                    auxTokenInfo[accountId],
                     block.timestamp,
-                    _loanLastUpdateTime(loans[accountId])
+                    _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId])
                 )
             );
     }
@@ -652,7 +649,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function updateAuxToken(uint256 requiredRatio) external override onlyOwner returns (uint256) {
-        auxTokenInfo.push(AuxTokenLoanRatio(uint128(block.timestamp), requiredRatio.to128()));
+        auxTokenRequiredRatios.push(
+            AuxTokenRequiredRatio(uint128(block.timestamp), requiredRatio.to128())
+        );
         emit UpdateAuxTokenRequirement(block.timestamp, requiredRatio);
     }
 
@@ -756,16 +755,19 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function _loanActiveTime(
         LoanInfo memory loan,
+        AuxTokenInfo memory ati,
         uint256 timestamp,
         uint256 auxLastUpdated
     ) internal view returns (uint256) {
-        uint256 curAuxTokenDeposit = loan.auxTokenDepositAmount;
-        bool currentlySufficient = auxTokenInfo.length > 0
+        uint256 curAuxTokenDeposit = ati.amount;
+        bool currentlySufficient = auxTokenRequiredRatios.length > 0
             ? curAuxTokenDeposit >=
-                uint256(loan.loanAmount).mulDecimal(auxTokenInfo[auxTokenInfo.length - 1].ratio)
+                uint256(loan.loanAmount).mulDecimal(
+                    auxTokenRequiredRatios[auxTokenRequiredRatios.length - 1].ratio
+                )
             : true;
         uint256 subs = (currentlySufficient ? 0 : block.timestamp - auxLastUpdated) +
-            loan.auxTokenDepositInsufficientTime +
+            ati.timeInsufficient +
             loan.startTime;
 
         if (timestamp < subs) {
@@ -775,11 +777,14 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return timestamp - subs;
     }
 
-    function _loanLastUpdateTime(LoanInfo memory loan) internal view returns (uint256) {
+    function _loanLastUpdateTime(
+        LoanInfo memory loan,
+        AuxTokenInfo memory ati
+    ) internal view returns (uint256) {
         return
-            auxTokenInfo.length > loan.auxTokenInfoEpoch
-                ? auxTokenInfo[loan.auxTokenInfoEpoch].timestamp
-                : loan.auxTokenDepositLastUpdated;
+            auxTokenRequiredRatios.length > ati.epoch
+                ? auxTokenRequiredRatios[ati.epoch].timestamp
+                : ati.lastUpdated;
     }
 
     function _repaymentPenalty(

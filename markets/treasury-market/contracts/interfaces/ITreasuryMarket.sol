@@ -22,13 +22,16 @@ interface ITreasuryMarket {
         uint32 power;
         uint32 duration;
         uint128 loanAmount;
-        uint128 auxTokenDepositAmount;
-        uint64 auxTokenDepositLastUpdated;
-        uint32 auxTokenDepositInsufficientTime;
-        uint32 auxTokenInfoEpoch;
     }
 
-    struct AuxTokenLoanRatio {
+    struct AuxTokenInfo {
+        uint128 amount;
+        uint64 lastUpdated;
+        uint32 timeInsufficient;
+        uint32 epoch;
+    }
+
+    struct AuxTokenRequiredRatio {
         uint128 timestamp;
         uint128 ratio;
     }
