@@ -15,9 +15,9 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
  * @notice Fork of Synthetix v2x StakingRewards contract which has been modified to:
  * * not require reward tokens to be deposited initially
  * * only pay out reward tokens after the measurement period has elapsed
- * * have a rollout of rewarded tokens 
+ * * have a rollout of rewarded tokens
  * * use ERC2771 msgSender to be compatible with multicalls
- * 
+ *
  * usage instructions:
  * 1. deploy contract
  * 2. owner calls `setRewardsDuration` to set how long it should take for rewards to come out
@@ -77,13 +77,14 @@ contract TreasuryStakingRewards is IStakingRewards, Ownable {
             return rewardPerTokenStored;
         }
         return
-            rewardPerTokenStored + (
-                (lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * 1e18 / _totalSupply
-            );
+            rewardPerTokenStored +
+            (((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * 1e18) / _totalSupply);
     }
 
     function earned(address account) public view returns (uint256) {
-        return _balances[account].mulDecimal(rewardPerToken() - userRewardPerTokenPaid[account]) + rewards[account];
+        return
+            _balances[account].mulDecimal(rewardPerToken() - userRewardPerTokenPaid[account]) +
+            rewards[account];
     }
 
     function getRewardForDuration() external view returns (uint256) {
@@ -113,7 +114,10 @@ contract TreasuryStakingRewards is IStakingRewards, Ownable {
             return;
         }
 
-        uint256 vestableReward = rewards[ERC2771Context._msgSender()] * (block.timestamp - periodFinish) / rewardsVestTime - paidRewards[ERC2771Context._msgSender()];
+        uint256 vestableReward = (rewards[ERC2771Context._msgSender()] *
+            (block.timestamp - periodFinish)) /
+            rewardsVestTime -
+            paidRewards[ERC2771Context._msgSender()];
         if (vestableReward > 0) {
             paidRewards[ERC2771Context._msgSender()] += vestableReward;
             IERC20(rewardsToken).transfer(ERC2771Context._msgSender(), vestableReward);
