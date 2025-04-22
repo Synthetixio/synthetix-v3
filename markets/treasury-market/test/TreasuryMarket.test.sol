@@ -58,7 +58,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             oracleManager,
             market.treasury(),
             poolId,
-            address(collateralToken)
+            address(collateralToken),
+            IStakingRewards(address(0))
         );
         vm.etch(deployer.getAddress("MarketImpl"), address(treasuryMarketCode).code);
 
@@ -192,7 +193,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             oracleManager,
             market.treasury(),
             poolId,
-            address(collateralToken)
+            address(collateralToken),
+            IStakingRewards(address(0))
         );
         newMarket.registerMarket();
 
@@ -255,7 +257,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // check rewards
         assertEq(market.depositRewardAvailable(accountId, address(collateralToken)), 0);
 
-        (uint64 startTime, uint32 power, uint32 duration, uint128 amount) = market.depositRewards(
+        (uint64 startTime, uint32 power, uint32 duration, uint128 amount, , , ,) = market.depositRewards(
             accountId,
             address(collateralToken)
         );
@@ -281,7 +283,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             "should have 0 rewards at the beginning"
         );
 
-        (uint64 startTime, uint32 power, uint32 duration, uint128 amount) = market.depositRewards(
+        (uint64 startTime, uint32 power, uint32 duration, uint128 amount,,,,) = market.depositRewards(
             accountId,
             address(collateralToken)
         );
@@ -467,7 +469,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
-        (uint64 startTime, , , ) = market.loans(accountId);
+        (uint64 startTime, , , , , , , ) = market.loans(accountId);
 
         assertEq(market.loanedAmount(accountId), 1 ether);
         vm.warp(startTime + 1000000);
@@ -483,7 +485,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
-        (uint64 startTime, , , ) = market.loans(accountId);
+        (uint64 startTime, , , , , , ,) = market.loans(accountId);
 
         assertEq(market.loanedAmount(accountId), 1 ether);
         vm.warp(startTime + 500000);
@@ -504,7 +506,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         sideMarket.setReportedDebt(1 ether);
         market.saddle(accountId);
 
-        (uint64 startTime, , , ) = market.loans(accountId);
+        (uint64 startTime, , , , , , , ) = market.loans(accountId);
 
         assertEq(market.loanedAmount(accountId), 1 ether);
         vm.warp(startTime + 500000);
@@ -543,7 +545,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 2000000, 1 ether, 0.5 ether);
 
-        (uint64 startTime, , , ) = market.loans(accountId);
+        (uint64 startTime, , , , , , , ) = market.loans(accountId);
 
         assertEq(market.loanedAmount(accountId), 1 ether);
         vm.warp(startTime + 500000);
@@ -562,7 +564,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         // the amount actually paid from the user's wallet is higher than the current amount of the loan (50% of 75% (avg of the two penalties) is the amount that didnt actually get repaid)
         assertEq(usdToken.balanceOf(address(this)), 0.125 ether);
 
-        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount) = market.loans(
+        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount, , , , ) = market.loans(
             accountId
         );
         assertEq(newStartTime, startTime);
@@ -582,7 +584,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 2000000, 1 ether, 0.5 ether);
 
-        (uint64 startTime, , , ) = market.loans(accountId);
+        (uint64 startTime, , , , , , , ) = market.loans(accountId);
 
         assertEq(market.loanedAmount(accountId), 1 ether);
         vm.warp(startTime + 500000);
@@ -604,7 +606,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.adjustLoan(accountId, 0);
         assertEq(usdToken.balanceOf(address(this)), 0.125 ether);
 
-        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount) = market.loans(
+        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount, , , , ) = market.loans(
             accountId
         );
         assertEq(newStartTime, startTime);
@@ -624,7 +626,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 2000000, 0, 0);
 
-        (uint64 startTime, , , ) = market.loans(accountId);
+        (uint64 startTime, , , , , , , ) = market.loans(accountId);
 
         assertEq(market.loanedAmount(accountId), 1 ether);
         vm.warp(startTime + 500000);
@@ -635,7 +637,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.adjustLoan(accountId, 0.4375 ether);
         assertEq(market.loanedAmount(accountId), 0.4375 ether);
 
-        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount) = market.loans(
+        (uint64 newStartTime, uint32 power, uint32 duration, uint256 loanAmount, , , , ) = market.loans(
             accountId
         );
         assertEq(newStartTime, startTime);
@@ -764,7 +766,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.saddle(accountId);
         sideMarket.setReportedDebt(1 ether);
 
-        (uint64 startTime, , , ) = market.depositRewards(accountId, address(collateralToken));
+        (uint64 startTime, , , , , , , ) = market.depositRewards(accountId, address(collateralToken));
         vm.warp(startTime + 86400 / 4);
 
         // we need a second account to go ahead and repay the first account
@@ -1020,7 +1022,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.saddle(accountId);
         sideMarket.setReportedDebt(1 ether);
 
-        (uint64 startTime, , , ) = market.depositRewards(accountId, address(collateralToken));
+        (uint64 startTime, , , , , , , ) = market.depositRewards(accountId, address(collateralToken));
         vm.warp(startTime + 86400 / 2);
 
         // we need a second account to go ahead and repay the first account

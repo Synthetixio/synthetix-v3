@@ -343,7 +343,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         loans[accountId].auxTokenDepositAmount = auxTokenAmount.to128();
 
         // update freeze status
-        if (curAuxTokenDeposit < uint256(loans[accountId].loanAmount).mulDecimal(auxTokenInfo[auxTokenInfo.length - 1].ratio)) {
+        if (auxTokenInfo.length != 0 && curAuxTokenDeposit < uint256(loans[accountId].loanAmount).mulDecimal(auxTokenInfo[auxTokenInfo.length - 1].ratio)) {
             loans[accountId].auxTokenDepositInsufficientTime = (loans[accountId].auxTokenDepositInsufficientTime + block.timestamp - _loanLastUpdateTime(loans[accountId])).to32();
         }
 
@@ -633,8 +633,13 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function _loanActiveTime(LoanInfo memory loan, uint256 timestamp, uint256 auxLastUpdated) internal view returns (uint256) {
         uint256 curAuxTokenDeposit = loan.auxTokenDepositAmount;
-        bool currentlySufficient = curAuxTokenDeposit >= uint256(loan.loanAmount).mulDecimal(auxTokenInfo[auxTokenInfo.length - 1].ratio);
+        bool currentlySufficient = auxTokenInfo.length > 0 ? curAuxTokenDeposit >= uint256(loan.loanAmount).mulDecimal(auxTokenInfo[auxTokenInfo.length - 1].ratio) : true;
         uint256 subs = (currentlySufficient ? 0 : block.timestamp - auxLastUpdated) + loan.auxTokenDepositInsufficientTime + loan.startTime;
+
+        if (timestamp < subs) {
+            return 0;
+        }
+
         return timestamp - subs;
     }
 
@@ -653,7 +658,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         }
 
         uint256 loanCompletionPercentage =
-            loan.duration > 0 ? (timestamp - loan.startTime).divDecimal(loan.duration) : 1 ether;
+            loan.duration > 0 ? loanActiveTime.divDecimal(loan.duration) : 1 ether;
 
         // the penalty subtracts a certain percentage from what has been decayed. for example, assuming 25% penalty:
         // 1. starting with a $1000 loan over 40 days

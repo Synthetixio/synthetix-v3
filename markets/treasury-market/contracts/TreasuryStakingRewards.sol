@@ -53,7 +53,7 @@ contract TreasuryStakingRewards is IStakingRewards, Ownable {
         address _owner,
         address _rewardsToken,
         address _stakingToken
-    ) public Ownable(ERC2771Context._msgSender()) {
+    ) Ownable(ERC2771Context._msgSender()) {
         rewardsToken = _rewardsToken;
         stakingToken = _stakingToken;
     }
