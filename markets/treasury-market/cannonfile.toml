@@ -17,6 +17,15 @@ defaultValue = "<%= imports.v3.contracts.USDProxy.address %>"
 [setting.v3_package]
 defaultValue = "synthetix:latest"
 
+[setting.aux_token]
+defaultValue = "<%= AddressZero %>"
+
+[setting.aux_recipient]
+defaultValue = "<%= AddressZero %>"
+
+[setting.required_aux_token_ratio]
+defaultValue = "0"
+
 [pull.v3]
 source = "<%= settings.v3_package %>"
 
@@ -44,6 +53,14 @@ args = [
 create2 = true
 ifExists = "continue"
 
+[deploy.Staking]
+artifact = "TreasuryStakingRewards"
+args = [
+    "<%= settings.aux_token %>",
+    "<%= contracts.InitialProxy.address %>",
+    "<%= settings.aux_recipient %>",
+]
+
 [invoke.upgradeProxy]
 target = ["InitialProxy"]
 abi = "UpgradeModule"
@@ -59,6 +76,15 @@ factory.Proxy.constructorArgs = [
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 factory.Proxy.highlight = true
+
+[invoke.setAuxTokenRewards]
+target = ["Proxy"]
+from = "<%= settings.owner %>"
+func = "updateAuxToken"
+args = [
+    "<%= contracts.Staking.address %>",
+    "<%= settings.required_aux_token_ratio %>",
+]
 
 [invoke.setFeatureFlagMarket]
 target = ["v3.CoreProxy"]

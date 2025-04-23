@@ -36,7 +36,7 @@ interface ITreasuryMarket {
         uint128 ratio;
     }
 
-    function v3System() external view returns (IV3CoreProxy);
+    //function v3System() external view returns (IV3CoreProxy);
 
     /**
      * @notice Emitted when a new target cratio has been set
@@ -266,7 +266,17 @@ interface ITreasuryMarket {
 
     /**
      * @notice Called by the owner to require an auxillery token to be deposited in a configured rewards distribution contract, without which loan will not be automatically repaid
+     * @param newAuxTokenRewardsAddress How many aux tokens are required
      * @param requiredRatio The ratio of tokens needed in the reward contract before the loan can be automtaically repaid
      */
-    function updateAuxToken(uint256 requiredRatio) external returns (uint256);
+    function updateAuxToken(
+        address newAuxTokenRewardsAddress,
+        uint256 requiredRatio
+    ) external returns (uint256);
+
+    /**
+     * @notice Called by the staking rewards contract to indicate that a staking operation has occured, and a change should be observed.
+     * @param accountId the account that performed an operation on the staking contract
+     */
+    function reportAuxToken(uint128 accountId) external;
 }

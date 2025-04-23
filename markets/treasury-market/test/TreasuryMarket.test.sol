@@ -60,8 +60,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             oracleManager,
             market.treasury(),
             poolId,
-            address(collateralToken),
-            IStakingRewards(address(this))
+            address(collateralToken)
         );
         vm.etch(deployer.getAddress("MarketImpl"), address(treasuryMarketCode).code);
 
@@ -195,8 +194,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             oracleManager,
             market.treasury(),
             poolId,
-            address(collateralToken),
-            IStakingRewards(address(0))
+            address(collateralToken)
         );
         newMarket.registerMarket();
 
@@ -1332,7 +1330,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         // then, updateAuxToken
         vm.prank(market.owner());
-        market.updateAuxToken(0.25 ether);
+        market.updateAuxToken(address(this), 0.25 ether);
 
         // then, let some time pass and make sure our saddled user does not have their debt paid off
         vm.warp(100750000);

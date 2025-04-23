@@ -9,7 +9,7 @@ import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import {UUPSImplementation} from "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 
 import "./interfaces/ITreasuryMarket.sol";
-import "./interfaces/IStakingRewards.sol";
+import "./interfaces/ITreasuryStakingRewards.sol";
 
 import "./interfaces/external/IOracleManagerProxy.sol";
 
@@ -38,8 +38,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     address public immutable treasury;
     uint128 public immutable poolId;
     address public immutable collateralToken;
-    IV3CoreProxy public immutable v3System;
-    IOracleManagerProxy public immutable oracleManager;
+    IV3CoreProxy private immutable v3System;
+    IOracleManagerProxy private immutable oracleManager;
 
     int256 public artificialDebt;
 
@@ -47,11 +47,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     uint256 public targetCratio;
 
-    uint32 public debtDecayPower;
-    uint32 public debtDecayTime;
+    uint32 private debtDecayPower;
+    uint32 private debtDecayTime;
 
-    uint128 public debtDecayPenaltyStart;
-    uint128 public debtDecayPenaltyEnd;
+    uint128 private debtDecayPenaltyStart;
+    uint128 private debtDecayPenaltyEnd;
 
     uint256 lockedCollateral;
 
@@ -66,9 +66,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     mapping(uint128 => mapping(address => LoanInfo)) public depositRewards;
 
-    IStakingRewards public immutable auxTokenRewardsAddress;
-    AuxTokenRequiredRatio[] public auxTokenRequiredRatios;
-    mapping(uint128 => AuxTokenInfo) public auxTokenInfo;
+    ITreasuryStakingRewards private auxTokenRewardsAddress;
+    AuxTokenRequiredRatio[] private auxTokenRequiredRatios;
+    mapping(uint128 => AuxTokenInfo) private auxTokenInfo;
 
     // solhint-disable-next-line no-empty-blocks
     constructor(
@@ -76,8 +76,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         IOracleManagerProxy oracleManagerAddress,
         address treasuryAddress,
         uint128 v3PoolId,
-        address collateralTokenAddress,
-        IStakingRewards auxTokenRewardsAddressValue
+        address collateralTokenAddress
     ) Ownable(ERC2771Context._msgSender()) {
         treasury = treasuryAddress;
         v3System = v3SystemAddress;
@@ -85,8 +84,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         poolId = v3PoolId;
 
         collateralToken = collateralTokenAddress;
-
-        auxTokenRewardsAddress = auxTokenRewardsAddressValue;
     }
 
     /**
@@ -376,17 +373,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     }
 
     function reportAuxToken(uint128 accountId) external {
-        if (msg.sender != address(auxTokenRewardsAddress)) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-
         if (saddledCollateral[accountId] == 0 || loans[accountId].loanAmount == 0) {
             return;
         }
 
-        uint256 auxTokenAmount = auxTokenRewardsAddress.balanceOf(
-            v3System.getAccountOwner(accountId)
-        );
+        uint256 auxTokenAmount = auxTokenRewardsAddress.balanceOf(accountId);
 
         address sender = ERC2771Context._msgSender();
         IERC721 accountToken = IERC721(v3System.getAccountTokenAddress());
@@ -666,7 +657,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         return availableDepositRewards[token];
     }
 
-    function updateAuxToken(uint256 requiredRatio) external override onlyOwner returns (uint256) {
+    function updateAuxToken(
+        address newAuxTokenRewardsAddress,
+        uint256 requiredRatio
+    ) external override onlyOwner returns (uint256) {
+        auxTokenRewardsAddress = ITreasuryStakingRewards(newAuxTokenRewardsAddress);
         auxTokenRequiredRatios.push(
             AuxTokenRequiredRatio(uint128(block.timestamp), requiredRatio.to128())
         );
@@ -695,10 +690,10 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(IERC165) returns (bool) {
-        return
-            interfaceId == type(IMarket).interfaceId ||
+        return true;
+        /*interfaceId == type(IMarket).interfaceId ||
             interfaceId == type(IERC721Receiver).interfaceId ||
-            interfaceId == this.supportsInterface.selector;
+            interfaceId == this.supportsInterface.selector;*/
     }
 
     function upgradeTo(address to) external onlyOwner {
