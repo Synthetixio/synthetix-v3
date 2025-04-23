@@ -384,13 +384,12 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             return;
         }
 
-        uint256 auxTokenAmount = auxTokenRewardsAddress.balanceOf(v3System.getAccountOwner(accountId));
+        uint256 auxTokenAmount = auxTokenRewardsAddress.balanceOf(
+            v3System.getAccountOwner(accountId)
+        );
 
         address sender = ERC2771Context._msgSender();
         IERC721 accountToken = IERC721(v3System.getAccountTokenAddress());
-        if (sender != accountToken.ownerOf(accountId)) {
-            revert AccessError.Unauthorized(sender);
-        }
 
         uint256 curAuxTokenDeposit = auxTokenInfo[accountId].amount;
 
@@ -423,12 +422,22 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         LoanInfo memory loan = loans[accountId];
         AuxTokenInfo memory ati = auxTokenInfo[accountId];
         uint256 timestamp = block.timestamp;
-        uint256 loanActiveTime = _loanActiveTime(loan, ati, timestamp, _loanLastUpdateTime(loan, ati));
+        uint256 loanActiveTime = _loanActiveTime(
+            loan,
+            ati,
+            timestamp,
+            _loanLastUpdateTime(loan, ati)
+        );
         return
             _repaymentPenalty(
                 loan,
                 targetLoan,
-                _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, loanActiveTime),
+                _currentPenaltyRate(
+                    loan,
+                    debtDecayPenaltyStart,
+                    debtDecayPenaltyEnd,
+                    loanActiveTime
+                ),
                 timestamp,
                 loanActiveTime
             );
@@ -448,7 +457,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             }
         }
         if (!configFound) {
-            revert ParameterError.InvalidParameter("depositRewardToken", "config not found");
+            return 0;
         }
         LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
         uint256 timestamp = block.timestamp;
@@ -485,14 +494,25 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         if (amount > currentLoan) {
             revert ParameterError.InvalidParameter("amount", "must be less than current loan");
         } else if (amount < currentLoan) {
-            uint256 loanActiveTime = _loanActiveTime(loan, ati, timestamp, _loanLastUpdateTime(loan, ati));
+            uint256 loanActiveTime = _loanActiveTime(
+                loan,
+                ati,
+                timestamp,
+                _loanLastUpdateTime(loan, ati)
+            );
 
             uint256 penaltyAmount = _repaymentPenalty(
                 loan,
                 amount,
-                _currentPenaltyRate(loan, debtDecayPenaltyStart, debtDecayPenaltyEnd, loanActiveTime),
+                _currentPenaltyRate(
+                    loan,
+                    debtDecayPenaltyStart,
+                    debtDecayPenaltyEnd,
+                    loanActiveTime
+                ),
                 timestamp,
-                            loanActiveTime);
+                loanActiveTime
+            );
             // apply a penalty on whatever is repaid
 
             v3System.depositMarketUsd(marketId, sender, currentLoan - amount + penaltyAmount);
@@ -813,8 +833,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     1 ether - targetLoan.divDecimal(currentLoan)
                 );
         }
-
-        return 0;
     }
 
     function _currentPenaltyRate(

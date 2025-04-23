@@ -316,6 +316,13 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             (0.8 ether / 2) * (1 - 0.5 / 2),
             "should have 0.75 penalty on accrued rewards"
         );
+
+        // no penalty for nonexistant config
+        assertEq(
+            market.depositRewardPenalty(accountId, address(this)),
+            0,
+            "no penalty for nonexistant config"
+        );
     }
 
     function test_SaddleSecondAccount() external {
@@ -666,6 +673,14 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.mintTreasury(1 ether);
     }
 
+    function test_TreasuryMintInsufficient() external {
+        vm.prank(market.treasury());
+        vm.expectRevert(
+            abi.encodeWithSelector(ITreasuryMarket.InsufficientExcessDebt.selector, 1000 ether, 0)
+        );
+        market.mintTreasury(1000 ether);
+    }
+
     function test_TreasuryMint() external {
         market.saddle(accountId);
 
@@ -728,6 +743,18 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test__RevertIf_RemoveDepositRewardUnauthorized() external {
         vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
         market.removeFromDepositReward(address(collateralToken), 500 ether);
+    }
+
+    function test__RevertIf_RemoveDepositRewardInsufficient() external {
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "amount",
+                "greater than available rewards"
+            )
+        );
+        market.removeFromDepositReward(address(collateralToken), 100000 ether);
     }
 
     function test_RevertIf_UnsaddleUnauthorized() external {
@@ -1285,7 +1312,10 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     }
 
     function test_RevertIf_UnauthorizedUpdateAuxToken() external {
-
+        address owner = market.owner();
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, owner));
+        vm.prank(owner);
+        market.reportAuxToken(1);
     }
 
     function test_UpdateAuxTokenAndDebtDecayBehavior() external {
