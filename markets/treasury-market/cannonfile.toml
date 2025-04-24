@@ -23,6 +23,9 @@ defaultValue = "<%= AddressZero %>"
 [setting.aux_recipient]
 defaultValue = "<%= AddressZero %>"
 
+[setting.aux_reset_time]
+defaultValue = "<%= 86400 * 7 %>"
+
 [setting.required_aux_token_ratio]
 defaultValue = "0"
 
@@ -84,6 +87,7 @@ func = "updateAuxToken"
 args = [
     "<%= contracts.Staking.address %>",
     "<%= settings.required_aux_token_ratio %>",
+    "<%= settings.aux_reset_time %>",
 ]
 
 [invoke.setFeatureFlagMarket]

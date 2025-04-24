@@ -268,10 +268,12 @@ interface ITreasuryMarket {
      * @notice Called by the owner to require an auxillery token to be deposited in a configured rewards distribution contract, without which loan will not be automatically repaid
      * @param newAuxTokenRewardsAddress How many aux tokens are required
      * @param requiredRatio The ratio of tokens needed in the reward contract before the loan can be automtaically repaid
+     * @param resetTime The amount of time to comply before the account's jubilee is reset to the starting point
      */
     function updateAuxToken(
         address newAuxTokenRewardsAddress,
-        uint256 requiredRatio
+        uint256 requiredRatio,
+        uint256 resetTime
     ) external returns (uint256);
 
     /**

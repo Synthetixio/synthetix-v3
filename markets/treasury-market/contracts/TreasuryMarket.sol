@@ -69,6 +69,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
     ITreasuryStakingRewards private auxTokenRewardsAddress;
     AuxTokenRequiredRatio[] private auxTokenRequiredRatios;
     mapping(uint128 => AuxTokenInfo) private auxTokenInfo;
+    uint256 private auxResetTime;
 
     // solhint-disable-next-line no-empty-blocks
     constructor(
@@ -379,9 +380,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         uint256 auxTokenAmount = auxTokenRewardsAddress.balanceOf(accountId);
 
-        address sender = ERC2771Context._msgSender();
-        IERC721 accountToken = IERC721(v3System.getAccountTokenAddress());
-
         uint256 curAuxTokenDeposit = auxTokenInfo[accountId].amount;
 
         // update aux token deposit amount
@@ -395,9 +393,17 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 auxTokenRequiredRatios[auxTokenRequiredRatios.length - 1].ratio
             )
         ) {
-            auxTokenInfo[accountId].timeInsufficient = (auxTokenInfo[accountId].timeInsufficient +
-                block.timestamp -
-                _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId])).to32();
+            // if their loan hasnt been repaid by reset time, it gets completely reset
+            uint256 loanLastUpdate = _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId]);
+            if (block.timestamp - loanLastUpdate > auxResetTime) {
+                auxTokenInfo[accountId].timeInsufficient = (block.timestamp -
+                    loans[accountId].startTime).to32();
+            } else {
+                auxTokenInfo[accountId].timeInsufficient = (auxTokenInfo[accountId]
+                    .timeInsufficient +
+                    block.timestamp -
+                    loanLastUpdate).to32();
+            }
         }
 
         auxTokenInfo[accountId].lastUpdated = uint64(block.timestamp);
@@ -659,12 +665,16 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function updateAuxToken(
         address newAuxTokenRewardsAddress,
-        uint256 requiredRatio
+        uint256 requiredRatio,
+        uint256 resetTime
     ) external override onlyOwner returns (uint256) {
         auxTokenRewardsAddress = ITreasuryStakingRewards(newAuxTokenRewardsAddress);
         auxTokenRequiredRatios.push(
             AuxTokenRequiredRatio(uint128(block.timestamp), requiredRatio.to128())
         );
+
+        auxResetTime = resetTime;
+
         emit UpdateAuxTokenRequirement(block.timestamp, requiredRatio);
     }
 
@@ -779,6 +789,12 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     auxTokenRequiredRatios[auxTokenRequiredRatios.length - 1].ratio
                 )
             : true;
+
+        // if the loan has not been active for longer than the reset time, the loan should be reset back to the beginning
+        if (!currentlySufficient && timestamp - auxLastUpdated > auxResetTime) {
+            return 0;
+        }
+
         uint256 subs = (currentlySufficient ? 0 : timestamp - auxLastUpdated) +
             ati.timeInsufficient +
             loan.startTime;
