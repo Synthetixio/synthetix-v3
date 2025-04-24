@@ -24,14 +24,14 @@ contract TreasuryStakingRewards is ITreasuryStakingRewards {
         recipient = _recipient;
     }
 
-    function deposit(uint128 account, uint256 amount) external {
+    function deposit(uint128 accountId, uint256 amount) external {
         IERC20(stakingToken).transferFrom(ERC2771Context._msgSender(), recipient, amount);
         totalDeposited += amount;
-        balanceOf[account] += amount;
-        treasuryMarket.reportAuxToken(account);
-        emit Deposited(ERC2771Context._msgSender(), account, amount);
+        balanceOf[accountId] += amount;
+        treasuryMarket.reportAuxToken(accountId);
+        emit Deposited(ERC2771Context._msgSender(), accountId, amount);
     }
     /* ========== EVENTS ========== */
 
-    event Deposited(address indexed sender, uint128 indexed account, uint256 amount);
+    event Deposited(address indexed sender, uint128 indexed accountId, uint256 amount);
 }
