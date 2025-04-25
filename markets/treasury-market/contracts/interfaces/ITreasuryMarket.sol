@@ -24,7 +24,19 @@ interface ITreasuryMarket {
         uint128 loanAmount;
     }
 
-    function v3System() external view returns (IV3CoreProxy);
+    struct AuxTokenInfo {
+        uint128 amount;
+        uint64 lastUpdated;
+        uint32 timeInsufficient;
+        uint32 epoch;
+    }
+
+    struct AuxTokenRequiredRatio {
+        uint128 timestamp;
+        uint128 ratio;
+    }
+
+    //function v3System() external view returns (IV3CoreProxy);
 
     /**
      * @notice Emitted when a new target cratio has been set
@@ -59,6 +71,12 @@ interface ITreasuryMarket {
         uint256 previousLoanedAmount
     );
 
+    event AuxTokenDepositChanged(
+        uint128 indexed accountId,
+        uint256 newAuxTokenDeposit,
+        uint256 oldAuxTokenDeposit
+    );
+
     /**
      * @notice Emitted when a user received a reward for depositing and saddling into the treasury market
      */
@@ -77,6 +95,11 @@ interface ITreasuryMarket {
         uint256 rewardRedeemed,
         uint256 penaltyPaid
     );
+
+    /**
+     * @notice Emitted after a call to `updateAuxToken`
+     */
+    event UpdateAuxTokenRequirement(uint256 timestamp, uint256 requiredRatio);
 
     /**
      * @notice Emitted after a call to `treasuryMint`, where the owner has pulled funds from the market into the configured treasury address
@@ -240,4 +263,22 @@ interface ITreasuryMarket {
      * @param newDrcs The reward configurations that should be set
      */
     function setDepositRewardConfigurations(DepositRewardConfiguration[] memory newDrcs) external;
+
+    /**
+     * @notice Called by the owner to require an auxillery token to be deposited in a configured rewards distribution contract, without which loan will not be automatically repaid
+     * @param newAuxTokenRewardsAddress How many aux tokens are required
+     * @param requiredRatio The ratio of tokens needed in the reward contract before the loan can be automtaically repaid
+     * @param resetTime The amount of time to comply before the account's jubilee is reset to the starting point
+     */
+    function updateAuxToken(
+        address newAuxTokenRewardsAddress,
+        uint256 requiredRatio,
+        uint256 resetTime
+    ) external returns (uint256);
+
+    /**
+     * @notice Called by the staking rewards contract to indicate that a staking operation has occured, and a change should be observed.
+     * @param accountId the account that performed an operation on the staking contract
+     */
+    function reportAuxToken(uint128 accountId) external;
 }

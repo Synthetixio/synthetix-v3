@@ -33,6 +33,8 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     uint128 constant accountId = 25;
     uint128 constant poolId = 1;
 
+    mapping(uint128 => uint256) public balanceOf;
+
     function setUp() external {
         CannonDeploy deployer = new CannonDeploy();
         deployer.run();
@@ -312,6 +314,13 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             (0.8 ether / 2) * (1 - 0.5 / 2),
             "should have 0.75 penalty on accrued rewards"
         );
+
+        // no penalty for nonexistant config
+        assertEq(
+            market.depositRewardPenalty(accountId, address(this)),
+            0,
+            "no penalty for nonexistant config"
+        );
     }
 
     function test_SaddleSecondAccount() external {
@@ -436,25 +445,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
     function test_RevertIf_SetDebtDecayInvalidCases() external {
         vm.startPrank(market.owner());
-        vm.expectRevert(
-            abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "power", "too high")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDebtDecayFunction(101, 86400, 0, 0);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "startPenalty",
-                "must be less than 1 ether"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDebtDecayFunction(100, 86400, 1.01 ether, 0);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "endPenalty",
-                "must be lte startPenalty"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDebtDecayFunction(100, 86400, 0.5 ether, 0.75 ether);
 
         // setting penalties to same values is ok though
@@ -662,6 +657,14 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.mintTreasury(1 ether);
     }
 
+    function test_TreasuryMintInsufficient() external {
+        vm.prank(market.treasury());
+        vm.expectRevert(
+            abi.encodeWithSelector(ITreasuryMarket.InsufficientExcessDebt.selector, 1000 ether, 0)
+        );
+        market.mintTreasury(1000 ether);
+    }
+
     function test_TreasuryMint() external {
         market.saddle(accountId);
 
@@ -724,6 +727,18 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
     function test__RevertIf_RemoveDepositRewardUnauthorized() external {
         vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
         market.removeFromDepositReward(address(collateralToken), 500 ether);
+    }
+
+    function test__RevertIf_RemoveDepositRewardInsufficient() external {
+        vm.prank(market.owner());
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "amount",
+                "greater than available rewards"
+            )
+        );
+        market.removeFromDepositReward(address(collateralToken), 100000 ether);
     }
 
     function test_RevertIf_UnsaddleUnauthorized() external {
@@ -874,21 +889,9 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             .getCollateralConfiguration(market.collateralToken())
             .liquidationRatioD18;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "ratio",
-                "would cause liquidation"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setTargetCRatio(liqRatio);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "ratio",
-                "would cause liquidation"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setTargetCRatio(0.5 ether);
 
         vm.stopPrank();
@@ -1172,13 +1175,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         });
 
         vm.prank(market.owner());
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "newDrcs",
-                "token address must increase"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDepositRewardConfigurations(configs);
     }
 
@@ -1278,15 +1275,139 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             )
         );
         market.setDepositRewardConfigurations(configs);
+    }
 
-        /*
-        uint256 usdBalanceBefore = v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken));
-        IERC721(v3System.getAccountTokenAddress()).approve(address(market), accountId + 1);
+    function test_RevertIf_UnauthorizedUpdateAuxToken() external {
+        address owner = market.owner();
+        vm.startPrank(address(1234));
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(1234)));
+        market.updateAuxToken(address(this), 1, 1);
+    }
 
-        market.unsaddle(accountId + 1);
+    function test_UpdateAuxTokenAndReset() external {
+        // first, set up decaying debt, saddle, and pass some time
+        vm.warp(100000000);
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1000000, 0, 0);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
 
-        assertGt(v3System.getAccountAvailableCollateral(accountId + 1, address(usdToken)), usdBalanceBefore);
-        */
+        // debt should be 50% paid off
+        vm.warp(100500000);
+        assertEq(market.loanedAmount(accountId), 0.5 ether);
+
+        // then, updateAuxToken
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), 0.25 ether, 100000);
+
+        // then, let some time pass and make sure our saddled user has had their position reset
+        vm.warp(100750000);
+        assertEq(market.loanedAmount(accountId), 1 ether);
+
+        // then, "deposit" some tokens, allow time to pass, and check that burn was "resumed". Also, add a second saddled user.
+        balanceOf[accountId] = 0.25 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(100850000);
+        assertEq(market.loanedAmount(accountId), 0.9 ether);
+
+        // then, remove tokens and it should be paused again
+
+        balanceOf[accountId] = 0.24 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(100950000);
+        assertEq(market.loanedAmount(accountId), 0.9 ether);
+
+        // then, verify we can get to the end of the distribution.
+
+        balanceOf[accountId] = 0.25 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(101750000);
+        assertEq(market.loanedAmount(accountId), 0.1 ether);
+    }
+
+    function test_UpdateAuxTokenAndDebtDecayBehavior() external {
+        // first, set up decaying debt, saddle, and pass some time
+        vm.warp(100000000);
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1000000, 0, 0);
+        sideMarket.setReportedDebt(1 ether);
+        market.saddle(accountId);
+
+        // debt should be 50% paid off
+        vm.warp(100500000);
+        assertEq(market.loanedAmount(accountId), 0.5 ether);
+
+        // then, updateAuxToken
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), 0.25 ether, 1000000);
+
+        // then, let some time pass and make sure our saddled user does not have their debt paid off
+        vm.warp(100750000);
+        assertEq(market.loanedAmount(accountId), 0.5 ether);
+
+        // then, "deposit" some tokens, allow time to pass, and check that burn was "resumed". Also, add a second saddled user.
+        balanceOf[accountId] = 0.25 ether;
+        market.reportAuxToken(1);
+        market.reportAuxToken(accountId);
+        vm.warp(100850000);
+        assertEq(market.loanedAmount(accountId), 0.4 ether);
+
+        // then, remove tokens and it should be paused again
+
+        balanceOf[accountId] = 0.24 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(101500000);
+        assertEq(market.loanedAmount(accountId), 0.4 ether);
+
+        // then, verify we can get to the end of the distribution.
+
+        balanceOf[accountId] = 0.25 ether;
+        market.reportAuxToken(accountId);
+        vm.warp(102000000);
+        assertEq(market.loanedAmount(accountId), 0 ether);
+    }
+
+    function test_epochChangeAuxResetBug() external {
+        // Test params
+        vm.warp(100000000);
+        uint32 debtDecayDuration = 1000000;
+        uint256 initialDebt = 1 ether;
+        uint256 auxRequiredRatio = 0.1 ether;
+        uint256 auxResetTime = 500000;
+        uint256 requiredAuxAmount = (initialDebt * auxRequiredRatio) / 1 ether;
+
+        // Set up debt decay function and saddle an account with debt
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, debtDecayDuration, 0, 0);
+        // Saddle
+        sideMarket.setReportedDebt(initialDebt);
+        market.saddle(accountId);
+
+        //Set aux token requirements, deposit the required amount, then skip to half the decay period. Loan should be half now
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), auxRequiredRatio, auxResetTime);
+        balanceOf[accountId] = requiredAuxAmount;
+        market.reportAuxToken(accountId);
+        vm.warp(100500000);
+        assertEq(market.loanedAmount(accountId), initialDebt / 2);
+
+        // Set aux token requirements with new lower ratio, such that we are still sufficiently staked then wait a period of time
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), auxRequiredRatio / 2, auxResetTime);
+        vm.warp(100750000);
+        // We are now 75% of the way through the decay period, debt is still decaying and only 25% of debt should be left
+        assertEq(market.loanedAmount(accountId), initialDebt / 4);
+
+        // Set aux token requirements with new higher ratio, such that we are not sufficiently staked
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), auxRequiredRatio * 2, auxResetTime);
+        // Since we were sufficient previously, we should be frozen now but not reset
+        assertEq(market.loanedAmount(accountId), initialDebt / 4);
+
+        // Meeting the requirement doesn't resolve the issue
+        balanceOf[accountId] = requiredAuxAmount * 2;
+        market.reportAuxToken(accountId);
+        assertEq(market.loanedAmount(accountId), initialDebt / 4);
     }
 
     function onERC721Received(
