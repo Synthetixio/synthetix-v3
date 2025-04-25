@@ -1371,7 +1371,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
         // then, updateAuxToken
         vm.prank(market.owner());
-        market.updateAuxToken(address(this), 0.25 ether, 1 ether);
+        market.updateAuxToken(address(this), 0.25 ether, 1000000);
 
         // then, let some time pass and make sure our saddled user does not have their debt paid off
         vm.warp(100750000);
@@ -1397,6 +1397,49 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.reportAuxToken(accountId);
         vm.warp(102000000);
         assertEq(market.loanedAmount(accountId), 0 ether);
+    }
+
+    function test_epochChangeAuxResetBug() external {
+        // Test params
+        vm.warp(100000000);
+        uint32 debtDecayDuration = 1000000;
+        uint256 initialDebt = 1 ether;
+        uint256 auxRequiredRatio = 0.1 ether;
+        uint256 auxResetTime = 500000;
+        uint256 requiredAuxAmount = (initialDebt * auxRequiredRatio) / 1 ether;
+
+        // Set up debt decay function and saddle an account with debt
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, debtDecayDuration, 0, 0);
+        // Saddle
+        sideMarket.setReportedDebt(initialDebt);
+        market.saddle(accountId);
+
+        //Set aux token requirements, deposit the required amount, then skip to half the decay period. Loan should be half now
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), auxRequiredRatio, auxResetTime);
+        balanceOf[accountId] = requiredAuxAmount;
+        market.reportAuxToken(accountId);
+        vm.warp(100500000);
+        assertEq(market.loanedAmount(accountId), initialDebt / 2);
+
+        // Set aux token requirements with new lower ratio, such that we are still sufficiently staked then wait a period of time
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), auxRequiredRatio / 2, auxResetTime);
+        vm.warp(100750000);
+        // We are now 75% of the way through the decay period, debt is still decaying and only 25% of debt should be left
+        assertEq(market.loanedAmount(accountId), initialDebt / 4);
+
+        // Set aux token requirements with new higher ratio, such that we are not sufficiently staked
+        vm.prank(market.owner());
+        market.updateAuxToken(address(this), auxRequiredRatio * 2, auxResetTime);
+        // Since we were sufficient previously, we should be frozen now but not reset
+        assertEq(market.loanedAmount(accountId), initialDebt / 4);
+
+        // Meeting the requirement doesn't resolve the issue
+        balanceOf[accountId] = requiredAuxAmount * 2;
+        market.reportAuxToken(accountId);
+        assertEq(market.loanedAmount(accountId), initialDebt / 4);
     }
 
     function onERC721Received(

@@ -303,6 +303,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             v3System.deposit(accountId, v3System.getUsdToken(), neededToRepay);
             v3System.burnUsd(accountId, poolId, collateralToken, neededToRepay);
 
+            auxTokenInfo[accountId] = AuxTokenInfo(0, 0, 0, 0);
+
             emit AccountUnsaddled(accountId, accountCollateral, neededToRepay);
         }
 
@@ -381,6 +383,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint256 auxTokenAmount = auxTokenRewardsAddress.balanceOf(accountId);
 
         uint256 curAuxTokenDeposit = auxTokenInfo[accountId].amount;
+        uint256 loanLastUpdate = _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId]);
 
         // update aux token deposit amount
         auxTokenInfo[accountId].amount = auxTokenAmount.to128();
@@ -394,7 +397,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             )
         ) {
             // if their loan hasnt been repaid by reset time, it gets completely reset
-            uint256 loanLastUpdate = _loanLastUpdateTime(loans[accountId], auxTokenInfo[accountId]);
+
+            //emit UpdateAuxTokenRequirement(auxTokenRequiredRatios[firstInsufficientIdx].timestamp, 0);
+            emit UpdateAuxTokenRequirement(loanLastUpdate, block.timestamp);
             if (block.timestamp - loanLastUpdate > auxResetTime) {
                 auxTokenInfo[accountId].timeInsufficient = (block.timestamp -
                     loans[accountId].startTime).to32();
@@ -810,9 +815,20 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         LoanInfo memory loan,
         AuxTokenInfo memory ati
     ) internal view returns (uint256) {
+        uint256 firstInsufficientIdx = ati.epoch;
+        for (; firstInsufficientIdx < auxTokenRequiredRatios.length; firstInsufficientIdx++) {
+            if (
+                ati.amount <
+                uint256(loan.loanAmount).mulDecimal(
+                    auxTokenRequiredRatios[firstInsufficientIdx].ratio
+                )
+            ) {
+                break;
+            }
+        }
         return
-            auxTokenRequiredRatios.length > ati.epoch
-                ? auxTokenRequiredRatios[ati.epoch].timestamp
+            firstInsufficientIdx < auxTokenRequiredRatios.length
+                ? auxTokenRequiredRatios[firstInsufficientIdx].timestamp
                 : ati.lastUpdated;
     }
 
