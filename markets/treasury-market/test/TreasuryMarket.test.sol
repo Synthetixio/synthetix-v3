@@ -445,25 +445,11 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
 
     function test_RevertIf_SetDebtDecayInvalidCases() external {
         vm.startPrank(market.owner());
-        vm.expectRevert(
-            abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "power", "too high")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDebtDecayFunction(101, 86400, 0, 0);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "startPenalty",
-                "must be less than 1 ether"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDebtDecayFunction(100, 86400, 1.01 ether, 0);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "endPenalty",
-                "must be lte startPenalty"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDebtDecayFunction(100, 86400, 0.5 ether, 0.75 ether);
 
         // setting penalties to same values is ok though
@@ -903,21 +889,9 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
             .getCollateralConfiguration(market.collateralToken())
             .liquidationRatioD18;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "ratio",
-                "would cause liquidation"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setTargetCRatio(liqRatio);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "ratio",
-                "would cause liquidation"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setTargetCRatio(0.5 ether);
 
         vm.stopPrank();
@@ -1201,13 +1175,7 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         });
 
         vm.prank(market.owner());
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ParameterError.InvalidParameter.selector,
-                "newDrcs",
-                "token address must increase"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "", ""));
         market.setDepositRewardConfigurations(configs);
     }
 

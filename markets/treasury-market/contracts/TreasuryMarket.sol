@@ -145,7 +145,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function setTargetCRatio(uint256 ratio) external override onlyOwner {
         if (ratio <= v3System.getCollateralConfiguration(collateralToken).liquidationRatioD18) {
-            revert ParameterError.InvalidParameter("ratio", "would cause liquidation");
+            revert ParameterError.InvalidParameter("", "");
         }
 
         targetCratio = ratio;
@@ -563,14 +563,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint128 startPenalty,
         uint128 endPenalty
     ) external override onlyOwner {
-        if (power > 100) {
-            revert ParameterError.InvalidParameter("power", "too high");
-        }
-        if (startPenalty > 1 ether) {
-            revert ParameterError.InvalidParameter("startPenalty", "must be less than 1 ether");
-        }
-        if (endPenalty > startPenalty) {
-            revert ParameterError.InvalidParameter("endPenalty", "must be lte startPenalty");
+        if (power > 100 || startPenalty > 1 ether || endPenalty > startPenalty) {
+            revert ParameterError.InvalidParameter("", "");
         }
         debtDecayPower = power;
         debtDecayTime = time;
@@ -590,7 +584,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint256 j;
         for (uint256 i = 0; i < newDrcs.length; i++) {
             if (newDrcs[i].token <= previousDrc) {
-                revert ParameterError.InvalidParameter("newDrcs", "token address must increase");
+                revert ParameterError.InvalidParameter("", "");
             }
             previousDrc = newDrcs[i].token;
 
