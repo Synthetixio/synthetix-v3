@@ -43,6 +43,13 @@ args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
 abiOf = ["InitialModuleBundle"]
 create2 = true
 
+[deploy.InitialStakingProxy]
+artifact = "SynthetixTreasuryProxy"
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+abiOf = ["InitialModuleBundle"]
+salt = "staking"
+create2 = true
+
 # deploy the legacy market
 [deploy.MarketImpl]
 artifact = "TreasuryMarket"
@@ -56,13 +63,29 @@ args = [
 create2 = true
 ifExists = "continue"
 
-[deploy.Staking]
+[deploy.StakingImpl]
 artifact = "TreasuryStakingRewards"
 args = [
     "<%= settings.aux_token %>",
     "<%= contracts.InitialProxy.address %>",
     "<%= settings.aux_recipient %>",
 ]
+
+[invoke.upgradeStakingProxy]
+target = ["InitialStakingProxy"]
+abi = "UpgradeModule"
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.StakingImpl.address %>"]
+factory.StakingProxy.abiOf = ["StakingImpl"]
+factory.StakingProxy.artifact = "SynthetixTreasuryProxy"
+factory.StakingProxy.constructorArgs = [
+    "<%= contracts.InitialModuleBundle.address %>",
+    "<%= settings.owner %>",
+]
+factory.StakingProxy.event = "Upgraded"
+factory.StakingProxy.arg = 0
+factory.StakingProxy.highlight = true
 
 [invoke.upgradeProxy]
 target = ["InitialProxy"]
@@ -85,7 +108,7 @@ target = ["Proxy"]
 from = "<%= settings.owner %>"
 func = "updateAuxToken"
 args = [
-    "<%= contracts.Staking.address %>",
+    "<%= contracts.StakingProxy.address %>",
     "<%= settings.required_aux_token_ratio %>",
     "<%= settings.aux_reset_time %>",
 ]
