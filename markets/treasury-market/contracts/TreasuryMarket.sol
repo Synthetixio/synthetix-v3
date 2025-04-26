@@ -397,9 +397,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             )
         ) {
             // if their loan hasnt been repaid by reset time, it gets completely reset
-
-            //emit UpdateAuxTokenRequirement(auxTokenRequiredRatios[firstInsufficientIdx].timestamp, 0);
-            emit UpdateAuxTokenRequirement(loanLastUpdate, block.timestamp);
             if (block.timestamp - loanLastUpdate > auxResetTime) {
                 auxTokenInfo[accountId].timeInsufficient = (block.timestamp -
                     loans[accountId].startTime).to32();
