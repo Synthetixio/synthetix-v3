@@ -24,7 +24,7 @@ contract TreasuryStakingRewards is ITreasuryStakingRewards, UUPSImplementation, 
         address _stakingToken,
         address _treasuryMarket,
         address _recipient
-    ) Ownable(msg.sender) {
+    ) Ownable(ERC2771Context._msgSender()) {
         stakingToken = _stakingToken;
         treasuryMarket = ITreasuryMarket(_treasuryMarket);
         recipient = _recipient;
