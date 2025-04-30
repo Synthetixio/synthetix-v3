@@ -236,4 +236,17 @@ interface IGlobalPerpsMarketModule {
      * @dev InterestRateUpdated event is emitted
      */
     function updateInterestRate() external;
+
+    /**
+     * @notice Checks if a market is solvent within its capacity when considering a position change.
+     * @param marketId The ID of the market to check.
+     * @param accountId The ID of the account involved in the market.
+     * @param sizeDelta The change in position size to be considered.
+     * @return isMarketSolvent A boolean indicating whether the market is solvent after the position change.
+     */
+    function isWithinMarketCapacity(
+        uint128 marketId,
+        uint128 accountId,
+        int256 sizeDelta
+    ) external view returns (bool isMarketSolvent);
 }
