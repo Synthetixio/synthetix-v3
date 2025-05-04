@@ -1093,7 +1093,8 @@
                 "type": "enum",
                 "name": "strategyType",
                 "members": [
-                  "PYTH"
+                  "PYTH",
+                  "CHAINLINK"
                 ]
               },
               {
@@ -1362,7 +1363,8 @@
           "type": "enum",
           "name": "strategyType",
           "members": [
-            "PYTH"
+            "PYTH",
+            "CHAINLINK"
           ],
           "size": 1,
           "slot": "0",
