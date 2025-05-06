@@ -490,8 +490,16 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             _loanActiveTime(loan, ati, block.timestamp, _loanLastUpdateTime(loan, ati))
         );
 
-        if (amount > currentLoan) {
-            revert ParameterError.InvalidParameter("amount", "must be less than current loan");
+        if (amount > currentLoan && currentLoan == 0) {
+            // NOTE: this branch is intended for admins to be able to assign debt to an account to recreate a position posthumously.
+            // Do not use if you do not know what you are doing.
+            // create a loan on the account (the user doesn't get any repayment though)
+            loans[accountId] = LoanInfo(
+                uint64(block.timestamp),
+                debtDecayPower,
+                debtDecayTime,
+                amount.to128()
+            );
         } else if (amount < currentLoan) {
             uint256 loanActiveTime = _loanActiveTime(
                 loan,
@@ -515,14 +523,14 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             // apply a penalty on whatever is repaid
 
             v3System.depositMarketUsd(marketId, sender, currentLoan - amount + penaltyAmount);
+
+            // fractionally modify the original loan amount--this will continue the repayment schedule where the user left off without resetting it
+            loans[accountId].loanAmount = ((loans[accountId].loanAmount * amount) / currentLoan)
+                .to128();
             _rebalance();
         } else {
             return; // nothing to do
         }
-
-        // fractionally modify the original loan amount--this will continue the repayment schedule where the user left off without resetting it
-        loans[accountId].loanAmount = ((loans[accountId].loanAmount * amount) / currentLoan)
-            .to128();
 
         emit LoanAdjusted(accountId, amount, currentLoan);
     }

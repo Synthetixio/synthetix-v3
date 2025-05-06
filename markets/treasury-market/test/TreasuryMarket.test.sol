@@ -389,11 +389,19 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.adjustLoan(accountId, 1 ether);
     }
 
-    function test_RevertIf_TakeLoan() external {
+    function test_AdjustLoanIncrease() external {
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1000000, 0, 0);
+
         market.saddle(accountId);
 
-        vm.expectRevert();
+        vm.warp(1000000);
         market.adjustLoan(accountId, 1 ether);
+
+        assertEq(market.loanedAmount(accountId), 1 ether);
+
+        vm.warp(1250000);
+        assertEq(market.loanedAmount(accountId), 0.75 ether);
     }
 
     function test_TakeLoanNoChange() external {
