@@ -14,11 +14,11 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = ""
 
 [setting.synthetixPackage]
-defaultValue = "synthetix:3.10.2-testable"
+defaultValue = "synthetix:3.12.0-testable"
 depends = []
 
 [setting.spotMarketPackage]
-defaultValue = "synthetix-spot-market:3.10.2-testable"
+defaultValue = "synthetix-spot-market:3.12.0-testable"
 depends = []
 
 [import.synthetix]

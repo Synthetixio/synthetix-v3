@@ -52,7 +52,24 @@ describe('Settle Orderbook order', () => {
   });
 
   before('deposit collateral', async () => {
-    //await systems().PerpsMarket.connect(trader1())['createAccount(uint128)'](3);
+    for (let i = 0; i < 38; i++) {
+      await systems()
+        .PerpsMarket.connect(i % 2 === 0 ? trader1() : trader2())
+        ['createAccount(uint128)'](4 + i);
+      await depositCollateral({
+        systems,
+        trader: i % 2 === 0 ? trader1 : trader2,
+        accountId: () => 4 + i,
+        collaterals: [
+          {
+            snxUSDAmount: () => bn(10_000),
+          },
+        ],
+      });
+      await systems()
+        .PerpsMarket.connect(i % 2 === 0 ? trader1() : trader2())
+        .setBookMode(4 + i, true);
+    }
     await depositCollateral({
       systems,
       trader: trader1,
@@ -77,6 +94,8 @@ describe('Settle Orderbook order', () => {
 
     await systems().PerpsMarket.connect(trader1()).setBookMode(2, true);
     await systems().PerpsMarket.connect(trader2()).setBookMode(3, true);
+    await systems().PerpsMarket.connect(trader1()).setBookMode(4, true);
+    await systems().PerpsMarket.connect(trader2()).setBookMode(5, true);
   });
 
   before('set fee collector and referral', async () => {
@@ -192,20 +211,22 @@ describe('Settle Orderbook order', () => {
 
     describe('run another order', () => {
       before('run another orderbook order', async () => {
-        tx = await systems()
-          .PerpsMarket.connect(keeper())
-          .settleBookOrders(ethMarketId, [
-            {
-              accountId: 2,
-              sizeDelta: bn(2),
-              orderPrice: bn(1100),
-              signedPriceData: '0x',
-              trackingCode: ethers.utils.formatBytes32String(''),
-            },
-          ]);
+        const orders = [];
+        for (let i = 0; i < 40; i++) {
+          orders.push({
+            accountId: i < 20 ? 2 : 2 + Math.floor(i),
+            sizeDelta: bn(i % 2 === 0 ? (i % 5) + 2 : -((i % 5) + 2)),
+            orderPrice: bn((i % 10) + 1100),
+            signedPriceData: '0x',
+            trackingCode: ethers.utils.formatBytes32String(''),
+          });
+        }
+        tx = await systems().PerpsMarket.connect(keeper()).settleBookOrders(ethMarketId, orders);
+        const waited = await tx.wait();
+        console.log('tx gas', waited.gasUsed);
       });
 
-      it('changes the account size again', async () => {
+      it.only('changes the account size again', async () => {
         const [, , size] = await systems().PerpsMarket.getOpenPosition(2, ethMarketId);
         assertBn.equal(size, bn(3));
       });
