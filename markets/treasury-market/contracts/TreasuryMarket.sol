@@ -62,9 +62,11 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     mapping(address => uint256) public availableDepositRewards;
 
-    DepositRewardConfiguration[] public depositRewardConfigurations;
+    // no longer used
+    DepositRewardConfiguration[] private _depositRewardConfigurations;
 
-    mapping(uint128 => mapping(address => LoanInfo)) public depositRewards;
+    // no longer used
+    mapping(uint128 => mapping(address => LoanInfo)) private _depositRewards;
 
     ITreasuryStakingRewards private auxTokenRewardsAddress;
     AuxTokenRequiredRatio[] private auxTokenRequiredRatios;
@@ -210,34 +212,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                     accountDebt.toUint().to128()
                 );
                 emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
-            } else {
-                // this depositor is eligible for possible rewards
-                //DepositRewardConfiguration[] memory drc = depositRewardConfigurations;
-                for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
-                    DepositRewardConfiguration memory config = depositRewardConfigurations[i];
-                    uint256 rewardAmount = accountCollateral
-                        .mulDecimal(oracleManager.process(config.valueRatioOracle).price.toUint())
-                        .mulDecimal(config.percent);
-
-                    // stack was too deep to set this as a local variable. annoying.
-                    depositRewards[accountId][config.token] = LoanInfo(
-                        uint64(block.timestamp),
-                        config.power,
-                        config.duration,
-                        uint128(rewardAmount)
-                    );
-
-                    emit DepositRewardIssued(
-                        accountId,
-                        config.token,
-                        LoanInfo(
-                            uint64(block.timestamp),
-                            config.power,
-                            config.duration,
-                            uint128(rewardAmount)
-                        )
-                    );
-                }
             }
         }
 
@@ -319,57 +293,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         _rebalance();
 
-        // distribute any deposit rewards to the user's account
-        uint256 timestamp = block.timestamp;
-        for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
-            DepositRewardConfiguration memory config = depositRewardConfigurations[i];
-            LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
-            if (userDepositReward.loanAmount > 0) {
-                uint256 penaltyPaid = _repaymentPenalty(
-                    userDepositReward,
-                    0,
-                    _currentPenaltyRate(
-                        userDepositReward,
-                        config.penaltyStart,
-                        config.penaltyEnd,
-                        timestamp - userDepositReward.startTime
-                    ),
-                    timestamp,
-                    timestamp - userDepositReward.startTime
-                );
-
-                uint256 receivedAmount = userDepositReward.loanAmount -
-                    _loanedAmount(
-                        userDepositReward,
-                        timestamp,
-                        timestamp - userDepositReward.startTime
-                    ) -
-                    penaltyPaid;
-
-                if (receivedAmount > 0) {
-                    if (receivedAmount > availableDepositRewards[config.token]) {
-                        revert InsufficientAvailableReward(
-                            config.token,
-                            receivedAmount,
-                            availableDepositRewards[config.token]
-                        );
-                    }
-
-                    availableDepositRewards[config.token] -= receivedAmount;
-
-                    v3System.withdrawMarketCollateral(marketId, config.token, receivedAmount);
-                    v3System.deposit(accountId, config.token, receivedAmount);
-
-                    emit DepositRewardRedeemed(
-                        accountId,
-                        config.token,
-                        receivedAmount,
-                        penaltyPaid
-                    );
-                }
-            }
-        }
-
         // return the account token to the user. we use the "unsafe" call here because the account is being returned to the same address
         // it came from, so its probably ok and the account will be able to handle receipt of the NFT.
         accountToken.transferFrom(address(this), sender, accountId);
@@ -439,39 +362,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 ),
                 timestamp,
                 loanActiveTime
-            );
-    }
-
-    function depositRewardPenalty(
-        uint128 accountId,
-        address depositRewardToken
-    ) external view override returns (uint256) {
-        DepositRewardConfiguration memory config;
-        bool configFound = false;
-        for (uint256 i = 0; i < depositRewardConfigurations.length; i++) {
-            if (depositRewardConfigurations[i].token == depositRewardToken) {
-                config = depositRewardConfigurations[i];
-                configFound = true;
-                break;
-            }
-        }
-        if (!configFound) {
-            return 0;
-        }
-        LoanInfo memory userDepositReward = depositRewards[accountId][config.token];
-        uint256 timestamp = block.timestamp;
-        return
-            _repaymentPenalty(
-                userDepositReward,
-                0,
-                _currentPenaltyRate(
-                    userDepositReward,
-                    config.penaltyStart,
-                    config.penaltyEnd,
-                    timestamp - userDepositReward.startTime
-                ),
-                timestamp,
-                timestamp - userDepositReward.startTime
             );
     }
 
@@ -549,19 +439,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             );
     }
 
-    function depositRewardAvailable(
-        uint128 accountId,
-        address rewardTokenAddress
-    ) external view override returns (uint256) {
-        return
-            depositRewards[accountId][rewardTokenAddress].loanAmount -
-            _loanedAmount(
-                depositRewards[accountId][rewardTokenAddress],
-                block.timestamp,
-                block.timestamp - depositRewards[accountId][rewardTokenAddress].startTime
-            );
-    }
-
     function setDebtDecayFunction(
         uint32 power,
         uint32 time,
@@ -577,64 +454,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         debtDecayPenaltyEnd = endPenalty;
 
         emit DebtDecayUpdated(power, time, startPenalty, endPenalty);
-    }
-
-    function setDepositRewardConfigurations(
-        DepositRewardConfiguration[] memory newDrcs
-    ) external override onlyOwner {
-        address previousDrc = address(0);
-
-        DepositRewardConfiguration[] memory oldDrcs = depositRewardConfigurations;
-
-        uint256 j;
-        for (uint256 i = 0; i < newDrcs.length; i++) {
-            if (newDrcs[i].token <= previousDrc) {
-                revert ParameterError.InvalidParameter("", "");
-            }
-            previousDrc = newDrcs[i].token;
-
-            // detect tokens that are being removed
-            while (j < oldDrcs.length && newDrcs[i].token > oldDrcs[j].token) {
-                // removing a reward token from the market
-                // verify that this token is not having any available rewards
-                if (availableDepositRewards[oldDrcs[j].token] > 0) {
-                    revert ParameterError.InvalidParameter(
-                        "newDrcs",
-                        "removes existing reward token"
-                    );
-                }
-
-                j++;
-            }
-
-            if (
-                j < depositRewardConfigurations.length &&
-                newDrcs[i].token == depositRewardConfigurations[j].token
-            ) {
-                j++;
-            }
-
-            if (depositRewardConfigurations.length <= i) {
-                depositRewardConfigurations.push();
-            }
-            depositRewardConfigurations[i] = newDrcs[i];
-
-            // ensure that the v3 core system can pull funds from us
-            IERC20(newDrcs[i].token).approve(address(v3System), type(uint256).max);
-        }
-
-        for (; j < oldDrcs.length; j++) {
-            // removing a reward token from the market
-            // verify that this token is not having any available rewards
-            if (availableDepositRewards[oldDrcs[j].token] > 0) {
-                revert ParameterError.InvalidParameter("newDrcs", "removes existing reward token");
-            }
-        }
-
-        uint256 popped = depositRewardConfigurations.length - newDrcs.length;
-        for (uint256 i = 0; i < popped; i++) {
-            depositRewardConfigurations.pop();
-        }
     }
 
     function rebalance() external override {
