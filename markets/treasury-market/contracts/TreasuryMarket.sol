@@ -278,8 +278,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             v3System.burnUsd(accountId, poolId, collateralToken, neededToRepay);
 
             auxTokenInfo[accountId] = AuxTokenInfo(0, 0, 0, 0);
-
-            emit AccountUnsaddled(accountId, accountCollateral, neededToRepay);
         }
 
         totalSaddledCollateral -= saddledCollateral[accountId];
@@ -296,6 +294,8 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         // return the account token to the user. we use the "unsafe" call here because the account is being returned to the same address
         // it came from, so its probably ok and the account will be able to handle receipt of the NFT.
         accountToken.transferFrom(address(this), sender, accountId);
+
+        emit AccountUnsaddled(accountId, accountCollateral, neededToRepay);
     }
 
     function reportAuxToken(uint128 accountId) external {
