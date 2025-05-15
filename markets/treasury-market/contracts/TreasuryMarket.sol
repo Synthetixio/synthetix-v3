@@ -70,7 +70,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     ITreasuryStakingRewards private auxTokenRewardsAddress;
     AuxTokenRequiredRatio[] private auxTokenRequiredRatios;
-    mapping(uint128 => AuxTokenInfo) private auxTokenInfo;
+    mapping(uint128 => AuxTokenInfo) public auxTokenInfo;
     uint256 private auxResetTime;
 
     // solhint-disable-next-line no-empty-blocks
