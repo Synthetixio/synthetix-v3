@@ -180,16 +180,6 @@ interface ITreasuryMarket {
     function setOverrideLoanDuration(uint128 accountId, uint32 loanDuration) external;
 
     /**
-     * @dev Used by the treasury to deposit a token to be used for a rewards configuration. The deposited tokens can also be minted from
-     */
-    function fundForDepositReward(address token, uint256 amount) external returns (uint256);
-
-    /**
-     * @dev Used by the treasury to remove a token from a deposit rewards configuration.
-     */
-    function removeFromDepositReward(address token, uint256 amount) external returns (uint256);
-
-    /**
      * @notice Called by the owner to mint available sUSD to the treasury.
      */
     function mintTreasury(uint256 amount) external;

@@ -469,32 +469,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         _rebalance();
     }
 
-    function fundForDepositReward(
-        address token,
-        uint256 amount
-    ) external override returns (uint256) {
-        IERC20(token).transferFrom(ERC2771Context._msgSender(), address(this), amount);
-        v3System.depositMarketCollateral(marketId, token, amount);
-        availableDepositRewards[token] += amount;
-
-        return availableDepositRewards[token];
-    }
-
-    function removeFromDepositReward(
-        address token,
-        uint256 amount
-    ) external override onlyTreasury returns (uint256) {
-        if (availableDepositRewards[token] < amount) {
-            revert ParameterError.InvalidParameter("amount", "greater than available rewards");
-        }
-        v3System.withdrawMarketCollateral(marketId, token, amount);
-        IERC20(token).transfer(ERC2771Context._msgSender(), amount);
-
-        availableDepositRewards[token] -= amount;
-
-        return availableDepositRewards[token];
-    }
-
     function updateAuxToken(
         address newAuxTokenRewardsAddress,
         uint256 requiredRatio,
