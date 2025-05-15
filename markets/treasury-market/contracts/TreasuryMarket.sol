@@ -256,6 +256,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             collateralToken
         );
 
+        uint256 neededToRepay = 0;
         if (accountDebt > 0) {
             (uint256 vaultCollateral, ) = v3System.getVaultCollateral(poolId, collateralToken);
 
@@ -266,7 +267,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 );
             }
 
-            uint256 neededToRepay = uint256(accountDebt);
+            neededToRepay = uint256(accountDebt);
 
             if (int256(neededToRepay) > artificialDebt) {
                 revert InsufficientExcessDebt(int256(neededToRepay), artificialDebt);
