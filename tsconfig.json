@@ -14,7 +14,5 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "exclude": [
-    "**/subgraph/**/*"
-  ]
+  "exclude": ["**/subgraph/**/*"]
 }
