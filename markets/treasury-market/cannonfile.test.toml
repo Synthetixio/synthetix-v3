@@ -1,0 +1,89 @@
+name = "synthetix-treasury-market"
+version = "<%= package.version %>"
+description = ""
+
+[setting.owner] # this has to be the same owner as CoreProxy
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.treasury_address]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.pool_id]
+defaultValue = "1"
+
+[setting.collateral_token]
+defaultValue = "<%= imports.v3.contracts.CollateralMock.address %>"
+
+[setting.v3_package]
+# TODO: Make this dynamic, cannon overrides package for some reason and template is no longer working
+#defaultValue = "synthetix:<%= package.version %>-testable"
+defaultValue = "synthetix:3.12.0-testable"
+
+depends = []
+
+[clone.v3]
+source = "<%= settings.v3_package %>"
+target = "synthetix:treasury-test"
+
+[deploy.InitialModuleBundle]
+artifact = "InitialModuleBundle"
+create2 = true
+ifExists = "continue"
+
+[deploy.InitialProxy]
+artifact = "SynthetixTreasuryProxy"
+args = ["<%= contracts.InitialModuleBundle.address %>", "<%= settings.owner %>"]
+abiOf = ["InitialModuleBundle"]
+create2 = true
+
+# deploy the legacy market
+[deploy.MarketImpl]
+artifact = "TreasuryMarket"
+args = [
+    "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= imports.v3.imports.oracle_manager.contracts.Proxy.address %>",
+    "<%= settings.treasury_address %>",
+    "<%= settings.pool_id %>",
+    "<%= settings.collateral_token %>",
+]
+create2 = true
+ifExists = "continue"
+
+[invoke.upgradeProxy]
+target = ["InitialProxy"]
+abi = "UpgradeModule"
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.MarketImpl.address %>"]
+factory.Proxy.abiOf = ["MarketImpl"]
+factory.Proxy.artifact = "SynthetixTreasuryProxy"
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
+factory.Proxy.highlight = true
+
+[invoke.setFeatureFlagMarket]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+args = [
+    "0x72656769737465724d61726b6574000000000000000000000000000000000000",
+    "<%= contracts.Proxy.address %>",
+] # formatBytes32String("registerMarket")
+fromCall.func = "owner"
+
+[invoke.setFeatureFlagAssociateDebt]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+args = [
+    "0x6173736f63696174654465627400000000000000000000000000000000000000",
+    "<%= contracts.Proxy.address %>",
+] # formatBytes32String("associateDebt")
+fromCall.func = "owner"
+
+[invoke.registerMarket]
+target = ["Proxy"]
+from = "<%= settings.owner %>"
+func = "registerMarket"
+args = []
+extra.market_id.event = "MarketRegistered"
+extra.market_id.arg = 1
+depends = ["invoke.setFeatureFlagMarket"]

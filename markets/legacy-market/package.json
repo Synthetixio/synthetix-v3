@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/legacy-market",
-  "version": "3.10.1",
+  "version": "3.12.2",
   "description": "Contract for migration from v2x to v3",
   "publishConfig": {
     "access": "public"
@@ -21,6 +21,8 @@
     "coverage": "hardhat coverage --network hardhat",
     "clean": "hardhat clean",
     "compile-contracts": "hardhat compile",
+    "publish-contracts": "cannon publish synthetix-legacy-market:$(node -p 'require(`./package.json`).version') --chain-id 13370 --quiet --tags $(node -p '/^\\d+\\.\\d+\\.\\d+$/.test(require(`./package.json`).version) ? `latest` : `dev`')",
+    "deploy": "yarn build && yarn publish-contracts",
     "size-contracts": "hardhat compile && hardhat size-contracts",
     "docgen": "hardhat docgen"
   },

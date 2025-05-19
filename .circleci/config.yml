@@ -24,32 +24,34 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}-{{ .Environment.FOUNDRY_COMMIT }}
+            - &foundry_cache foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
 
       - run:
-          name: "Add .foundry/bin to PATH"
+          name: "Install Foundry"
+          working_directory: ~/
+          environment:
+            SHELL: /bin/bash
           command: |-
             export PATH="$PATH:$HOME/.foundry/bin"
             echo 'export PATH=$PATH:$HOME/.foundry/bin' >> $BASH_ENV
-
-      - run:
-          name: "forge --version"
-          command: |-
-            if command -v forge; then
-              forge --version
+            if command -v curl; then
+              curl --version
             else
-              echo "Forge needs to be installed"
-              exit 1 # EXIT! We must compile
-              curl -L https://foundry.paradigm.xyz | bash
-              cd .foundry/bin
-              ./foundryup
-              forge --version
+              apt update && apt install --yes curl
             fi
 
-      #- save_cache:
-      #    key: foundry-{{ .Environment.FOUNDRY_CACHE_VERSION }}
-      #    paths:
-      #      - "~/.foundry/bin"
+            if command -v anvil; then
+              echo "Anvil already installed"
+              anvil --version
+            else
+              curl -L https://foundry.paradigm.xyz | bash
+              foundryup
+            fi
+
+      - save_cache:
+          key: *foundry_cache
+          paths:
+            - "~/.foundry"
 
   compile-foundry:
     steps:
@@ -198,13 +200,6 @@ commands:
             - cannon-{{ .Environment.CANNON_CACHE_VERSION }}-{{ .Environment.CIRCLE_SHA1 }}
 
 jobs:
-  compile-foundry:
-    docker:
-      - image: cimg/node:<< pipeline.parameters.node-version >>
-    resource_class: large
-    steps:
-      - compile-foundry
-
   build-testable:
     parameters:
       generate-testable-command:
@@ -243,7 +238,6 @@ jobs:
           key: generated-testable-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - "auxiliary/PythERC7412Wrapper/contracts/generated"
-            - "protocol/governance/contracts/generated"
             - "protocol/oracle-manager/contracts/generated"
             - "protocol/synthetix/contracts/generated"
             - "utils/core-modules/contracts/generated"
@@ -276,9 +270,9 @@ jobs:
             - "markets/legacy-market/artifacts"
             - "markets/legacy-market/cache"
             - "markets/legacy-market/typechain-types"
-            - "markets/bfp-market/artifacts"
-            - "markets/bfp-market/cache"
-            - "markets/bfp-market/typechain-types"
+            #- "markets/bfp-market/artifacts"
+            #- "markets/bfp-market/cache"
+            #- "markets/bfp-market/typechain-types"
 
             - "auxiliary/ArbitrumGasPriceOracle/artifacts"
             - "auxiliary/BuybackSnx/artifacts"
@@ -608,20 +602,14 @@ jobs:
     parameters:
       workspace:
         type: string
-      parallelism:
-        type: integer
-        default: 1
     docker:
       - image: cimg/node:<< pipeline.parameters.node-version >>
-    parallelism: << parameters.parallelism >>
+    resource_class: large
     steps:
       - checkout
       - install-foundry
       - yarn-install
-      - run: yarn workspace "<< parameters.workspace >>" run forge-test
       - run: yarn workspace "<< parameters.workspace >>" run forge-coverage
-
-      # TODO: Setup codecov job
       - store_artifacts:
           path: "lcov.info"
 
@@ -702,14 +690,10 @@ workflows:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
 
     jobs:
-      - compile-foundry
       - lint
       - size-contracts
-      - verify-storage:
-          requires: [compile-foundry]
-
-      - build-testable:
-          requires: [compile-foundry]
+      - verify-storage
+      - build-testable
 
       - test-contracts:
           name: "test-main"
@@ -739,16 +723,15 @@ workflows:
           parallelism: 8
           batch-size: 1
 
-      - test-contracts:
-          name: "test-bfp-market"
-          requires: [build-testable]
-          dir: "./markets/bfp-market"
-          parallelism: 6
-          batch-size: 1
+      #      - test-contracts:
+      #          name: "test-bfp-market"
+      #          requires: [build-testable]
+      #          dir: "./markets/bfp-market"
+      #          parallelism: 6
+      #          batch-size: 1
 
       - test-contracts:
           name: "test-core-modules"
-          requires: [compile-foundry]
           dir: "./utils/core-modules"
           parallelism: 1
           batch-size: 5
@@ -762,71 +745,47 @@ workflows:
 
       - test-contracts:
           name: "test-core-utils"
-          requires: [compile-foundry]
           dir: "./utils/core-utils"
           parallelism: 2
           batch-size: 5
 
       - test-forge:
           name: "test-rewards-distributor"
-          requires: [compile-foundry]
           workspace: "@synthetixio/rewards-distributor"
 
-      - test-subgraph:
-          name: "test-subgraph-core"
-          workspace: "@synthetixio/core-subgraph"
+      - test-forge:
+          name: "test-treasury-market"
+          workspace: "@synthetixio/treasury-market"
 
-      - test-subgraph:
-          name: "test-subgraph-spot-market"
-          workspace: "@synthetixio/spot-market-subgraph"
+      - simulate-release:
+          name: "synthetix--base-mainnet-andromeda"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "andromeda"
+          hardhatNetwork: "base-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
 
-      - test-subgraph:
-          name: "test-subgraph-perps-market"
-          workspace: "@synthetixio/perps-market-subgraph"
+      - simulate-release:
+          name: "synthetix--optimism-mainnet"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
 
-      #- simulate-release:
-      #    name: "synthetix--base-mainnet-andromeda"
-      #    requires: [compile-foundry]
-      #    workspace: "@synthetixio/main"
-      #    cannonPackage: "synthetix:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialCoreProxy"
-
-      #- simulate-release:
-      #    name: "synthetix--base-sepolia-andromeda"
-      #    requires: [compile-foundry]
-      #    workspace: "@synthetixio/main"
-      #    cannonPackage: "synthetix:latest"
-      #    cannonPreset: "andromeda"
-      #    hardhatNetwork: "base-sepolia"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialCoreProxy"
-
-      #- simulate-release:
-      #    name: "synthetix--optimism-mainnet"
-      #    requires: [compile-foundry]
-      #    workspace: "@synthetixio/main"
-      #    cannonPackage: "synthetix:latest"
-      #    cannonPreset: "main"
-      #    hardhatNetwork: "optimistic-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialCoreProxy"
-
-      #- simulate-release:
-      #    name: "synthetix--mainnet"
-      #    requires: [compile-foundry]
-      #    workspace: "@synthetixio/main"
-      #    cannonPackage: "synthetix:latest"
-      #    cannonPreset: "main"
-      #    hardhatNetwork: "mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialCoreProxy"
+      - simulate-release:
+          name: "synthetix--mainnet"
+          workspace: "@synthetixio/main"
+          cannonPackage: "synthetix:latest"
+          cannonPreset: "main"
+          hardhatNetwork: "mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialCoreProxy"
 
       - simulate-release:
           name: "oracle-manager--base-mainnet-andromeda"
-          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -835,18 +794,7 @@ workflows:
           proxy: "contract.InitialProxy"
 
       - simulate-release:
-          name: "oracle-manager--base-sepolia-andromeda"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/oracle-manager"
-          cannonPackage: "oracle-manager:latest"
-          cannonPreset: "with-synthetix"
-          hardhatNetwork: "base-sepolia"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
-
-      - simulate-release:
           name: "oracle-manager--optimism-mainnet"
-          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -856,7 +804,6 @@ workflows:
 
       - simulate-release:
           name: "oracle-manager--mainnet"
-          requires: [compile-foundry]
           workspace: "@synthetixio/oracle-manager"
           cannonPackage: "oracle-manager:latest"
           cannonPreset: "with-synthetix"
@@ -865,8 +812,16 @@ workflows:
           proxy: "contract.InitialProxy"
 
       - simulate-release:
+          name: "oracle-manager--optimism"
+          workspace: "@synthetixio/oracle-manager"
+          cannonPackage: "oracle-manager:latest"
+          cannonPreset: "with-synthetix"
+          hardhatNetwork: "optimistic-mainnet"
+          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+          proxy: "contract.InitialProxy"
+
+      - simulate-release:
           name: "spot-market--base-mainnet-andromeda"
-          requires: [compile-foundry]
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "andromeda"
@@ -875,18 +830,7 @@ workflows:
           proxy: "contract.InitialSpotMarketProxy"
 
       - simulate-release:
-          name: "spot-market--base-sepolia-andromeda"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/spot-market"
-          cannonPackage: "synthetix-spot-market:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-sepolia"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialSpotMarketProxy"
-
-      - simulate-release:
           name: "spot-market--optimism-mainnet"
-          requires: [compile-foundry]
           workspace: "@synthetixio/spot-market"
           cannonPackage: "synthetix-spot-market:latest"
           cannonPreset: "main"
@@ -896,7 +840,6 @@ workflows:
 
       - simulate-release:
           name: "perps-market--base-mainnet-andromeda"
-          requires: [compile-foundry]
           workspace: "@synthetixio/perps-market"
           cannonPackage: "synthetix-perps-market:latest"
           cannonPreset: "andromeda"
@@ -904,52 +847,13 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
-      - simulate-release:
-          name: "perps-market--base-sepolia-andromeda"
-          requires: [compile-foundry]
-          workspace: "@synthetixio/perps-market"
-          cannonPackage: "synthetix-perps-market:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-sepolia"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
-
-      # TODO: Uncomment when deployed
-      #- simulate-release:
-      #    name: "perps-market--optimism-mainnet"
-      #    requires: [compile-foundry]
-      #    workspace: "@synthetixio/perps-market"
-      #    cannonPackage: "synthetix-perps-market:latest"
-      #    cannonPreset: "main"
-      #    hardhatNetwork: "optimistic-mainnet"
-      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-      #    proxy: "contract.InitialProxy"
-
-  # TODO: Uncomment when update-subgraphs has been refactored/re-implemented to work.
-  # update-subgraphs:
-  #   when:
-  #     or:
-  #       - and:
-  #           - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
-  #           - equal: ["Check deploys", << pipeline.schedule.name >>]
-  #       - equal: ["update-subgraphs", << pipeline.git.branch >>]
-  #   jobs:
-  #     - update-subgraphs
-
   docgen-contracts:
     unless:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
-      - compile-foundry:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
       - docgen-contracts:
           name: "docgen-contracts"
-          requires: [compile-foundry]
           filters:
             tags:
               only: /^v.*/
@@ -961,14 +865,7 @@ workflows:
       or:
         - equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
     jobs:
-      - compile-foundry:
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              only: /docgen-contracts/
       - docgen-contracts:
-          requires: [compile-foundry]
           filters:
             tags:
               ignore: /.*/

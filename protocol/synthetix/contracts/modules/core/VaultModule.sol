@@ -36,6 +36,7 @@ contract VaultModule is IVaultModule {
     using SafeCastI256 for int256;
 
     bytes32 private constant _DELEGATE_FEATURE_FLAG = "delegateCollateral";
+    bytes32 private constant _MIGRATE_DELEGATION_FEATURE_FLAG = "migrateDelegation";
 
     /**
      * @inheritdoc IVaultModule
@@ -70,7 +71,9 @@ contract VaultModule is IVaultModule {
         // Conditions for collateral amount
 
         // Ensure current collateral amount differs from the new collateral amount.
-        if (newCollateralAmountD18 == currentCollateralAmount) revert InvalidCollateralAmount();
+        if (newCollateralAmountD18 == currentCollateralAmount) {
+            revert InvalidCollateralAmount();
+        }
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
         else if (newCollateralAmountD18 > currentCollateralAmount) {
@@ -114,13 +117,6 @@ contract VaultModule is IVaultModule {
 
         _verifyPoolCratio(poolId, collateralType);
 
-        _updateAccountCollateralPools(
-            accountId,
-            poolId,
-            collateralType,
-            newCollateralAmountD18 > 0
-        );
-
         // If decreasing the delegated collateral amount,
         // check the account's collateralization ratio.
         // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
@@ -154,6 +150,115 @@ contract VaultModule is IVaultModule {
             collateralType,
             newCollateralAmountD18,
             leverage,
+            ERC2771Context._msgSender()
+        );
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function migrateDelegation(
+        uint128 accountId,
+        uint128 oldPoolId,
+        address collateralType,
+        uint128 newPoolId
+    ) external override {
+        if (oldPoolId == newPoolId) {
+            revert ParameterError.InvalidParameter("newPoolId", "must differ from oldPoolId");
+        }
+        FeatureFlag.ensureAccessToFeature(_MIGRATE_DELEGATION_FEATURE_FLAG);
+        Account.loadAccountAndValidatePermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+
+        // Identify the vault that corresponds to this collateral type and old pool id.
+        Vault.Data storage oldVault = Pool.loadExisting(oldPoolId).vaults[collateralType];
+        Vault.Data storage newVault = Pool.loadExisting(newPoolId).vaults[collateralType];
+
+        uint256 currentCollateralAmount = oldVault.currentAccountCollateral(accountId);
+
+        if (newVault.currentAccountCollateral(accountId) > 0) {
+            // for now to keep things a bit simpler it is not possible to migrate delegation to a pool thats
+            // already delegated
+            revert ParameterError.InvalidParameter("newPoolId", "already delegated");
+        }
+
+        // Cannot migrate 0 collateral amount
+        if (currentCollateralAmount == 0) {
+            revert ParameterError.InvalidParameter("oldPoolId", "not delegated");
+        }
+
+        int256 currentDebtAmount = Pool.load(oldPoolId).updateAccountDebt(
+            collateralType,
+            accountId
+        );
+
+        // Cannot migrate if min delegation time has not elapsed
+        Pool.loadExisting(oldPoolId).requireMinDelegationTimeElapsed(
+            accountId,
+            oldVault.currentEpoch().lastDelegationTime[accountId]
+        );
+
+        // Must not surpass collateral limit of new pool
+        Pool.loadExisting(newPoolId).checkPoolCollateralLimit(
+            collateralType,
+            currentCollateralAmount
+        );
+
+        // distribute any outstanding rewards distributor value to vaults prior to updating positions
+        Pool.load(oldPoolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, oldPoolId, collateralType)
+        );
+        Pool.load(newPoolId).updateRewardsToVaults(
+            Vault.PositionSelector(accountId, newPoolId, collateralType)
+        );
+
+        // Clear debt for account in preparation for movement to new pool
+        Pool.load(oldPoolId).assignDebtToAccount(collateralType, accountId, -currentDebtAmount);
+        Pool.load(newPoolId).updateAccountDebt(collateralType, accountId);
+
+        // Update the account's position for the given pool and collateral type,
+        _updateAccountCollateralPools(accountId, oldPoolId, collateralType, false);
+        _updateAccountCollateralPools(accountId, newPoolId, collateralType, true);
+
+        oldVault.currentEpoch().updateAccountPosition(accountId, 0, 1 ether);
+        newVault.currentEpoch().updateAccountPosition(accountId, currentCollateralAmount, 1 ether);
+
+        Pool.load(oldPoolId).recalculateVaultCollateral(collateralType);
+        uint256 collateralPrice = Pool.load(newPoolId).recalculateVaultCollateral(collateralType);
+
+        // old pool must not be left in capacity locked state
+        _verifyNotCapacityLocked(oldPoolId);
+
+        // newly migrated position must not be liquidatable
+        CollateralConfiguration.load(collateralType).verifyLiquidationRatio(
+            currentDebtAmount,
+            currentCollateralAmount.mulDecimal(collateralPrice)
+        );
+
+        // now assign the new debt to the account
+        Pool.load(newPoolId).assignDebtToAccount(collateralType, accountId, currentDebtAmount);
+
+        // solhint-disable-next-line numcast/safe-cast
+        oldVault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
+        // solhint-disable-next-line numcast/safe-cast
+        newVault.currentEpoch().lastDelegationTime[accountId] = uint64(block.timestamp);
+
+        _verifyPoolCratio(oldPoolId, collateralType);
+        _verifyPoolCratio(newPoolId, collateralType);
+
+        emit DelegationUpdated(
+            accountId,
+            oldPoolId,
+            collateralType,
+            0,
+            1 ether,
+            ERC2771Context._msgSender()
+        );
+        emit DelegationUpdated(
+            accountId,
+            newPoolId,
+            collateralType,
+            currentCollateralAmount,
+            1 ether,
             ERC2771Context._msgSender()
         );
     }
@@ -246,6 +351,17 @@ contract VaultModule is IVaultModule {
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
         return Pool.loadExisting(poolId).currentVaultDebt(collateralType);
+    }
+
+    function getLastDelegationTime(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) external view override returns (uint256 lastDelegationTime) {
+        return
+            Pool.loadExisting(poolId).vaults[collateralType].currentEpoch().lastDelegationTime[
+                accountId
+            ];
     }
 
     /**

@@ -375,9 +375,33 @@ describe('IssueUSDModule', function () {
         );
       });
 
+      it('if collateral is locked, does not allow burn', async () => {
+        await systems()
+          .Core.connect(user1)
+          .createLock(accountId, systems().USD.address, depositAmount.div(20), 4000000000);
+
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10)),
+          'InsufficientAvailableCollateral("0", "50000000000000000000")'
+        );
+      });
+
       it(
         'has correct debt',
         verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(10))
+      );
+
+      it('we burn', async () => {
+        await systems()
+          .Core.connect(user1)
+          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(20));
+      });
+
+      it(
+        'has correct debt after',
+        verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(20))
       );
 
       it('did not took away from user2 balance', async () => {

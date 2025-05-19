@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/perps-market",
-  "version": "3.10.2",
+  "version": "3.12.2",
   "description": "Perps Market implementation",
   "publishConfig": {
     "access": "public"
@@ -44,7 +44,7 @@
     "@synthetixio/oracle-manager": "workspace:*",
     "@synthetixio/spot-market": "workspace:*",
     "@synthetixio/wei": "^2.74.4",
-    "@usecannon/cli": "2.21.0",
+    "@usecannon/cli": "2.22.0",
     "ethers": "^5.7.2",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36",

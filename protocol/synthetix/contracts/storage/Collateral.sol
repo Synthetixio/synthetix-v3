@@ -15,9 +15,9 @@ library Collateral {
     using SafeCastU256 for uint256;
 
     /**
-     * @dev Thrown when a specified market is not found.
+     * @dev Thrown when collateral cannot be used for delegation or withdrawal because its insufficent balance in the account.
      */
-    error InsufficentAvailableCollateral(
+    error InsufficientAvailableCollateral(
         uint256 amountAvailableForDelegationD18,
         uint256 amountD18
     );
@@ -60,7 +60,7 @@ library Collateral {
      */
     function decreaseAvailableCollateral(Data storage self, uint256 amountD18) internal {
         if (self.amountAvailableForDelegationD18 < amountD18) {
-            revert InsufficentAvailableCollateral(self.amountAvailableForDelegationD18, amountD18);
+            revert InsufficientAvailableCollateral(self.amountAvailableForDelegationD18, amountD18);
         }
         self.amountAvailableForDelegationD18 -= amountD18;
     }

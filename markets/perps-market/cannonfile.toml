@@ -101,6 +101,10 @@ func = "upgradeTo"
 args = ["<%= contracts.PerpsMarketRouter.address %>"]
 factory.PerpsMarketProxy.abiOf = ["PerpsMarketRouter"]
 factory.PerpsMarketProxy.artifact = "contracts/Proxy.sol:Proxy"
+factory.PerpsMarketProxy.constructorArgs = [
+    "<%= contracts.CoreModule.address %>",
+    "<%= settings.owner %>",
+]
 factory.PerpsMarketProxy.event = "Upgraded"
 factory.PerpsMarketProxy.arg = 0
 factory.PerpsMarketProxy.highlight = true

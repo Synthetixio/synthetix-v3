@@ -40,7 +40,7 @@
     "deps:fix": "deps --fix",
     "deps:mismatched": "deps-mismatched",
     "deps:circular": "deps-circular",
-    "publish:release": "lerna publish",
+    "publish:release": "lerna publish --force-publish",
     "publish:dev": "lerna publish from-package --force-publish --dist-tag dev --no-git-reset",
     "version:dev": "lerna version 0.0.0-dev.$(git rev-parse --short HEAD) --no-changelog --no-push --no-git-tag-version --force-publish --allow-branch $(git branch --show-current)",
     "publish-contracts": "yarn workspaces foreach --all --verbose run publish-contracts",
@@ -73,7 +73,7 @@
     "@types/semver": "^7.5.8",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
     "@typescript-eslint/parser": "^8.4.0",
-    "@usecannon/cli": "2.21.0",
+    "@usecannon/cli": "2.22.0",
     "eslint": "^9.9.1",
     "eslint-plugin-no-only-tests": "^3.1.0",
     "globals": "^15.9.0",
@@ -125,5 +125,5 @@
   "engines": {
     "node": "^20.17.0"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.7.0"
 }

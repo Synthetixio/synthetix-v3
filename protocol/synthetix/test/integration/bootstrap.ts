@@ -104,7 +104,7 @@ export function bootstrapWithMockMarketAndPool() {
         {
           marketId: marketId,
           weightD18: ethers.utils.parseEther('1'),
-          maxDebtShareValueD18: ethers.utils.parseEther('1'),
+          maxDebtShareValueD18: ethers.utils.parseEther('100'),
         },
       ]);
 

@@ -20,10 +20,10 @@ describe('LiquidationModule', function () {
     restore,
   } = bootstrapWithMockMarketAndPool();
 
-  let user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   before('identify signers', async () => {
-    [, user1, user2] = signers();
+    [owner, user1, user2] = signers();
   });
 
   describe('liquidate()', () => {
@@ -182,6 +182,377 @@ describe('LiquidationModule', function () {
             )}, ${depositAmount}, ${liquidationReward}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
             systems().Core
           );
+        });
+      });
+    });
+  });
+
+  it('liquidateToTreasury: cannot liquidate when treasury account id not configured', async () => {
+    await assertRevert(
+      systems().Core.connect(user2).liquidateToTreasury(accountId, poolId, collateralAddress()),
+      'InvalidParameter("treasuryAccountId"',
+      systems().Core
+    );
+  });
+
+  it('liquidateToTreasury: cannot liquidate when treasury pool id not configured', async () => {
+    await systems()
+      .Core.connect(owner)
+      .setConfig(
+        ethers.utils.formatBytes32String('treasuryAccountId'),
+        ethers.utils.defaultAbiCoder.encode(['uint256'], [12341234])
+      );
+    await assertRevert(
+      systems().Core.connect(user2).liquidateToTreasury(accountId, poolId, collateralAddress()),
+      'InvalidParameter("treasuryPoolId"',
+      systems().Core
+    );
+  });
+
+  describe('liquidateToTreasury()', () => {
+    before(restore);
+
+    const treasuryAccountId = 1344242235;
+
+    before('setup treasury liquidation', async () => {
+      await systems().Core.connect(user2)['createAccount(uint128)'](treasuryAccountId);
+
+      await systems()
+        .Core.connect(owner)
+        .setConfig(
+          ethers.utils.formatBytes32String('treasuryAccountId'),
+          ethers.utils.defaultAbiCoder.encode(['uint256'], [treasuryAccountId])
+        );
+      await systems()
+        .Core.connect(owner)
+        .setConfig(
+          ethers.utils.formatBytes32String('treasuryPoolId'),
+          ethers.utils.defaultAbiCoder.encode(['uint256'], [poolId])
+        );
+    });
+
+    it('does not allow liquidation of account with healthy c-ratio', async () => {
+      await assertRevert(
+        systems().Core.connect(user1).liquidateToTreasury(accountId, poolId, collateralAddress()),
+        'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
+        systems().Core
+      );
+    });
+
+    describe('account goes into debt', () => {
+      // this should put us very close to 110% c-ratio
+      const debtAmount = depositAmount
+        .mul(ethers.utils.parseEther('1'))
+        .div(ethers.utils.parseEther('1.1'));
+
+      before('take out a loan', async () => {
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
+
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), debtAmount.div(10));
+      });
+
+      before('going into debt', async () => {
+        await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
+
+        // sanity
+        assertBn.near(
+          await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+          debtAmount
+        );
+      });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'liquidateToTreasury',
+        () =>
+          systems().Core.connect(user1).liquidateToTreasury(accountId, poolId, collateralAddress())
+      );
+
+      // a second account is required to "absorb" the debt which is coming from the first account
+      describe('another account joins', () => {
+        const accountId2 = 56857923;
+
+        before('add another account', async () => {
+          await collateralContract()
+            .connect(user1)
+            .transfer(await user2.getAddress(), depositAmount.mul(10));
+          await collateralContract()
+            .connect(user2)
+            .approve(systems().Core.address, depositAmount.mul(10));
+          await systems().Core.connect(user2)['createAccount(uint128)'](accountId2);
+          await systems()
+            .Core.connect(user2)
+            .deposit(accountId2, collateralAddress(), depositAmount.mul(10));
+
+          // use the zero pool to get minted USD
+          await systems()
+            .Core.connect(user2)
+            .delegateCollateral(
+              accountId2,
+              poolId,
+              collateralAddress(),
+              depositAmount.mul(10),
+              ethers.utils.parseEther('1')
+            );
+        });
+
+        let txn: ethers.providers.TransactionResponse;
+        before('liquidate', async () => {
+          txn = await systems()
+            .Core.connect(user2)
+            .liquidateToTreasury(accountId, poolId, collateralAddress());
+        });
+
+        it('erases the liquidated account', async () => {
+          assertBn.isZero(
+            await systems().Core.callStatic.getPositionCollateral(
+              accountId,
+              poolId,
+              collateralAddress()
+            )
+          );
+          assertBn.isZero(
+            await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress())
+          );
+        });
+
+        it('sends correct debt and collateral to the treasury accounts position', async () => {
+          const treasuryAccountCollateral = await systems().Core.getAccountCollateral(
+            treasuryAccountId,
+            collateralAddress()
+          );
+          assertBn.equal(treasuryAccountCollateral.totalDeposited, depositAmount);
+          const positionInfo = await systems().Core.callStatic.getPosition(
+            treasuryAccountId,
+            poolId,
+            collateralAddress()
+          );
+          assertBn.equal(positionInfo.collateralAmount, depositAmount);
+          assertBn.near(positionInfo.debt, debtAmount);
+        });
+
+        it('redistributes debt among remaining staker', async () => {
+          // vault should still have same amounts (minus collateral from reward)
+          assertBn.equal(
+            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0],
+            depositAmount.mul(11)
+          );
+          assertBn.near(
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+            debtAmount
+          );
+        });
+
+        it('has reduced amount of total liquidity registered to the market', async () => {
+          assertBn.equal(
+            await systems().Core.callStatic.getMarketCollateral(marketId()),
+            depositAmount.mul(11)
+          );
+        });
+
+        it('emits correct event', async () => {
+          await assertEvent(
+            txn,
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", [${debtAmount.sub(
+              1 // precision loss
+            )}, ${depositAmount}, 0], ${treasuryAccountId}, "${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
+      });
+    });
+  });
+
+  describe('liquidateToTreasury() -- liquidate to separate pool', () => {
+    before(restore);
+
+    const treasuryAccountId = 1344242235;
+    const treasuryPoolId = 7233;
+
+    before('setup treasury liquidation', async () => {
+      await systems()
+        .Core.connect(user2)
+        .createPool(treasuryPoolId, await user2.getAddress());
+      await systems().Core.connect(user2)['createAccount(uint128)'](treasuryAccountId);
+
+      // set up an existing position for the treasury to verify behavior with stuff already going on
+
+      await systems()
+        .Core.connect(owner)
+        .setConfig(
+          ethers.utils.formatBytes32String('treasuryAccountId'),
+          ethers.utils.defaultAbiCoder.encode(['uint256'], [treasuryAccountId])
+        );
+      await systems()
+        .Core.connect(owner)
+        .setConfig(
+          ethers.utils.formatBytes32String('treasuryPoolId'),
+          ethers.utils.defaultAbiCoder.encode(['uint256'], [treasuryPoolId])
+        );
+    });
+
+    describe('account goes into debt', () => {
+      // this should put us very close to 110% c-ratio
+      const debtAmount = depositAmount
+        .mul(ethers.utils.parseEther('1'))
+        .div(ethers.utils.parseEther('1.1'));
+
+      before('take out a loan', async () => {
+        await systems()
+          .Core.connect(user1)
+          .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
+
+        await systems()
+          .Core.connect(user1)
+          .withdraw(accountId, await systems().Core.getUsdToken(), debtAmount.div(10));
+      });
+
+      before('going into debt', async () => {
+        await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
+
+        // sanity
+        assertBn.near(
+          await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+          debtAmount
+        );
+      });
+
+      verifyUsesFeatureFlag(
+        () => systems().Core,
+        'liquidateToTreasury',
+        () =>
+          systems().Core.connect(user1).liquidateToTreasury(accountId, poolId, collateralAddress())
+      );
+
+      // a second account is required to "absorb" the debt which is coming from the first account
+      describe('another account joins', () => {
+        const accountId2 = 56857923;
+
+        before('add another account', async () => {
+          await collateralContract()
+            .connect(user1)
+            .transfer(await user2.getAddress(), depositAmount.mul(10));
+          await collateralContract()
+            .connect(user2)
+            .approve(systems().Core.address, depositAmount.mul(10));
+          await systems().Core.connect(user2)['createAccount(uint128)'](accountId2);
+          await systems()
+            .Core.connect(user2)
+            .deposit(accountId2, collateralAddress(), depositAmount.mul(10));
+
+          // use the zero pool to get minted USD
+          await systems()
+            .Core.connect(user2)
+            .delegateCollateral(
+              accountId2,
+              poolId,
+              collateralAddress(),
+              depositAmount.mul(10),
+              ethers.utils.parseEther('1')
+            );
+        });
+
+        let txn: ethers.providers.TransactionResponse;
+        before('liquidate', async () => {
+          txn = await systems()
+            .Core.connect(user2)
+            .liquidateToTreasury(accountId, poolId, collateralAddress());
+        });
+
+        it('erases the liquidated account', async () => {
+          assertBn.isZero(
+            await systems().Core.callStatic.getPositionCollateral(
+              accountId,
+              poolId,
+              collateralAddress()
+            )
+          );
+          assertBn.isZero(
+            await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress())
+          );
+        });
+
+        it('sends correct debt and collateral to the treasury accounts position', async () => {
+          const treasuryAccountCollateral = await systems().Core.getAccountCollateral(
+            treasuryAccountId,
+            collateralAddress()
+          );
+          assertBn.equal(treasuryAccountCollateral.totalDeposited, depositAmount);
+          const positionInfo = await systems().Core.callStatic.getPosition(
+            treasuryAccountId,
+            treasuryPoolId,
+            collateralAddress()
+          );
+          assertBn.equal(positionInfo.collateralAmount, depositAmount);
+          assertBn.near(positionInfo.debt, debtAmount);
+        });
+
+        it('remaining staker should not be affected', async () => {
+          // vault should have removed amounts from the liquidated staker
+          assertBn.equal(
+            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0],
+            depositAmount.mul(10)
+          );
+          assertBn.near(
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+            0
+          );
+        });
+
+        it('has reduced amount of total liquidity registered to the market', async () => {
+          assertBn.equal(
+            await systems().Core.callStatic.getMarketCollateral(marketId()),
+            depositAmount.mul(10)
+          );
+        });
+
+        it('emits correct event', async () => {
+          await assertEvent(
+            txn,
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", [${debtAmount.sub(
+              1 // precision loss
+            )}, ${depositAmount}, 0], ${treasuryAccountId}, "${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
+
+        describe('liquidate the other staker', () => {
+          before('liquidate other staker', async () => {
+            await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(509).div(10));
+            txn = await systems()
+              .Core.connect(user2)
+              .liquidateToTreasury(accountId2, poolId, collateralAddress());
+          });
+
+          it('vault should be empty now', async () => {
+            assertBn.equal(
+              (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0],
+              0
+            );
+            assertBn.near(
+              await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+              0
+            );
+          });
+
+          it('sends correct debt and collateral to the treasury accounts position', async () => {
+            const treasuryAccountCollateral = await systems().Core.getAccountCollateral(
+              treasuryAccountId,
+              collateralAddress()
+            );
+            assertBn.equal(treasuryAccountCollateral.totalDeposited, depositAmount.mul(11));
+            const positionInfo = await systems().Core.callStatic.getPosition(
+              treasuryAccountId,
+              treasuryPoolId,
+              collateralAddress()
+            );
+            assertBn.equal(positionInfo.collateralAmount, depositAmount.mul(11));
+            assertBn.near(positionInfo.debt, debtAmount.mul(11));
+          });
         });
       });
     });

@@ -56,6 +56,7 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         uint128 indexed marketId,
         address indexed sender
     );
+
     error MarketAlreadyRegistered(uint256 existingMarketId);
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint256 amountRequested, uint256 amountAvailable);
@@ -133,6 +134,35 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
     ) external pure returns (uint256 lockedAmount) {
         // legacy market never locks collateral
         return 0;
+    }
+
+    /**
+     * @inheritdoc ILegacyMarket
+     */
+    function returnUSD(uint256 amount) external override {
+        if (pauseStablecoinConversion) {
+            revert Paused();
+        }
+
+        if (amount == 0) {
+            revert ParameterError.InvalidParameter("amount", "Should be non-zero");
+        }
+
+        address sender = ERC2771Context._msgSender();
+
+        // get synthetix v2x addresses
+        IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
+        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("Synthetix"));
+        IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
+
+        // retrieve the v3 sUSD from the user so we can burn it
+        v3System.depositMarketUsd(marketId, sender, amount);
+
+        // now issue new synths and send them to the user
+        oldSynthetix.issueSynths(amount);
+        oldUSD.transfer(sender, amount);
+
+        emit ReturnedUSD(ERC2771Context._msgSender(), amount);
     }
 
     /**
@@ -276,12 +306,24 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
         migrationInProgress = false;
 
         // now we can associate the debt to a single staker
+        // only associate the debt that can actually be sent to the user; any excess will need to be absorbed by the other stakers of the pool
+        uint256 debtValueAssigned = debtValueMigrated;
+        if (
+            cratio < v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18
+        ) {
+            debtValueAssigned =
+                (collateralMigrated * v3System.getCollateralPrice(address(oldSynthetix))) /
+                v3System.getCollateralConfiguration(address(oldSynthetix)).liquidationRatioD18 -
+                10;
+            emit DebtForgiven(staker, accountId, debtValueMigrated - debtValueAssigned);
+        }
+
         v3System.associateDebt(
             marketId,
             preferredPoolId,
             address(oldSynthetix),
             accountId,
-            debtValueMigrated
+            debtValueAssigned
         );
 
         if (v3System.isVaultLiquidatable(preferredPoolId, address(oldSynthetix))) {
@@ -404,9 +446,9 @@ contract LegacyMarket is ILegacyMarket, Ownable, UUPSImplementation, IMarket, IE
 
     function onERC721Received(
         address operator,
-        address /*from*/,
-        uint256 /*tokenId*/,
-        bytes memory /*data*/
+        address,
+        /*from*/ uint256,
+        /*tokenId*/ bytes memory /*data*/
     ) external view override returns (bytes4) {
         if (operator != address(v3System)) {
             revert ParameterError.InvalidParameter("operator", "should be account token");
