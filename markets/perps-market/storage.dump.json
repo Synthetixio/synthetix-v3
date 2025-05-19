@@ -1,35 +1,63 @@
 {
-  "contracts/modules/BookOrderModule.sol:BookOrderModule": {
-    "name": "BookOrderModule",
+  "contracts/modules/LiquidationModule.sol:LiquidationModule": {
+    "name": "LiquidationModule",
     "kind": "contract",
     "structs": {
-      "AccumulatedOrderData": [
+      "LiquidateAccountRuntime": [
         {
-          "type": "uint256",
-          "name": "orderFee",
-          "size": 32,
+          "type": "uint128",
+          "name": "accountId",
+          "size": 16,
           "slot": "0",
           "offset": 0
         },
         {
-          "type": "int256",
-          "name": "sizeDelta",
+          "type": "uint256",
+          "name": "totalFlaggingRewards",
           "size": 32,
           "slot": "1",
           "offset": 0
         },
         {
           "type": "uint256",
-          "name": "orderCount",
+          "name": "totalLiquidated",
           "size": 32,
           "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "bool",
+          "name": "accountFullyLiquidated",
+          "size": 1,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "totalLiquidationCost",
+          "size": 32,
+          "slot": "4",
           "offset": 0
         },
         {
           "type": "uint256",
           "name": "price",
           "size": 32,
-          "slot": "3",
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "positionMarketId",
+          "size": 16,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "loopIterator",
+          "size": 32,
+          "slot": "7",
           "offset": 0
         }
       ]
@@ -133,6 +161,200 @@
           "name": "referrer",
           "size": 20,
           "slot": "4",
+          "offset": 0
+        }
+      ],
+      "SimulateDataRuntime": [
+        {
+          "type": "bool",
+          "name": "isEligible",
+          "size": 1,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "sizeDelta",
+          "size": 16,
+          "slot": "0",
+          "offset": 1
+        },
+        {
+          "type": "uint128",
+          "name": "accountId",
+          "size": 16,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint128",
+          "name": "marketId",
+          "size": 16,
+          "slot": "1",
+          "offset": 16
+        },
+        {
+          "type": "uint256",
+          "name": "fillPrice",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "orderFees",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "availableMargin",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "currentLiquidationMargin",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "accumulatedLiquidationRewards",
+          "size": 32,
+          "slot": "6",
+          "offset": 0
+        },
+        {
+          "type": "int128",
+          "name": "newPositionSize",
+          "size": 16,
+          "slot": "7",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "newNotionalValue",
+          "size": 32,
+          "slot": "8",
+          "offset": 0
+        },
+        {
+          "type": "int256",
+          "name": "currentAvailableMargin",
+          "size": 32,
+          "slot": "9",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "requiredInitialMargin",
+          "size": 32,
+          "slot": "10",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "initialRequiredMargin",
+          "size": 32,
+          "slot": "11",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "totalRequiredMargin",
+          "size": 32,
+          "slot": "12",
+          "offset": 0
+        },
+        {
+          "type": "struct",
+          "name": "newPosition",
+          "members": [
+            {
+              "type": "uint128",
+              "name": "marketId"
+            },
+            {
+              "type": "int128",
+              "name": "size"
+            },
+            {
+              "type": "uint128",
+              "name": "latestInteractionPrice"
+            },
+            {
+              "type": "int128",
+              "name": "latestInteractionFunding"
+            },
+            {
+              "type": "uint256",
+              "name": "latestInterestAccrued"
+            }
+          ],
+          "size": 96,
+          "slot": "13",
+          "offset": 0
+        },
+        {
+          "type": "bytes32",
+          "name": "trackingCode",
+          "size": 32,
+          "slot": "16",
+          "offset": 0
+        }
+      ],
+      "RequiredMarginWithNewPositionRuntime": [
+        {
+          "type": "uint256",
+          "name": "newRequiredMargin",
+          "size": 32,
+          "slot": "0",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "oldRequiredMargin",
+          "size": 32,
+          "slot": "1",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "requiredMarginForNewPosition",
+          "size": 32,
+          "slot": "2",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "accumulatedLiquidationRewards",
+          "size": 32,
+          "slot": "3",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "maxNumberOfWindows",
+          "size": 32,
+          "slot": "4",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "numberOfWindows",
+          "size": 32,
+          "slot": "5",
+          "offset": 0
+        },
+        {
+          "type": "uint256",
+          "name": "requiredRewardMargin",
+          "size": 32,
+          "slot": "6",
           "offset": 0
         }
       ]
@@ -686,84 +908,6 @@
           "name": "debt",
           "size": 32,
           "slot": "8",
-          "offset": 0
-        },
-        {
-          "type": "bytes16",
-          "name": "orderMode",
-          "size": 16,
-          "slot": "9",
-          "offset": 0
-        },
-        {
-          "type": "uint128",
-          "name": "orderModeChangeTime",
-          "size": 16,
-          "slot": "9",
-          "offset": 16
-        }
-      ],
-      "MemoryContext": [
-        {
-          "type": "uint128",
-          "name": "accountId",
-          "size": 16,
-          "slot": "0",
-          "offset": 0
-        },
-        {
-          "type": "enum",
-          "name": "stalenessTolerance",
-          "members": [
-            "DEFAULT",
-            "STRICT",
-            "ONE_MONTH"
-          ],
-          "size": 1,
-          "slot": "0",
-          "offset": 16
-        },
-        {
-          "type": "array",
-          "name": "positions",
-          "value": {
-            "type": "struct",
-            "name": "Position.Data",
-            "members": [
-              {
-                "type": "uint128",
-                "name": "marketId"
-              },
-              {
-                "type": "int128",
-                "name": "size"
-              },
-              {
-                "type": "uint128",
-                "name": "latestInteractionPrice"
-              },
-              {
-                "type": "int128",
-                "name": "latestInteractionFunding"
-              },
-              {
-                "type": "uint256",
-                "name": "latestInterestAccrued"
-              }
-            ]
-          },
-          "size": 32,
-          "slot": "1",
-          "offset": 0
-        },
-        {
-          "type": "array",
-          "name": "prices",
-          "value": {
-            "type": "uint256"
-          },
-          "size": 32,
-          "slot": "2",
           "offset": 0
         }
       ]

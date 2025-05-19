@@ -82,11 +82,6 @@ describe('LegacyMarket (iosiro)', function () {
       outputs.imports.v3.contracts.CoreProxy.abi,
       provider
     );
-    v3Account = new ethers.Contract(
-      outputs.imports.v3.contracts.AccountProxy.address,
-      outputs.imports.v3.contracts.AccountProxy.abi,
-      provider
-    );
 
     v3Usd = new ethers.Contract(
       outputs.imports.v3.contracts.USDProxy.address,

@@ -2,7 +2,7 @@ import { coreBootstrap } from '@synthetixio/core-utils/utils/bootstrap/tests';
 import { wei } from '@synthetixio/wei';
 import { ethers } from 'ethers';
 
-import { BuybackSnx } from '../generated/typechain';
+import { type BuybackSnx } from '../../typechain-types';
 
 interface Contracts {
   buyback_snx: BuybackSnx;
