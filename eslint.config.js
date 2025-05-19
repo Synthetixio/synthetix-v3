@@ -77,7 +77,16 @@ module.exports = [
     files: ['**/*.ts'],
   })),
   {
-    files: ['**/*.ts'],
+    files: [
+      './utils/**/*.ts',
+      './utils/**/*.js',
+      './protocol/**/*.ts',
+      './protocol/**/*.js',
+      './markets/**/*.ts',
+      './markets/**/*.js',
+      './auxiliary/**/*.js',
+      './auxiliary/**/*.ts',
+    ],
 
     languageOptions: {
       parser: tsParser,
