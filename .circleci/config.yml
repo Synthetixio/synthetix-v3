@@ -757,14 +757,14 @@ workflows:
           name: "test-treasury-market"
           workspace: "@synthetixio/treasury-market"
 
-      - simulate-release:
-          name: "synthetix--base-mainnet-andromeda"
-          workspace: "@synthetixio/main"
-          cannonPackage: "synthetix:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialCoreProxy"
+      #- simulate-release:
+      #    name: "synthetix--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/main"
+      #    cannonPackage: "synthetix:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialCoreProxy"
 
       - simulate-release:
           name: "synthetix--optimism-mainnet"
@@ -784,14 +784,14 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialCoreProxy"
 
-      - simulate-release:
-          name: "oracle-manager--base-mainnet-andromeda"
-          workspace: "@synthetixio/oracle-manager"
-          cannonPackage: "oracle-manager:latest"
-          cannonPreset: "with-synthetix"
-          hardhatNetwork: "base-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
+      #- simulate-release:
+      #    name: "oracle-manager--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/oracle-manager"
+      #    cannonPackage: "oracle-manager:latest"
+      #    cannonPreset: "with-synthetix"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
 
       - simulate-release:
           name: "oracle-manager--optimism-mainnet"
@@ -811,23 +811,14 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialProxy"
 
-      - simulate-release:
-          name: "oracle-manager--optimism"
-          workspace: "@synthetixio/oracle-manager"
-          cannonPackage: "oracle-manager:latest"
-          cannonPreset: "with-synthetix"
-          hardhatNetwork: "optimistic-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
-
-      - simulate-release:
-          name: "spot-market--base-mainnet-andromeda"
-          workspace: "@synthetixio/spot-market"
-          cannonPackage: "synthetix-spot-market:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialSpotMarketProxy"
+      #- simulate-release:
+      #    name: "spot-market--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/spot-market"
+      #    cannonPackage: "synthetix-spot-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialSpotMarketProxy"
 
       - simulate-release:
           name: "spot-market--optimism-mainnet"
@@ -838,14 +829,14 @@ workflows:
           impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
           proxy: "contract.InitialSpotMarketProxy"
 
-      - simulate-release:
-          name: "perps-market--base-mainnet-andromeda"
-          workspace: "@synthetixio/perps-market"
-          cannonPackage: "synthetix-perps-market:latest"
-          cannonPreset: "andromeda"
-          hardhatNetwork: "base-mainnet"
-          impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
-          proxy: "contract.InitialProxy"
+      #- simulate-release:
+      #    name: "perps-market--base-mainnet-andromeda"
+      #    workspace: "@synthetixio/perps-market"
+      #    cannonPackage: "synthetix-perps-market:latest"
+      #    cannonPreset: "andromeda"
+      #    hardhatNetwork: "base-mainnet"
+      #    impersonate: "0x48914229deDd5A9922f44441ffCCfC2Cb7856Ee9"
+      #    proxy: "contract.InitialProxy"
 
   docgen-contracts:
     unless:
