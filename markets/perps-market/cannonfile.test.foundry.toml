@@ -1,4 +1,4 @@
-name = "synthetix-perps-market"
+name = "snx-perps-market"
 version = "<%= package.version %>-testable"
 description = "Perps market implementation"
 
@@ -21,7 +21,7 @@ depends = []
 defaultValue = "synthetix-spot-market:3.12.2-testable"
 depends = []
 
-[import.synthetix]
+[clone.v3]
 source = "<%= settings.synthetixPackage %>"
 
 [import.spotMarket]
@@ -75,8 +75,8 @@ artifact = "GlobalPerpsMarketModule"
 # Core
 [router.PerpsMarketRouter]
 contracts = [
-    "synthetix.AccountModule",
-    "synthetix.AssociatedSystemsModule",
+    "v3.AccountModule",
+    "v3.AssociatedSystemsModule",
     "CoreModule",
     "PerpsMarketFactoryModule",
     "PerpsAccountModule",
@@ -111,16 +111,16 @@ args = [
     "Perpetual Futures Account",
     "snxPerpsAcct",
     "",
-    "<%= imports.synthetix.contracts.AccountRouter.address %>",
+    "<%= imports.v3.contracts.AccountRouter.address %>",
 ]
 depends = ["invoke.upgrade_proxy"]
-factory.AccountProxy.abiOf = ["synthetix.AccountRouter"]
+factory.AccountProxy.abiOf = ["v3.AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
 
 # add pool owner to feature flag allow list
 [invoke.addPerpsMarketToFeatureFlag]
-target = ["synthetix.CoreProxy"]
+target = ["v3.CoreProxy"]
 func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = [
@@ -145,3 +145,12 @@ artifact = "contracts/mocks/MockPythERC7412Wrapper.sol:MockPythERC7412Wrapper"
 
 [contract.FeeCollectorMock]
 artifact = "contracts/mocks/FeeCollectorMock.sol:FeeCollectorMock"
+
+[invoke.initializeFactory]
+target = ["PerpsMarketProxy"]
+func = "initializeFactory"
+args = [
+    "<%= imports.v3.contracts.CoreProxy.address %>",
+    "<%= imports.spotMarket.contracts.SpotMarketProxy.address %>",
+]
+from = "<%= settings.owner %>"

@@ -1,0 +1,60 @@
+# Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
+
+[profile.default]
+auto_detect_solc = false
+block_timestamp = 1_738_368_000 # Feb 1, 2025 at 00:00 GMT
+bytecode_hash = "none"
+evm_version = "shanghai"
+fuzz = { runs = 1_000 }
+gas_reports = ["BookOrderModule"]
+optimizer = true
+optimizer_runs = 10_000
+out = "out"
+script = "script"
+solc = "0.8.29"
+src = "contracts"
+test = "tests"
+tests = ["tests"]
+remappings = [
+    'forge-std/=../../node_modules/forge-std/src',
+    '@synthetixio/core-contracts/=../../node_modules/@synthetixio/core-contracts/',
+    '@synthetixio/core-utils/=../../node_modules/@synthetixio/core-utils/',
+    '@synthetixio/wei/=../../node_modules/@synthetixio/wei/',
+    '@openzeppelin/contracts/=../../node_modules/@openzeppelin/contracts/',
+    '@synthetixio/main/=../../node_modules/@synthetixio/main/',
+    '@synthetixio/oracle-manager/=../../node_modules/@synthetixio/oracle-manager/',
+    '@synthetixio/rewards-distributor/=../../node_modules/@synthetixio/rewards-distributor/',
+    '@synthetixio/rewards-dist-ext/=../../node_modules/@synthetixio/rewards-dist-ext/',
+    '@synthetixio/core-modules/=../../node_modules/@synthetixio/core-modules/',
+    '@synthetixio/spot-market/=../../node_modules/@synthetixio/spot-market/',
+]
+libs = ["../../node_modules","node_modules", "lib", "../../"]
+
+[profile.ci]
+fuzz = { runs = 10_000 }
+verbosity = 4
+
+[etherscan]
+mainnet = { key = "${API_KEY_ETHERSCAN}" }
+
+[fmt]
+bracket_spacing = true
+int_types = "long"
+line_length = 120
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+tab_width = 4
+wrap_comments = true
+
+[rpc_endpoints]
+arbitrum = "https://arbitrum-one-rpc.publicnode.com"
+avalanche = "https://avalanche-c-chain-rpc.publicnode.com"
+base = "https://mainnet.base.org"
+bnb_smart_chain = "https://bsc-dataseed.binance.org"
+gnosis_chain = "https://rpc.gnosischain.com"
+localhost = "http://localhost:8545"
+mainnet = "https://eth-mainnet.g.alchemy.com/v2/${API_KEY_ALCHEMY}"
+optimism = "https://optimism-rpc.publicnode.com"
+polygon = "https://polygon-bor-rpc.publicnode.com"
+sepolia = "https://ethereum-sepolia-rpc.publicnode.com"

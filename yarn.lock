@@ -8307,6 +8307,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"forge-std@github:foundry-rs/forge-std#v1.9.7":
+  version: 1.9.7
+  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=77041d2ce690e692d6e03cc812b57d1ddaa4d505"
+  checksum: 10/102f11b5fe592b5ef77600703f4c6b9dac038caf1fc7166ec686ed2e1789718605996f3f379d51adf199f0ef2923fde96c584d4a9a7d747a2bbc091e4cb17e9c
+  languageName: node
+  linkType: hard
+
 "form-data-encoder@npm:^2.1.2":
   version: 2.1.4
   resolution: "form-data-encoder@npm:2.1.4"
@@ -16145,6 +16152,7 @@ __metadata:
     "@usecannon/cli": "npm:2.20.1"
     eslint: "npm:^9.9.1"
     eslint-plugin-no-only-tests: "npm:^3.1.0"
+    forge-std: "github:foundry-rs/forge-std#v1.9.7"
     globals: "npm:^15.9.0"
     lint-staged: "npm:^15.2.10"
     mocha: "npm:^10.7.3"
