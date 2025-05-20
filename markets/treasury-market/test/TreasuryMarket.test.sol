@@ -280,6 +280,47 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.adjustLoan(accountId, 1 ether);
     }
 
+    function test_AdjustLoanForRestorePosition() external {
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1_000_000, 0, 0);
+
+        uint128 newAccountId = v3System.createAccount();
+
+        vm.expectEmit();
+        emit IV3CoreProxy.Deposited(
+            newAccountId,
+            address(collateralToken),
+            200 ether,
+            address(this)
+        );
+        v3System.deposit(newAccountId, address(collateralToken), 200 ether);
+
+        vm.expectEmit();
+        emit IV3CoreProxy.DelegationUpdated(
+            newAccountId,
+            poolId,
+            address(collateralToken),
+            200 ether,
+            1 ether,
+            address(this)
+        );
+        v3System.delegateCollateral(
+            newAccountId,
+            poolId,
+            address(collateralToken),
+            200 ether,
+            1 ether
+        );
+
+        vm.expectEmit();
+        emit ITreasuryMarket.AccountSaddled(newAccountId, 200 ether, 102 ether);
+        market.saddle(newAccountId);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.LoanAdjusted(newAccountId, 50 ether, 0);
+        market.adjustLoan(newAccountId, 50 ether);
+    }
+
     function test_AdjustLoanIncrease() external {
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 1000000, 0, 0);
