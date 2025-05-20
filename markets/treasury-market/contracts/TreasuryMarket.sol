@@ -70,7 +70,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     ITreasuryStakingRewards private auxTokenRewardsAddress;
     AuxTokenRequiredRatio[] private auxTokenRequiredRatios;
-    mapping(uint128 => AuxTokenInfo) private auxTokenInfo;
+    mapping(uint128 => AuxTokenInfo) public auxTokenInfo;
     uint256 private auxResetTime;
 
     // solhint-disable-next-line no-empty-blocks
@@ -256,6 +256,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             collateralToken
         );
 
+        uint256 neededToRepay = 0;
         if (accountDebt > 0) {
             (uint256 vaultCollateral, ) = v3System.getVaultCollateral(poolId, collateralToken);
 
@@ -266,7 +267,7 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
                 );
             }
 
-            uint256 neededToRepay = uint256(accountDebt);
+            neededToRepay = uint256(accountDebt);
 
             if (int256(neededToRepay) > artificialDebt) {
                 revert InsufficientExcessDebt(int256(neededToRepay), artificialDebt);
@@ -466,32 +467,6 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
     function rebalance() external override {
         _rebalance();
-    }
-
-    function fundForDepositReward(
-        address token,
-        uint256 amount
-    ) external override returns (uint256) {
-        IERC20(token).transferFrom(ERC2771Context._msgSender(), address(this), amount);
-        v3System.depositMarketCollateral(marketId, token, amount);
-        availableDepositRewards[token] += amount;
-
-        return availableDepositRewards[token];
-    }
-
-    function removeFromDepositReward(
-        address token,
-        uint256 amount
-    ) external override onlyTreasury returns (uint256) {
-        if (availableDepositRewards[token] < amount) {
-            revert ParameterError.InvalidParameter("amount", "greater than available rewards");
-        }
-        v3System.withdrawMarketCollateral(marketId, token, amount);
-        IERC20(token).transfer(ERC2771Context._msgSender(), amount);
-
-        availableDepositRewards[token] -= amount;
-
-        return availableDepositRewards[token];
     }
 
     function updateAuxToken(
