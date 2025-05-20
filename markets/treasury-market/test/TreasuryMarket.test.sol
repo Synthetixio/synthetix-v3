@@ -280,6 +280,20 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         market.adjustLoan(accountId, 1 ether);
     }
 
+    function test__RevertIf_AdjustLoanAmountTooBig() external {
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1_000_000, 0, 0);
+
+        vm.expectEmit();
+        emit ITreasuryMarket.AccountSaddled(accountId, 4 ether, 2 ether);
+        market.saddle(accountId);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ParameterError.InvalidParameter.selector, "amount", "too big")
+        );
+        market.adjustLoan(accountId, 10 ether);
+    }
+
     function test_AdjustLoanForRestorePosition() external {
         vm.prank(market.owner());
         market.setDebtDecayFunction(1, 1_000_000, 0, 0);

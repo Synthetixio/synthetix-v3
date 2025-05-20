@@ -385,6 +385,17 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
             // NOTE: this branch is intended for admins to be able to assign debt to an account to recreate a position posthumously.
             // Do not use if you do not know what you are doing.
             // create a loan on the account (the user doesn't get any repayment though)
+
+            // Extra safeguard against assigning too much loan
+            (, uint256 accountCollateralValue, , ) = v3System.getPosition(
+                accountId,
+                poolId,
+                collateralToken
+            );
+            if (accountCollateralValue < amount) {
+                revert ParameterError.InvalidParameter("amount", "too big");
+            }
+
             loans[accountId] = LoanInfo(
                 uint64(block.timestamp),
                 debtDecayPower,
