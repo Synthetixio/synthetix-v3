@@ -204,6 +204,26 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(market.totalSaddledCollateral(), 4 ether);
     }
 
+    function test_setOverrideLoanDuration() external {
+        vm.prank(market.owner());
+        market.setDebtDecayFunction(1, 1_000_000, 1 ether, 0.5 ether);
+
+        sideMarket.setReportedDebt(1 ether);
+        assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 1 ether);
+        market.saddle(accountId);
+
+        (, , uint32 originalDuration, uint128 originalLoanAmount) = market.loans(accountId);
+        assertEq(originalDuration, 1_000_000, "originalDuration is 1_000_000");
+        assertEq(originalLoanAmount, 1 ether, "originalLoanAmount is 1 ether");
+
+        vm.prank(market.owner());
+        market.setOverrideLoanDuration(accountId, 69);
+
+        (, , uint32 updatedDuration, uint128 updatedLoanAmount) = market.loans(accountId);
+        assertEq(updatedDuration, 69, "originalDuration is 69");
+        assertEq(updatedLoanAmount, 1 ether, "originalLoanAmount is 1 ether");
+    }
+
     function test_SaddleNoDebt() external {
         assertEq(v3System.getPositionDebt(accountId, poolId, address(collateralToken)), 0);
         market.saddle(accountId);
