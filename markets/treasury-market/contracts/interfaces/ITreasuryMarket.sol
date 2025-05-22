@@ -71,29 +71,19 @@ interface ITreasuryMarket {
         uint256 previousLoanedAmount
     );
 
+    /**
+     * @notice Emitted when market owner overrides the loan duration for an account
+     */
+    event LoanDurationAdjusted(
+        uint128 indexed accountId,
+        uint32 newLoanDuration,
+        uint32 previousLoanDuration
+    );
+
     event AuxTokenDepositChanged(
         uint128 indexed accountId,
         uint256 newAuxTokenDeposit,
         uint256 oldAuxTokenDeposit
-    );
-
-    /**
-     * @notice Emitted when a user received a reward for depositing and saddling into the treasury market
-     */
-    event DepositRewardIssued(
-        uint128 indexed accountId,
-        address indexed rewardToken,
-        LoanInfo depositedRewardData
-    );
-
-    /**
-     *
-     */
-    event DepositRewardRedeemed(
-        uint128 indexed accountId,
-        address indexed rewardToken,
-        uint256 rewardRedeemed,
-        uint256 penaltyPaid
     );
 
     /**
@@ -144,15 +134,6 @@ interface ITreasuryMarket {
     error InsufficientExcessDebt(int256 neededToRepay, int256 ableToRepay);
 
     /**
-     * @notice Emitted when there is not enough deposited reward funds to cover the user's deposit in the contract
-     */
-    error InsufficientAvailableReward(
-        address rewardToken,
-        uint256 rewardedAmount,
-        uint256 availableToReward
-    );
-
-    /**
      * @notice called by the owner to register this market with v3. This is an initialization call only.
      */
     function registerMarket() external returns (uint128 newMarketId);
@@ -175,14 +156,9 @@ interface ITreasuryMarket {
     function adjustLoan(uint128 accountId, uint256 amount) external;
 
     /**
-     * @dev Used by the treasury to deposit a token to be used for a rewards configuration. The deposited tokens can also be minted from
+     * @dev Allows the market owner to change a loans duration (for admin, restoration purposes)
      */
-    function fundForDepositReward(address token, uint256 amount) external returns (uint256);
-
-    /**
-     * @dev Used by the treasury to remove a token from a deposit rewards configuration.
-     */
-    function removeFromDepositReward(address token, uint256 amount) external returns (uint256);
+    function setOverrideLoanDuration(uint128 accountId, uint32 loanDuration) external;
 
     /**
      * @notice Called by the owner to mint available sUSD to the treasury.
@@ -213,15 +189,6 @@ interface ITreasuryMarket {
     function loanedAmount(uint128 accountId) external view returns (uint256);
 
     /**
-     * @notice Retrieves the current amount of reward that the user would keep if they chose to withdraw immediately (not accounting for penalty)
-     * @param accountId The account to retrieve current debt for
-     */
-    function depositRewardAvailable(
-        uint128 accountId,
-        address rewardTokenAddress
-    ) external view returns (uint256);
-
-    /**
      * @notice Returns the amount of penalty which must be repaid upon early repayment. This amount is on top of the amount of the principal repaid.
      * @param accountId The account for which the repayment penalty is being calculated.
      * @param targetDebt The target amount of debt to calculate the repayment penalty for.
@@ -230,17 +197,6 @@ interface ITreasuryMarket {
     function repaymentPenalty(
         uint128 accountId,
         uint256 targetDebt
-    ) external view returns (uint256);
-
-    /**
-     * @notice Calculates the penalty amount for early withdrawal. This penalty is added on top of the accrued rewards amount.
-     * @param accountId The account for which the deposit reward penalty is being calculated.
-     * @param depositRewardToken The token in which the deposit reward is denominated.
-     * @return The calculated penalty amount that is applied on top of accrued rewards.
-     */
-    function depositRewardPenalty(
-        uint128 accountId,
-        address depositRewardToken
     ) external view returns (uint256);
 
     /**
@@ -257,12 +213,6 @@ interface ITreasuryMarket {
         uint128 startPenalty,
         uint128 endPenalty
     ) external;
-
-    /**
-     * @notice Called by the owner to set rewards distributed to new saddlers. Completely replaces any existing reward configurations already set
-     * @param newDrcs The reward configurations that should be set
-     */
-    function setDepositRewardConfigurations(DepositRewardConfiguration[] memory newDrcs) external;
 
     /**
      * @notice Called by the owner to require an auxillery token to be deposited in a configured rewards distribution contract, without which loan will not be automatically repaid

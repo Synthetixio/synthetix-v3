@@ -35,6 +35,7 @@
     "@synthetixio/common-config": "workspace:*",
     "@synthetixio/docgen": "workspace:*",
     "@synthetixio/main": "workspace:*",
+    "@usecannon/cli": "2.22.0",
     "forge-std": "github:foundry-rs/forge-std#master",
     "hardhat": "^2.19.5",
     "solidity-docgen": "^0.6.0-beta.36"
