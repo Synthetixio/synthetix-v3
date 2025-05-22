@@ -104,10 +104,10 @@ type Account @entity {
   created_at_block: BigInt!
   updated_at: BigInt!
   updated_at_block: BigInt!
-  permissions: [AccountPermissionUsers!]
+  permissions: [AccountPermissionUser!]
 }
 
-type AccountPermissionUsers @entity {
+type AccountPermissionUser @entity {
   "NFT token id + user address"
   id: ID!
   address: Bytes!
