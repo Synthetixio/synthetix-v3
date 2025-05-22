@@ -78,25 +78,6 @@ interface ITreasuryMarket {
     );
 
     /**
-     * @notice Emitted when a user received a reward for depositing and saddling into the treasury market
-     */
-    event DepositRewardIssued(
-        uint128 indexed accountId,
-        address indexed rewardToken,
-        LoanInfo depositedRewardData
-    );
-
-    /**
-     *
-     */
-    event DepositRewardRedeemed(
-        uint128 indexed accountId,
-        address indexed rewardToken,
-        uint256 rewardRedeemed,
-        uint256 penaltyPaid
-    );
-
-    /**
      * @notice Emitted after a call to `updateAuxToken`
      */
     event UpdateAuxTokenRequirement(uint256 timestamp, uint256 requiredRatio);
@@ -142,15 +123,6 @@ interface ITreasuryMarket {
      * @notice Emitted when there is not enough clearable debt to allow the user that is unsaddling to exit
      */
     error InsufficientExcessDebt(int256 neededToRepay, int256 ableToRepay);
-
-    /**
-     * @notice Emitted when there is not enough deposited reward funds to cover the user's deposit in the contract
-     */
-    error InsufficientAvailableReward(
-        address rewardToken,
-        uint256 rewardedAmount,
-        uint256 availableToReward
-    );
 
     /**
      * @notice called by the owner to register this market with v3. This is an initialization call only.
