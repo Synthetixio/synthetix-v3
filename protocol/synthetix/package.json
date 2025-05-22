@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.12.2",
+  "version": "3.12.3",
   "description": "Core Synthetix Protocol Contracts",
   "publishConfig": {
     "access": "public"
