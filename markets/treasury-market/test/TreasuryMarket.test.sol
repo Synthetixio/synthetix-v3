@@ -216,6 +216,9 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         assertEq(originalDuration, 1_000_000, "originalDuration is 1_000_000");
         assertEq(originalLoanAmount, 1 ether, "originalLoanAmount is 1 ether");
 
+        vm.expectEmit();
+        emit ITreasuryMarket.LoanDurationAdjusted(accountId, 69, 1_000_000);
+
         vm.prank(market.owner());
         market.setOverrideLoanDuration(accountId, 69);
 

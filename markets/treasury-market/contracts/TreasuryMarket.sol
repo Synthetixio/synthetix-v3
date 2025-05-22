@@ -439,7 +439,9 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         uint128 accountId,
         uint32 loanDuration
     ) external override onlyOwner {
+        uint32 previousLoanDuration = loans[accountId].duration;
         loans[accountId].duration = loanDuration;
+        emit LoanDurationAdjusted(accountId, loanDuration, previousLoanDuration);
     }
 
     function loanedAmount(uint128 accountId) external view override returns (uint256) {

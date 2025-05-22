@@ -71,6 +71,15 @@ interface ITreasuryMarket {
         uint256 previousLoanedAmount
     );
 
+    /**
+     * @notice Emitted when market owner overrides the loan duration for an account
+     */
+    event LoanDurationAdjusted(
+        uint128 indexed accountId,
+        uint32 newLoanDuration,
+        uint32 previousLoanDuration
+    );
+
     event AuxTokenDepositChanged(
         uint128 indexed accountId,
         uint256 newAuxTokenDeposit,
