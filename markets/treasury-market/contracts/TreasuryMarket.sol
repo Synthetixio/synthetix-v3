@@ -203,16 +203,14 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         v3System.associateDebt(marketId, poolId, collateralToken, accountId, debtIncrease);
 
         // if a user has not been saddled before, any existing account debt becomes a loan on the user
-        if (saddledCollateral[accountId] == 0) {
-            if (accountDebt > 0) {
-                loans[accountId] = LoanInfo(
-                    uint64(block.timestamp),
-                    debtDecayPower,
-                    debtDecayTime,
-                    accountDebt.toUint().to128()
-                );
-                emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
-            }
+        if (saddledCollateral[accountId] == 0 && accountDebt > 0) {
+            loans[accountId] = LoanInfo(
+                uint64(block.timestamp),
+                debtDecayPower,
+                debtDecayTime,
+                accountDebt.toUint().to128()
+            );
+            emit LoanAdjusted(accountId, accountDebt.toUint(), 0);
         }
 
         totalSaddledCollateral += accountCollateral - saddledCollateral[accountId];
