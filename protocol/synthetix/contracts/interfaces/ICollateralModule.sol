@@ -14,6 +14,11 @@ interface ICollateralModule {
     error InsufficientAccountCollateral(uint256 amount);
 
     /**
+     * @notice Thrown when a deposited collateral cannot be withdrawn because it has been deprecated.
+     */
+    error DeprecatedDeposit();
+
+    /**
      * @notice Emitted when `tokenAmount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      * @param accountId The id of the account that deposited collateral.
      * @param collateralType The address of the collateral that was deposited.

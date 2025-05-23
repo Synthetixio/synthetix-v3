@@ -98,6 +98,11 @@ contract CollateralModule is ICollateralModule {
 
         account.collaterals[collateralType].decreaseAvailableCollateral(tokenAmountD18);
 
+        if (collateralType.balanceOf(address(this)) < tokenAmount) {
+            // if the tokens are not there, and the user has balance, it means the collateral was deprecated
+            revert DeprecatedDeposit();
+        }
+
         collateralType.safeTransfer(ERC2771Context._msgSender(), tokenAmount);
 
         emit Withdrawn(accountId, collateralType, tokenAmount, ERC2771Context._msgSender());

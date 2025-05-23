@@ -16,6 +16,15 @@ interface ICollateralConfigurationModule {
     event CollateralConfigured(address indexed collateralType, CollateralConfiguration.Data config);
 
     /**
+     * @notice Emitted when a collateral is deprecated and its balance sent to a deprecation wallet
+     */
+    event CollateralDeprecated(
+        address indexed collateralType,
+        address deprecationReceiver,
+        uint256 deprecatedBalance
+    );
+
+    /**
      * @notice Creates or updates the configuration for the given `collateralType`.
      * @param config The CollateralConfiguration object describing the new configuration.
      *
@@ -27,6 +36,13 @@ interface ICollateralConfigurationModule {
      *
      */
     function configureCollateral(CollateralConfiguration.Data memory config) external;
+
+    /**
+     * @notice Deprecates a collateral and transfers the remaining balance in the v3 system
+     * to the specified receiver contract.
+     *
+     */
+    function deprecateCollateral(address collateralType, address deprecationReceiver) external;
 
     /**
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.

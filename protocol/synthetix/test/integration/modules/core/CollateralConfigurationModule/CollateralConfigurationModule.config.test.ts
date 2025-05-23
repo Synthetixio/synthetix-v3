@@ -8,6 +8,7 @@ import {
 } from '../CollateralModule/CollateralModule.helper';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
+import { depositAmount } from '../../../../common';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -141,6 +142,40 @@ describe('CollateralModule', function () {
                 depositingEnabled: false,
               });
             await tx.wait();
+          });
+
+          it('is well configured', async () => {
+            await verifyCollateral(
+              2,
+              AnotherCollateral,
+              oracleNodeId2,
+              bn(3),
+              bn(2.5),
+              false,
+              systems().Core
+            );
+          });
+
+          it('shows in the collateral list', async function () {
+            await verifyCollateralListed(AnotherCollateral, true, false, systems().Core);
+            await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
+          });
+        });
+
+        describe('when the second collateral is deprecated', () => {
+          before('deprecate the collateral', async () => {
+            const tx = await systems()
+              .Core.connect(systemOwner)
+              .deprecateCollateral(AnotherCollateral.address, await systemOwner.getAddress());
+            await tx.wait();
+          });
+
+          it('sends to deprecation target', async () => {
+            assertBn.equal(AnotherCollateral.balanceOf(systems().Core.address), 0);
+            assertBn.equal(
+              AnotherCollateral.balanceOf(await systemOwner.getAddress()),
+              depositAmount
+            );
           });
 
           it('is well configured', async () => {

@@ -23,4 +23,8 @@ library ERC20Helper {
             revert FailedTransfer(from, to, value);
         }
     }
+
+    function balanceOf(address token, address wallet) internal view returns (uint256) {
+        return IERC20(token).balanceOf(wallet);
+    }
 }
