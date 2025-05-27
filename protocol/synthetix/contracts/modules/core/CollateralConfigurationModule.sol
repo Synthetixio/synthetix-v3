@@ -34,7 +34,9 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         OwnableStorage.onlyOwner();
 
         uint256 deprecatedBalance = deprecatedCollateral.balanceOf(address(this));
-        deprecatedCollateral.safeTransfer(deprecationReceiver, deprecatedBalance);
+        if (deprecatedBalance > 0) {
+            deprecatedCollateral.safeTransfer(deprecationReceiver, deprecatedBalance);
+        }
 
         CollateralConfiguration.load(deprecatedCollateral).depositingEnabled = false;
 

@@ -8,7 +8,6 @@ import {
 } from '../CollateralModule/CollateralModule.helper';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { snapshotCheckpoint } from '@synthetixio/core-utils/utils/mocha/snapshot';
-import { depositAmount } from '../../../../common';
 
 describe('CollateralModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -23,6 +22,10 @@ describe('CollateralModule', function () {
   describe('CollateralModule - Collateral configuration', function () {
     before('identify signers', async () => {
       [systemOwner, user1] = signers();
+    });
+
+    before('create account', async () => {
+      await (await systems().Core.connect(user1)['createAccount(uint128)'](1)).wait();
     });
 
     describe('when the first collateral is added', function () {
@@ -58,6 +61,8 @@ describe('CollateralModule', function () {
             systems().OracleManager
           ));
         });
+
+        const restorePreDeprecate = snapshotCheckpoint(provider);
 
         it('is well configured', async () => {
           await verifyCollateral(
@@ -163,36 +168,59 @@ describe('CollateralModule', function () {
         });
 
         describe('when the second collateral is deprecated', () => {
-          before('deprecate the collateral', async () => {
-            const tx = await systems()
-              .Core.connect(systemOwner)
-              .deprecateCollateral(AnotherCollateral.address, await systemOwner.getAddress());
-            await tx.wait();
+          describe('when no collateral is deposited', () => {
+            before(restorePreDeprecate);
+            before('deprecate the collateral', async () => {
+              const tx = await systems()
+                .Core.connect(systemOwner)
+                .deprecateCollateral(AnotherCollateral.address, await systemOwner.getAddress());
+              await tx.wait();
+            });
+
+            it('is well configured', async () => {
+              await verifyCollateral(
+                2,
+                AnotherCollateral,
+                oracleNodeId2,
+                bn(4),
+                bn(2),
+                false,
+                systems().Core
+              );
+            });
+
+            it('shows in the collateral list', async function () {
+              await verifyCollateralListed(AnotherCollateral, true, false, systems().Core);
+              await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
+            });
           });
 
-          it('sends to deprecation target', async () => {
-            assertBn.equal(AnotherCollateral.balanceOf(systems().Core.address), 0);
-            assertBn.equal(
-              AnotherCollateral.balanceOf(await systemOwner.getAddress()),
-              depositAmount
-            );
-          });
+          describe('when collateral is deposited', async () => {
+            before(restorePreDeprecate);
+            before('deposit and deprecate the collateral', async () => {
+              await AnotherCollateral.mint(await user1.getAddress(), 1000);
+              await AnotherCollateral.connect(user1).approve(systems().Core.address, 1000);
+              await systems().Core.connect(user1).deposit(1, AnotherCollateral.address, 1000);
+              const tx = await systems()
+                .Core.connect(systemOwner)
+                .deprecateCollateral(AnotherCollateral.address, await systemOwner.getAddress());
+              await tx.wait();
+            });
+            it('sends to deprecation target', async () => {
+              assertBn.equal(await AnotherCollateral.balanceOf(systems().Core.address), 0);
+              assertBn.equal(
+                await AnotherCollateral.balanceOf(await systemOwner.getAddress()),
+                1000
+              );
+            });
 
-          it('is well configured', async () => {
-            await verifyCollateral(
-              2,
-              AnotherCollateral,
-              oracleNodeId2,
-              bn(3),
-              bn(2.5),
-              false,
-              systems().Core
-            );
-          });
-
-          it('shows in the collateral list', async function () {
-            await verifyCollateralListed(AnotherCollateral, true, false, systems().Core);
-            await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
+            it('fails with correct error when trying to withdraw', async () => {
+              assertRevert(
+                systems().Core.connect(user1).withdraw(1, AnotherCollateral.address, 1000),
+                'CollateralDeprecated',
+                systems().Core
+              );
+            });
           });
         });
       });
