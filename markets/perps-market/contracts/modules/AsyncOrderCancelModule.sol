@@ -10,7 +10,6 @@ import {AsyncOrder} from "../storage/AsyncOrder.sol";
 import {GlobalPerpsMarket} from "../storage/GlobalPerpsMarket.sol";
 import {SettlementStrategy} from "../storage/SettlementStrategy.sol";
 import {PerpsMarketFactory} from "../storage/PerpsMarketFactory.sol";
-import {IMarketEvents} from "../interfaces/IMarketEvents.sol";
 import {IAccountEvents} from "../interfaces/IAccountEvents.sol";
 import {IPythERC7412Wrapper} from "../interfaces/external/IPythERC7412Wrapper.sol";
 import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -19,7 +18,7 @@ import {SafeCastU256, SafeCastI256} from "@synthetixio/core-contracts/contracts/
  * @title Module for cancelling async orders.
  * @dev See IAsyncOrderCancelModule.
  */
-contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IMarketEvents, IAccountEvents {
+contract AsyncOrderCancelModule is IAsyncOrderCancelModule, IAccountEvents {
     using SafeCastI256 for int256;
     using SafeCastU256 for uint256;
     using PerpsAccount for PerpsAccount.Data;
