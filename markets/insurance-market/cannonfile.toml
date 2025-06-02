@@ -1,0 +1,86 @@
+name = "synthetix-spot-market"
+version = "<%= package.version %>"
+description = "Spot market implementation"
+
+[setting.coreProxyOwner]
+description = "owner of v3 core proxy"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.owner]
+description = "spot market owner"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.synthetixPackage]
+defaultValue = "synthetix:<%= package.version %>"
+
+[import.synthetix]
+source = "<%= settings.synthetixPackage %>"
+
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.PolicyModule]
+artifact = "contracts/modules/PolicyModule.sol:PolicyModule"
+
+[contract.ClaimModule]
+artifact = "contracts/modules/ClaimModule.sol:ClaimModule"
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>", "<%= settings.owner %>"]
+abiOf = ["CoreModule"]
+salt = "<%= settings.salt %>"
+depends = ["contract.CoreModule"]
+
+# Core
+[router.InsuranceMarketRouter]
+contracts = [
+  "CoreModule",
+  "AssociatedSystemsModule",
+  "FeatureFlagModule",
+  "PolicyModule",
+  "ClaimModule"
+]
+depends = [
+  "contract.CoreModule",
+  "AssociatedSystemsModule",
+  "FeatureFlagModule",
+  "contract.PolicyModule",
+  "contract.ClaimModule",
+]
+
+[invoke.upgrade_spot_market_proxy]
+target = ["InitialProxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "upgradeTo"
+args = ["<%= contracts.InsuranceMarketRouter.address %>"]
+factory.InsuranceMarketProxy.abiOf = ["InsuranceMarketRouter"]
+factory.InsuranceMarketProxy.event = "Upgraded"
+factory.InsuranceMarketProxy.arg = 0
+depends = ["contract.InitialProxy", "router.InsuranceMarketRouter"]
+
+[invoke.initialize]
+target = ["InsuranceMarketProxy"]
+fromCall.func = "owner"
+func = "initialize"
+args = [
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+  "<%= imports.synthetix.contracts.USDProxy.address %>",
+  "<%= imports.synthetix.imports.oracle_manager.contracts.Proxy.address %>",
+  "<%= contracts.SynthRouter.address %>"
+]
+depends = ["invoke.upgrade_spot_market_proxy", "import.synthetix", "router.SynthRouter"]
+
+# add pool owner to feature flag allow list
+[invoke.addSpotMarketToFeatureFlag]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.coreProxyOwner %>"
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
+depends = ['import.synthetix', 'invoke.upgrade_spot_market_proxy']
