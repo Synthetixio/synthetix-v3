@@ -215,7 +215,7 @@ describe('CollateralModule', function () {
             });
 
             it('fails with correct error when trying to withdraw', async () => {
-              assertRevert(
+              await assertRevert(
                 systems().Core.connect(user1).withdraw(1, AnotherCollateral.address, 1000),
                 'CollateralDeprecated',
                 systems().Core
