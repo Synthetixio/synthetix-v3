@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
 
 import "../../interfaces/IMarketCollateralModule.sol";
+import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Market.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
@@ -113,6 +114,11 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
         // Account for transferring out collateral
         collateralEntry.amountD18 -= systemAmount;
+
+        if (collateralType.balanceOf(address(this)) < tokenAmount) {
+            // if the tokens are not there, and the user has balance, it means the collateral was deprecated
+            revert ICollateralModule.DeprecatedDeposit();
+        }
 
         (uint256 depositedCollateralValue, bytes memory possibleError1) = marketData
             .getDepositedCollateralValue();

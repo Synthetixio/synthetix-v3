@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.11 <0.9.0;
 
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../../interfaces/ICollateralConfigurationModule.sol";
@@ -13,6 +14,7 @@ import "../../storage/CollateralConfiguration.sol";
 contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using SetUtil for SetUtil.AddressSet;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using ERC20Helper for address;
 
     /**
      * @inheritdoc ICollateralConfigurationModule
@@ -23,6 +25,22 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
         CollateralConfiguration.set(config);
 
         emit CollateralConfigured(config.tokenAddress, config);
+    }
+
+    function deprecateCollateral(
+        address deprecatedCollateral,
+        address deprecationReceiver
+    ) external override {
+        OwnableStorage.onlyOwner();
+
+        uint256 deprecatedBalance = deprecatedCollateral.balanceOf(address(this));
+        if (deprecatedBalance > 0) {
+            deprecatedCollateral.safeTransfer(deprecationReceiver, deprecatedBalance);
+        }
+
+        CollateralConfiguration.load(deprecatedCollateral).depositingEnabled = false;
+
+        emit CollateralDeprecated(deprecatedCollateral, deprecationReceiver, deprecatedBalance);
     }
 
     /**
