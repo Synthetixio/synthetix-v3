@@ -1,14 +1,14 @@
 import { PermissionGranted } from './generated/CoreProxy/CoreProxy';
-import { Account, AccountPermissionUsers } from './generated/schema';
+import { Account, AccountPermissionUser } from './generated/schema';
 
 export function handlePermissionGranted(event: PermissionGranted): void {
   const account = Account.load(event.params.accountId.toString());
   if (account !== null) {
-    let accountPermissionUsers = AccountPermissionUsers.load(
+    let accountPermissionUsers = AccountPermissionUser.load(
       event.params.accountId.toString().concat('-').concat(event.params.user.toHex())
     );
     if (accountPermissionUsers === null) {
-      accountPermissionUsers = new AccountPermissionUsers(
+      accountPermissionUsers = new AccountPermissionUser(
         event.params.accountId.toString().concat('-').concat(event.params.user.toHex())
       );
       accountPermissionUsers.created_at = event.block.timestamp;

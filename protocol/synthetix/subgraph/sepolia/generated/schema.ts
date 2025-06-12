@@ -1174,7 +1174,7 @@ export class Account extends Entity {
   }
 }
 
-export class AccountPermissionUsers extends Entity {
+export class AccountPermissionUser extends Entity {
   constructor(id: string) {
     super();
     this.set('id', Value.fromString(id));
@@ -1182,24 +1182,24 @@ export class AccountPermissionUsers extends Entity {
 
   save(): void {
     let id = this.get('id');
-    assert(id != null, 'Cannot save AccountPermissionUsers entity without an ID');
+    assert(id != null, 'Cannot save AccountPermissionUser entity without an ID');
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        `Entities of type AccountPermissionUsers must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        `Entities of type AccountPermissionUser must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set('AccountPermissionUsers', id.toString(), this);
+      store.set('AccountPermissionUser', id.toString(), this);
     }
   }
 
-  static loadInBlock(id: string): AccountPermissionUsers | null {
-    return changetype<AccountPermissionUsers | null>(
-      store.get_in_block('AccountPermissionUsers', id)
+  static loadInBlock(id: string): AccountPermissionUser | null {
+    return changetype<AccountPermissionUser | null>(
+      store.get_in_block('AccountPermissionUser', id)
     );
   }
 
-  static load(id: string): AccountPermissionUsers | null {
-    return changetype<AccountPermissionUsers | null>(store.get('AccountPermissionUsers', id));
+  static load(id: string): AccountPermissionUser | null {
+    return changetype<AccountPermissionUser | null>(store.get('AccountPermissionUser', id));
   }
 
   get id(): string {
