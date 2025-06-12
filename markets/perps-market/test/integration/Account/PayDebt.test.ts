@@ -23,6 +23,7 @@ const orderFees = {
 };
 
 const ethPerpsMarketId = bn(26);
+const sUSDSynthId = 0;
 
 describe('Account - payDebt()', () => {
   const { systems, provider, perpsMarkets, trader1, synthMarkets, superMarketId } =
@@ -126,11 +127,22 @@ describe('Account - payDebt()', () => {
     it('reverts', async () => {
       await assertRevert(systems().PerpsMarket.payDebt(25, bn(200)), 'AccountNotFound');
     });
+
+    it('reverts', async () => {
+      await assertRevert(systems().PerpsMarket.rebalanceDebt(25, bn(200)), 'AccountNotFound');
+    });
   });
 
   describe('when no debt exists', () => {
     it('reverts', async () => {
       await assertRevert(systems().PerpsMarket.payDebt(accountId, bn(200)), 'NonexistentDebt');
+    });
+
+    it('reverts', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(trader1()).rebalanceDebt(accountId, bn(200)),
+        'NonexistentDebt'
+      );
     });
   });
 
@@ -191,6 +203,111 @@ describe('Account - payDebt()', () => {
         await systems()
           .PerpsMarket.connect(trader1())
           .payDebt(accountId, accruedDebt.add(wei(10_000)).toBN());
+      });
+
+      it('zeroes out the debt', async () => {
+        assertBn.equal(await systems().PerpsMarket.debt(accountId), 0);
+      });
+
+      it('has correct USD balance', async () => {
+        assertBn.equal(
+          await systems().USD.balanceOf(await trader1().getAddress()),
+          traderUSDBalance.sub(accruedDebt).toBN()
+        );
+      });
+
+      it('has correct reported debt', async () => {
+        assertBn.equal(
+          await systems().PerpsMarket.reportedDebt(superMarketId()),
+          reportedDebt.add(accruedDebt).toBN()
+        );
+      });
+
+      it('has correct withdrawable margin', async () => {
+        assertBn.equal(
+          await systems().Core.getWithdrawableMarketUsd(superMarketId()),
+          withdrawableMargin.add(accruedDebt).toBN()
+        );
+      });
+    });
+  });
+
+  describe('using rebalanceDebt', () => {
+    let accruedDebt: Wei;
+    const { pnl: expectedPnl, totalFees } = openAndClosePosition(wei(50), wei(2000), wei(1500));
+
+    it('accrues correct amount of debt', async () => {
+      accruedDebt = expectedPnl.sub(totalFees).abs();
+      assertBn.equal(accruedDebt.abs().toBN(), await systems().PerpsMarket.debt(accountId));
+    });
+
+    it('revert with insufficient credit for rebalance', async () => {
+      await assertRevert(
+        systems().PerpsMarket.connect(trader1()).rebalanceDebt(accountId, bn(200)),
+        'InsufficientCreditForDebtRebalance'
+      );
+    });
+
+    describe('pay off some debt', () => {
+      let traderUSDBalance: Wei, reportedDebt: Wei;
+      const payoffAmount = wei(10_000);
+      let tx: ethers.providers.TransactionResponse;
+      before(async () => {
+        await systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountId, sUSDSynthId, wei(20_000).toBN());
+
+        reportedDebt = wei(await systems().PerpsMarket.reportedDebt(superMarketId()));
+        traderUSDBalance = wei(await systems().USD.balanceOf(await trader1().getAddress()));
+
+        tx = await systems()
+          .PerpsMarket.connect(trader1())
+          .rebalanceDebt(accountId, payoffAmount.toBN());
+      });
+
+      it('has correct debt', async () => {
+        accruedDebt = accruedDebt.sub(payoffAmount);
+        assertBn.equal(await systems().PerpsMarket.debt(accountId), accruedDebt.toBN());
+      });
+
+      it('has correct USD balance', async () => {
+        assertBn.equal(
+          await systems().USD.balanceOf(await trader1().getAddress()),
+          traderUSDBalance.sub(payoffAmount).toBN()
+        );
+      });
+
+      it('has correct reported debt', async () => {
+        assertBn.equal(
+          await systems().PerpsMarket.reportedDebt(superMarketId()),
+          reportedDebt.add(payoffAmount).toBN()
+        );
+      });
+
+      it('emits event', async () => {
+        await assertEvent(
+          tx,
+          `DebtPaid(${accountId}, ${bn(10_000)}, "${await trader1().getAddress()}")`,
+          systems().PerpsMarket
+        );
+      });
+    });
+
+    describe('attempt to pay off more than debt', () => {
+      let traderUSDBalance: Wei, withdrawableMargin: Wei, reportedDebt: Wei;
+
+      before(async () => {
+        await systems()
+          .PerpsMarket.connect(trader1())
+          .modifyCollateral(accountId, sUSDSynthId, wei(10_000).toBN());
+
+        reportedDebt = wei(await systems().PerpsMarket.reportedDebt(superMarketId()));
+        traderUSDBalance = wei(await systems().USD.balanceOf(await trader1().getAddress()));
+        withdrawableMargin = wei(await systems().Core.getWithdrawableMarketUsd(superMarketId()));
+
+        await systems()
+          .PerpsMarket.connect(trader1())
+          .rebalanceDebt(accountId, accruedDebt.add(wei(10_000)).toBN());
       });
 
       it('zeroes out the debt', async () => {
