@@ -522,7 +522,7 @@ describe('Market', function () {
 
         it('debt is only partially moved', async () => {
           // none of the pools have received any debt allocation
-          // becuase it only just now entered the range
+          // because it only just now entered the range
           assertBn.equal(
             await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
               fakeMarketId,

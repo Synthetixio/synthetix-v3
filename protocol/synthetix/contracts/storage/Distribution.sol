@@ -72,7 +72,7 @@ library Distribution {
      *
      * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
      *
-     * Returns the the amount by which the actors value changed since the last update.
+     * Returns the amount by which the actors value changed since the last update.
      */
     function setActorShares(
         Data storage self,
