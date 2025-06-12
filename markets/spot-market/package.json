@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/spot-market",
-  "version": "3.12.3",
+  "version": "3.13.0",
   "description": "Spot Market implementation",
   "publishConfig": {
     "access": "public"
