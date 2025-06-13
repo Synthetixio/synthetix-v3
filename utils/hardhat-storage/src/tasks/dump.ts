@@ -40,6 +40,12 @@ task(TASK_STORAGE_DUMP, 'Dump storage slots to a file')
 
     const { contracts, getArtifact } = await hre.run(SUBTASK_GET_ARTIFACTS);
 
+    if (!contracts.length) {
+      logger.warn(
+        'WARN: No contracts were found for storage checking, and your storage dump will be empty. Please check (and possibly add) a storage configuration in your hardhat configuration and try again.'
+      );
+    }
+
     if (!noValidate) {
       await hre.run(SUBTASK_VALIDATE_CONTRACTS, { contracts, getArtifact });
     }
