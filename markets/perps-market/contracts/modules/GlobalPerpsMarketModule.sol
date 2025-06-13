@@ -15,6 +15,8 @@ import {OwnableStorage} from "@synthetixio/core-contracts/contracts/ownership/Ow
 import {AddressError} from "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import {KeeperCosts} from "../storage/KeeperCosts.sol";
+import {PerpsMarket} from "../storage/PerpsMarket.sol";
+import {MathUtil} from "../utils/MathUtil.sol";
 
 /**
  * @title Module for global Perps Market settings.
@@ -25,6 +27,7 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
     using GlobalPerpsMarket for GlobalPerpsMarket.Data;
     using SetUtil for SetUtil.UintSet;
     using KeeperCosts for KeeperCosts.Data;
+    using PerpsMarket for PerpsMarket.Data;
 
     /**
      * @inheritdoc IGlobalPerpsMarketModule
@@ -270,5 +273,26 @@ contract GlobalPerpsMarketModule is IGlobalPerpsMarketModule {
         (uint128 interestRate, ) = InterestRate.update(PerpsPrice.Tolerance.DEFAULT);
 
         emit InterestRateUpdated(PerpsMarketFactory.load().perpsMarketId, interestRate);
+    }
+
+    /**
+     * @inheritdoc IGlobalPerpsMarketModule
+     */
+    function isWithinMarketCapacity(uint128 marketId, uint128 accountId, int256 sizeDelta) external view override returns (bool isMarketSolvent) {
+        int128 oldPositionSize = PerpsMarket.accountPosition(marketId, accountId);
+        int128 newPositionSize = oldPositionSize + sizeDelta;
+
+        uint256 newMagnitude = MathUtil.abs(runtime.newPositionSize);
+        uint256 oldMagnitude = MathUtil.abs(oldPositionSize);
+
+        bool sameSide = newPositionSize > 0 == oldPositionSize > 0;
+
+        if (newMagnitude > oldMagnitude || !sameSide) {
+            int256 lockedCreditDelta = PerpsMarket.requiredCreditForSize(sizeDelta, PerpsPrice.Tolerance.DEFAULT);
+            (bool isMarketSolvent, , ) = GlobalPerpsMarket.isMarketSolventForCreditDelta(sizeDelta);
+            return isMarketSolvent;
+        }
+
+        return true;
     }
 }
