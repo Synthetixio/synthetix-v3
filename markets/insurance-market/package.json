@@ -1,0 +1,37 @@
+{
+  "name": "@synthetixio/insurance-market",
+  "version": "3.0.2",
+  "description": "Insurance Market implementation",
+  "private": true,
+  "scripts": {
+    "build": "hardhat compile && hardhat storage:verify && hardhat cannon:build",
+    "check:storage": "git diff --exit-code storage.dump.sol",
+    "start": "yarn build && yarn cannon-build",
+    "clean": "hardhat clean",
+    "cannon-build": "hardhat cannon:build",
+    "test": "hardhat test",
+    "test:fork": "hardhat test test-fork/AsyncOrdersModule.e2e.test.ts",
+    "coverage": "yarn test",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat compile && hardhat size-contracts"
+  },
+  "keywords": [],
+  "author": "Synthetix",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "workspace:*",
+    "@synthetixio/core-contracts": "workspace:*",
+    "@synthetixio/core-modules": "workspace:*",
+    "@synthetixio/core-utils": "workspace:*",
+    "@synthetixio/main": "workspace:*",
+    "@synthetixio/oracle-manager": "workspace:*",
+    "@synthetixio/router": "^3.3.0",
+    "@synthetixio/wei": "^2.74.4",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.19.0",
+    "node-fetch": "^2.7.0",
+    "solidity-docgen": "^0.6.0-beta.36",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}

@@ -3328,6 +3328,27 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@synthetixio/insurance-market@workspace:markets/insurance-market":
+  version: 0.0.0-use.local
+  resolution: "@synthetixio/insurance-market@workspace:markets/insurance-market"
+  dependencies:
+    "@synthetixio/common-config": "workspace:*"
+    "@synthetixio/core-contracts": "workspace:*"
+    "@synthetixio/core-modules": "workspace:*"
+    "@synthetixio/core-utils": "workspace:*"
+    "@synthetixio/main": "workspace:*"
+    "@synthetixio/oracle-manager": "workspace:*"
+    "@synthetixio/router": "npm:^3.3.0"
+    "@synthetixio/wei": "npm:^2.74.4"
+    ethers: "npm:^5.7.2"
+    hardhat: "npm:^2.19.0"
+    node-fetch: "npm:^2.7.0"
+    solidity-docgen: "npm:^0.6.0-beta.36"
+    ts-node: "npm:^10.9.1"
+    typescript: "npm:^5.2.2"
+  languageName: unknown
+  linkType: soft
+
 "@synthetixio/legacy-market@workspace:markets/legacy-market":
   version: 0.0.0-use.local
   resolution: "@synthetixio/legacy-market@workspace:markets/legacy-market"
