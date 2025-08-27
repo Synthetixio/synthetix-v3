@@ -90,6 +90,22 @@ interface IVaultModule {
     ) external;
 
     /**
+     * @notice Allows for the owner to override create a position (migrated from another network).
+     * @param accountId The id of the account associated with the position that will be updated.
+     * @param poolId The id of the pool associated with the position.
+     * @param collateralToken The address of the collateral used in the position.
+     * @param totalCollateral The total amount of collateral used in the position.
+     * @param totalDebt The total amount of debt used in the position.
+     */
+    function importPosition(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralToken,
+        uint256 totalCollateral,
+        int256 totalDebt
+    ) external;
+
+    /**
      * @notice Returns the collateralization ratio of the specified liquidity position. If debt is negative, this function will return 0.
      * @dev Call this function using `callStatic` to treat it as a view function.
      * @dev The return value is a percentage with 18 decimals places.

@@ -16,6 +16,8 @@ interface IV3TestCoreProxy is IV3CoreProxy {}
 
 /* solhint-disable numcast/safe-cast */
 
+/// forge-lint: disable-start(all)
+
 contract TreasuryMarketTest is Test, IERC721Receiver {
     TreasuryMarket private market;
     IV3TestCoreProxy private v3System;
@@ -1127,6 +1129,156 @@ contract TreasuryMarketTest is Test, IERC721Receiver {
         balanceOf[accountId] = requiredAuxAmount * 2;
         market.reportAuxToken(accountId);
         assertEq(market.loanedAmount(accountId), initialDebt / 4);
+    }
+
+    function test_RevertIf_ImportStakerUnauthorized() external {
+        // Create test data
+        uint128 testAccountId = 100;
+        uint256 testSaddledCollateralAmount = 1000 ether;
+        ITreasuryMarket.LoanInfo memory testLoan = ITreasuryMarket.LoanInfo({
+            startTime: uint64(block.timestamp),
+            power: 2,
+            duration: 365 days,
+            loanAmount: 100 ether
+        });
+        ITreasuryMarket.AuxTokenInfo memory testAuxTokenInfo = ITreasuryMarket.AuxTokenInfo({
+            amount: 50 ether,
+            lastUpdated: uint64(block.timestamp),
+            timeInsufficient: 0,
+            epoch: 1
+        });
+
+        // Attempt to call importStaker as non-owner and expect revert
+        vm.expectRevert(abi.encodeWithSelector(AccessError.Unauthorized.selector, address(this)));
+        market.importStaker(testAccountId, testSaddledCollateralAmount, testLoan, testAuxTokenInfo);
+    }
+
+    function test_ImportStakerOverwritesExistingData() external {
+        // First, set some initial data
+        vm.warp(100000000);
+        uint128 testAccountId = 300;
+        uint256 initialSaddledAmount = 1000 ether;
+        ITreasuryMarket.LoanInfo memory initialLoan = ITreasuryMarket.LoanInfo({
+            startTime: uint64(block.timestamp - 1000),
+            power: 1,
+            duration: 365 days,
+            loanAmount: 50 ether
+        });
+        ITreasuryMarket.AuxTokenInfo memory initialAuxInfo = ITreasuryMarket.AuxTokenInfo({
+            amount: 25 ether,
+            lastUpdated: uint64(block.timestamp - 500),
+            timeInsufficient: 0,
+            epoch: 0
+        });
+
+        vm.prank(market.owner());
+        market.importStaker(testAccountId, initialSaddledAmount, initialLoan, initialAuxInfo);
+
+        // Now overwrite with new data
+        uint256 newSaddledAmount = 3000 ether;
+        ITreasuryMarket.LoanInfo memory newLoan = ITreasuryMarket.LoanInfo({
+            startTime: uint64(block.timestamp),
+            power: 4,
+            duration: 730 days,
+            loanAmount: 200 ether
+        });
+        ITreasuryMarket.AuxTokenInfo memory newAuxInfo = ITreasuryMarket.AuxTokenInfo({
+            amount: 100 ether,
+            lastUpdated: uint64(block.timestamp),
+            timeInsufficient: 172800, // 2 days
+            epoch: 3
+        });
+
+        vm.prank(market.owner());
+        market.importStaker(testAccountId, newSaddledAmount, newLoan, newAuxInfo);
+
+        // Verify the data was overwritten correctly
+        assertEq(
+            market.saddledCollateral(testAccountId),
+            newSaddledAmount,
+            "saddledCollateral not overwritten correctly"
+        );
+
+        assertEq(
+            market.getLoanInfo(testAccountId).startTime,
+            newLoan.startTime,
+            "loan startTime not overwritten correctly"
+        );
+        assertEq(
+            market.getLoanInfo(testAccountId).power,
+            newLoan.power,
+            "loan power not overwritten correctly"
+        );
+        assertEq(
+            market.getLoanInfo(testAccountId).duration,
+            newLoan.duration,
+            "loan duration not overwritten correctly"
+        );
+        assertEq(
+            market.getLoanInfo(testAccountId).loanAmount,
+            newLoan.loanAmount,
+            "loan loanAmount not overwritten correctly"
+        );
+
+        assertEq(
+            market.getAuxTokenInfo(testAccountId).amount,
+            newAuxInfo.amount,
+            "auxTokenInfo amount not overwritten correctly"
+        );
+        assertEq(
+            market.getAuxTokenInfo(testAccountId).lastUpdated,
+            newAuxInfo.lastUpdated,
+            "auxTokenInfo lastUpdated not overwritten correctly"
+        );
+        assertEq(
+            market.getAuxTokenInfo(testAccountId).timeInsufficient,
+            newAuxInfo.timeInsufficient,
+            "auxTokenInfo timeInsufficient not overwritten correctly"
+        );
+        assertEq(
+            market.getAuxTokenInfo(testAccountId).epoch,
+            newAuxInfo.epoch,
+            "auxTokenInfo epoch not overwritten correctly"
+        );
+    }
+
+    function test_ImportStakerWithZeroValues() external {
+        // Test with zero/minimal values to ensure no edge case issues
+        uint128 testAccountId = 400;
+        uint256 testSaddledCollateralAmount = 0;
+        ITreasuryMarket.LoanInfo memory testLoan = ITreasuryMarket.LoanInfo({
+            startTime: 0,
+            power: 0,
+            duration: 0,
+            loanAmount: 0
+        });
+        ITreasuryMarket.AuxTokenInfo memory testAuxTokenInfo = ITreasuryMarket.AuxTokenInfo({
+            amount: 0,
+            lastUpdated: 0,
+            timeInsufficient: 0,
+            epoch: 0
+        });
+
+        vm.prank(market.owner());
+        market.importStaker(testAccountId, testSaddledCollateralAmount, testLoan, testAuxTokenInfo);
+
+        // Verify all values are set to zero
+        assertEq(market.saddledCollateral(testAccountId), 0, "saddledCollateral should be 0");
+
+        (uint64 startTime, uint32 power, uint32 duration, uint128 loanAmount) = market.loans(
+            testAccountId
+        );
+        assertEq(startTime, 0, "loan startTime should be 0");
+        assertEq(power, 0, "loan power should be 0");
+        assertEq(duration, 0, "loan duration should be 0");
+        assertEq(loanAmount, 0, "loan loanAmount should be 0");
+
+        (uint128 amount, uint64 lastUpdated, uint32 timeInsufficient, uint32 epoch) = market
+            .auxTokenInfo(testAccountId);
+        assertEq(amount, 0, "auxTokenInfo amount should be 0");
+        assertEq(lastUpdated, 0, "auxTokenInfo lastUpdated should be 0");
+        assertEq(timeInsufficient, 0, "auxTokenInfo timeInsufficient should be 0");
+        assertEq(epoch, 0, "auxTokenInfo epoch should be 0");
     }
 
     function onERC721Received(

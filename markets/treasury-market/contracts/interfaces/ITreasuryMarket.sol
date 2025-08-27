@@ -134,6 +134,11 @@ interface ITreasuryMarket {
     error InsufficientExcessDebt(int256 neededToRepay, int256 ableToRepay);
 
     /**
+     * @notice Emitted when `transferFrom` or `transfer` of an account token fails
+     */
+    error AccountTokenTransferFailed(uint128 accountId);
+
+    /**
      * @notice called by the owner to register this market with v3. This is an initialization call only.
      */
     function registerMarket() external returns (uint128 newMarketId);

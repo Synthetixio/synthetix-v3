@@ -292,9 +292,21 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
 
         // return the account token to the user. we use the "unsafe" call here because the account is being returned to the same address
         // it came from, so its probably ok and the account will be able to handle receipt of the NFT.
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         accountToken.transferFrom(address(this), sender, accountId);
 
         emit AccountUnsaddled(accountId, accountCollateral, neededToRepay);
+    }
+
+    function importStaker(
+        uint128 accountId,
+        uint256 saddledCollateralAmount,
+        LoanInfo memory loan,
+        AuxTokenInfo memory newAuxInfo
+    ) external onlyOwner {
+        saddledCollateral[accountId] = saddledCollateralAmount;
+        loans[accountId] = loan;
+        auxTokenInfo[accountId] = newAuxInfo;
     }
 
     function reportAuxToken(uint128 accountId) external {
@@ -526,10 +538,19 @@ contract TreasuryMarket is ITreasuryMarket, Ownable, UUPSImplementation, IMarket
         _upgradeTo(to);
     }
 
+    function getLoanInfo(uint128 accountId) external view returns (LoanInfo memory) {
+        return loans[accountId];
+    }
+
+    function getAuxTokenInfo(uint128 accountId) external view returns (AuxTokenInfo memory) {
+        return auxTokenInfo[accountId];
+    }
+
     /**
      * @inheritdoc IERC721Receiver
      * @dev This function is required so that self transfer in `unsaddle` works as expected.
      */
+    /// forge-lint: disable-next-line(mixed-case-function)
     function onERC721Received(
         address,
         /*operator*/

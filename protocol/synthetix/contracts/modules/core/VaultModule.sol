@@ -4,6 +4,7 @@ pragma solidity >=0.8.11 <0.9.0;
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC2771Context.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
@@ -260,6 +261,28 @@ contract VaultModule is IVaultModule {
             currentCollateralAmount,
             1 ether,
             ERC2771Context._msgSender()
+        );
+    }
+
+    /**
+     * @inheritdoc IVaultModule
+     */
+    function importPosition(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralToken,
+        uint256 totalCollateral,
+        int256 totalDebt
+    ) external {
+        OwnableStorage.onlyOwner();
+        Pool.load(poolId).vaults[collateralToken].currentEpoch().updateAccountPosition(
+            accountId,
+            totalCollateral,
+            1 ether
+        );
+        Pool.load(poolId).vaults[collateralToken].currentEpoch().assignDebtToAccount(
+            accountId,
+            totalDebt
         );
     }
 
