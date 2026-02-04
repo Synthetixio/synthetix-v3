@@ -9,6 +9,7 @@ import {ParameterError} from "@synthetixio/core-contracts/contracts/errors/Param
 import {ERC20Helper} from "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import {IRewardsManagerModule} from "@synthetixio/main/contracts/interfaces/IRewardsManagerModule.sol";
 import {IRewardDistributor} from "@synthetixio/main/contracts/interfaces/external/IRewardDistributor.sol";
+import {ISnapshotRecord} from "@synthetixio/governance/contracts/interfaces/external/ISnapshotRecord.sol";
 import {SnapshotRewardsDistributor} from "../src/SnapshotRewardsDistributor.sol";
 import {IVaultModule} from "@synthetixio/main/contracts/interfaces/IVaultModule.sol";
 
@@ -281,5 +282,45 @@ contract SnapshotRewardsDistributorUnitTest is Test {
         assertEq(rewardsDistributor.balanceOf(vm.addr(0xB0B)), 9000);
         assertEq(rewardsDistributor.balanceOfOnPeriod(accountId, 2), 9000);
         assertEq(rewardsDistributor.balanceOfOnPeriod(vm.addr(0xB0B), 2), 9000);
+    }
+
+    /// @notice Regression test: takeSnapshot must reject max uint128 to prevent DoS
+    function test_takeSnapshot_rejects_maxUint128() public {
+        uint128 maxId = type(uint128).max;
+
+        vm.startPrank(vm.addr(0xA11CE));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ParameterError.InvalidParameter.selector,
+                "id",
+                "period id must be less than max uint128"
+            )
+        );
+        rewardsDistributor.takeSnapshot(maxId);
+        vm.stopPrank();
+
+        // Valid IDs should still work
+        vm.startPrank(vm.addr(0xA11CE));
+        rewardsDistributor.takeSnapshot(1);
+        assertEq(rewardsDistributor.currentPeriodId(), 1);
+
+        rewardsDistributor.takeSnapshot(100);
+        assertEq(rewardsDistributor.currentPeriodId(), 100);
+        vm.stopPrank();
+    }
+
+    /// @notice Regression test: supportsInterface must advertise ISnapshotRecord
+    function test_supportsInterface_includesISnapshotRecord() public view {
+        // After fix: supportsInterface should return true for ISnapshotRecord
+        assertTrue(
+            rewardsDistributor.supportsInterface(type(ISnapshotRecord).interfaceId),
+            "supportsInterface must advertise ISnapshotRecord"
+        );
+
+        // Should still support IRewardDistributor
+        assertTrue(
+            rewardsDistributor.supportsInterface(type(IRewardDistributor).interfaceId),
+            "supportsInterface must advertise IRewardDistributor"
+        );
     }
 }

@@ -214,6 +214,12 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
         if (!authorizedToSnapshot[sender]) {
             revert AccessError.Unauthorized(sender);
         }
+        if (id == type(uint128).max) {
+            revert ParameterError.InvalidParameter(
+                "id",
+                "period id must be less than max uint128"
+            );
+        }
         if (id <= currentPeriodId) {
             revert ParameterError.InvalidParameter("id", "period id must always increase");
         }
@@ -246,6 +252,7 @@ contract SnapshotRewardsDistributor is IRewardDistributor, ISnapshotRecord {
     ) public view virtual override(IERC165) returns (bool) {
         return
             interfaceId == type(IRewardDistributor).interfaceId ||
+            interfaceId == type(ISnapshotRecord).interfaceId ||
             interfaceId == this.supportsInterface.selector;
     }
 }
