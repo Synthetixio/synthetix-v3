@@ -33,6 +33,7 @@ contract BuybackSnx is IFeeCollector {
         address _snxToken,
         address _usdToken
     ) {
+        require(_snxFeeShare < DecimalMath.UNIT, "snxFeeShare must be < 100%");
         premium = _premium;
         snxFeeShare = _snxFeeShare;
         oracleManager = _oracleManager;
