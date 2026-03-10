@@ -55,7 +55,7 @@ contract WormholeCrossChainModule is IWormholeReceiver {
         }
     }
 
-    ///@dev Implementation from IWormholeReciever, necessary to receive and process messages from the WormholeRelayer
+    ///@dev Implementation from IWormholeReceiver, necessary to receive and process messages from the WormholeRelayer
     function receiveWormholeMessages(
         bytes memory payload,
         bytes[] memory /*additionalMessages*/,
